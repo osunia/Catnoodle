@@ -74,7 +74,7 @@ const RAW_PUZZLES_TEXT = [
         "IIIGGGBBBAA",
         "IEIGFFLBBHA",
         "EEDGFLLLHHA",
-        "EDDDDHLHHKK",
+        "EDDDDCLHHKK",
         "EJJJJCCCCKK"
     ],
     // #10
@@ -113,17 +113,17 @@ const RAW_PUZZLES_TEXT = [
     [
         "CCCCDHHJJJJ",
         "CLDDDDHHGGG",
-        "LLLAAIIGHBB",
+        "LLLAAIIHGBB",
         "FLKKAIEEGBB",
         "FFKKAIIEEEB" 
     ],
     // #15
     [
-        "DDDDAAALGGC",
-        "IDDHAFFLLLC",
+        "DDDDAAALGGG",
+        "IDIHAFLLLEG",
         "IIIHHFFLEEG",
         "CCCCHHBBEKK", // *Check: Length adjusted
-        "JJJJBBBEEKK"
+        "CJJJJBBBEKK"
     ],
     // #16
     [
@@ -151,16 +151,16 @@ const RAW_PUZZLES_TEXT = [
     ],
     // #19
     [
-        "HHAAAFEEEOO",
-        "DHHGAFFEEEO", // I=O/Yellow
-        "DDHGBBLLLOO",
+        "HHAAAFEEEII",
+        "DHHGAFFLEEI", // I=O/Yellow
+        "DDHGBBLLLII",
         "DGGGBBBLCKK",
         "DJJJJCCCCKK" // C count verification needed
     ],
     // #20
     [
-        "OOOBBBKKGGG",
-        "OEIBBBKKGCJ",
+        "IIIBBBKKGGG",
+        "IEIHBBKKGCJ",
         "EEHHAAALGCJ",
         "EHHDAFLLLCJ",
         "EDDDDFFLCCJ"
@@ -178,30 +178,30 @@ const RAW_PUZZLES_TEXT = [
         "KKCCCCJJJJE",
         "KKCFFHHAAEE",
         "IILFHHBBAEG",
-        "IILLHDBBAEG",
+        "ILLLHDBBAEG",
         "IILDDDDBGGG"
     ],
     // #23
     [
         "AAAEEEIIIBB",
         "ALEEKKIHIBB",
-        "LLLFFKKDHHG",
+        "LLLFKKDHHBG",
         "CLFFDDDDHHG",
         "CCCCJJJJGGG"
     ],
     // #24
     [
         "BBBCCCCLGGG",
-        "BBECIDLLLHG",
-        "EEECIDDLLHG",
-        "IFFEIDAHHKK",
-        "IIFEIDAAAKK"
+        "BBECJDLLLHG",
+        "IIEEJDDLHHG",
+        "IFFEJDAHHKK",
+        "IIFEJDAAAKK"
     ],
     // #25
     [
         "CCCCDJJJJBB",
-        "FFDDDDHHBBB", 
-        "KKFIGHHLBAA",
+        "CFFDDDDHHBB", 
+        "KKFIIGHHLBA",
         "KKEEIGHLLLA",
         "EEEIIGGGLAA"
     ],
@@ -209,16 +209,16 @@ const RAW_PUZZLES_TEXT = [
     [
         "DDDDLEEGGGJ",
         "IDILLLEEEGJ",
-        "IOOFFBBHHGJ",
-        "KKAFFCBHHHJ",
+        "IIIFLBBBHGJ",
+        "KKAFFCBBHHJ",
         "KKAAACCCCHH" // H adjusted
     ],
     // #27
     [
         "EGGGJJJJLCC",
         "EFFGBBHLLLC",
-        "EEFGBBHIIID",
-        "DEIKKBDHHAD",
+        "EEFGBBHHLAC",
+        "IEIKKBDHHAC",
         "IIIKKDDDDAA"
     ],
     // #28
@@ -231,10 +231,10 @@ const RAW_PUZZLES_TEXT = [
     ],
     // #29
     [
-        "GGGFFEEEEIJ",
+        "GGGFFEEEIIJ",
         "CCGFKKHEEIJ",
-        "CAGLKKHIIIJ",
-        "ALLLBBHHDDJ",
+        "CAGLKKHHIIJ",
+        "CALLLBBHHDJ",
         "CAALBBBDDDD"
     ],
     // #30
