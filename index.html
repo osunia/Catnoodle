@@ -25,8 +25,8 @@
             margin: 0;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; 
-            overflow-x: hidden; overflow-y: auto; 
-            touch-action: pan-y;
+            overflow: hidden; /* 게임 중 전체 스크롤 방지 */
+            touch-action: none; /* 모바일에서 브라우저 기본 제스처 차단 */
             user-select: none; -webkit-user-select: none;
         }
 
@@ -50,11 +50,12 @@
         #game-container {
             display: flex; flex-direction: column; align-items: center;
             gap: 25px; width: 95%; max-width: 1100px; padding: 10px;
-            touch-action: none; 
+            height: calc(100vh - 150px); /* 뷰포트 높이 활용 */
+            overflow-y: auto; /* 내부 스크롤 허용 */
         }
 
         @media (min-width: 850px) {
-            #game-container { flex-direction: row; align-items: flex-start; justify-content: center; }
+            #game-container { flex-direction: row; align-items: flex-start; justify-content: center; overflow: visible; }
             #board { margin-top: 0; }
             #tray { width: 420px; height: 520px; }
         }
@@ -88,12 +89,12 @@
         .ghost-block {
             width: var(--cell-size); height: var(--cell-size);
             border-radius: 50%;
-            background-color: white; /* 흰색 가이드 */
+            background-color: white;
             border: 2px dashed rgba(255,255,255,0.8);
         }
 
         #tray {
-            width: 100%; min-height: 400px; 
+            width: 100%; min-height: 300px; flex-grow: 1;
             background-color: var(--tray-bg);
             border-radius: 16px; position: relative; 
             box-shadow: 0 8px 20px rgba(0,0,0,0.08); border: 2px solid #dcdde1;
@@ -171,6 +172,7 @@
             display: none; z-index: 2000; text-align: center;
             font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-size: 1.2rem;
             white-space: pre-line;
+            pointer-events: none; /* 메시지가 터치 방해하지 않도록 */
         }
     </style>
 </head>
@@ -441,17 +443,14 @@ function updateGhost(idx, clientX, clientY) {
         const gx = Math.round(relX / (cellSize + gap));
         const gy = Math.round(relY / (cellSize + gap));
 
-        // 유효성 검사 (Ghost 표시 여부 결정)
-        // 임시로 보드에서 제거 후 검사
         if (p.x !== -1) removePieceFromBoardState(p.currentShape, p.y, p.x);
         const valid = canPlace(p.currentShape, gy, gx);
-        // 다시 복구 (실제 이동 전이므로)
         if (p.x !== -1) placePieceToBoardState(p.currentShape, p.y, p.x, p.id);
 
         if (valid) {
             ghostEl.style.display = 'grid';
             ghostEl.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
-            ghostEl.innerHTML = ''; // Rebuild blocks
+            ghostEl.innerHTML = ''; 
             p.currentShape.forEach(row => row.forEach(v => {
                 const b = document.createElement('div');
                 if(v) b.className = 'ghost-block';
@@ -472,7 +471,7 @@ function updateGhost(idx, clientX, clientY) {
 // 🖱️ PC Interaction
 function handleMouseDown(e, idx, el) {
     e.stopPropagation();
-    if(e.button === 2) { flipPieceData(idx); return; } // 우클릭 뒤집기
+    if(e.button === 2) { flipPieceData(idx); return; } 
     if(e.button !== 0) return;
     
     if(pickedPieceIdx !== null && pickedPieceIdx !== idx) return;
@@ -483,6 +482,7 @@ function handleMouseDown(e, idx, el) {
         dragOffsetY = e.clientY - rect.top;
         pickUpPiece(idx, el, e.clientX, e.clientY);
     } else {
+        // 이미 들고 있는 상태에서 클릭 시 (여기서는 실행 안 될 수도 있음, GlobalClick이 처리)
         dropPiece(idx, el);
     }
 }
@@ -498,6 +498,7 @@ function pickUpPiece(idx, el, startX, startY) {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('wheel', onWheel, {passive: false});
     document.addEventListener('mousedown', onGlobalClick);
+    document.addEventListener('touchstart', onGlobalTouchStart, {passive: false}); // 모바일 회전 감지 추가
 }
 
 function onMouseMove(e) {
@@ -505,7 +506,6 @@ function onMouseMove(e) {
         const el = document.getElementById(`p-${pickedPieceIdx}`);
         el.style.left = `${e.clientX - dragOffsetX}px`;
         el.style.top = `${e.clientY - dragOffsetY}px`;
-        // Ghost 업데이트
         updateGhost(pickedPieceIdx, e.clientX, e.clientY);
     }
 }
@@ -517,25 +517,29 @@ function onWheel(e) {
 function onGlobalClick(e) {
     if(pickedPieceIdx !== null) {
         if(e.button === 2) return; 
-        if(e.target.closest(`#p-${pickedPieceIdx}`)) return;
+        // 🚀 수정: e.target 체크 로직 제거 (어디를 누르든 드롭 시도)
         dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`));
     }
 }
 
+// 🚀 추가: 모바일 전역 멀티터치 감지 (회전)
+function onGlobalTouchStart(e) {
+    if(pickedPieceIdx !== null && e.touches.length > 1) {
+        e.preventDefault();
+        rotatePieceData(pickedPieceIdx);
+    }
+}
+
 function dropPiece(idx, el) {
-    const ghostStyle = window.getComputedStyle(ghostEl);
     const validDrop = ghostEl.style.display !== 'none';
     
     if (validDrop) {
-        // 자석 효과: Ghost 위치로 이동
         const gap = 2; const padding = 10;
-        // Ghost의 style.left/top 파싱
         const gxStr = ghostEl.style.left;
         const gyStr = ghostEl.style.top;
         const gxPx = parseFloat(gxStr);
         const gyPx = parseFloat(gyStr);
         
-        // Grid 좌표 역산
         const gx = Math.round((gxPx - padding) / (cellSize + gap));
         const gy = Math.round((gyPx - padding) / (cellSize + gap));
         
@@ -546,7 +550,6 @@ function dropPiece(idx, el) {
         
         checkWinCondition();
     } else {
-        // 유효하지 않으면 트레이로 (튕김 처리)
         const p = pieces[idx];
         if(p.x !== -1) removePieceFromBoardState(p.currentShape, p.y, p.x);
         returnToTrayRandomly(p);
@@ -572,15 +575,16 @@ function cleanupListeners() {
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('wheel', onWheel);
     document.removeEventListener('mousedown', onGlobalClick);
+    document.removeEventListener('touchstart', onGlobalTouchStart); // 리스너 정리
 }
 
-// 📱 Mobile Logic (Multi-touch Support)
+// 📱 Mobile Logic
 function handleTouchStart(e, idx, el) {
     e.preventDefault(); e.stopPropagation();
 
-    // 멀티 터치 감지 (회전)
+    // 🚀 수정: 멀티터치 회전 로직은 이제 onGlobalTouchStart가 처리합니다.
+    // 하지만 시작 시점에서 이미 2개라면 여기서도 방어
     if (e.touches.length > 1 && pickedPieceIdx === idx) {
-        rotatePieceData(idx);
         return;
     }
 
@@ -602,6 +606,9 @@ function handleTouchStart(e, idx, el) {
     el.style.left = `${touch.clientX - dragOffsetX}px`;
     el.style.top = `${touch.clientY - dragOffsetY}px`;
 
+    // 🚀 모바일에서도 전역 터치 이벤트 리스너 등록
+    document.addEventListener('touchstart', onGlobalTouchStart, {passive: false});
+
     const onTouchMove = (ev) => {
         ev.preventDefault();
         const t = ev.touches[0];
@@ -616,16 +623,17 @@ function handleTouchStart(e, idx, el) {
     };
     
     const onTouchEnd = (ev) => {
-        // 손가락을 뗐을 때, 아직 다른 손가락이 남아있다면(멀티터치 중) 드롭하지 않음
         if (ev.touches.length > 0) return;
 
         document.removeEventListener('touchmove', onTouchMove);
         document.removeEventListener('touchend', onTouchEnd);
+        // 드롭 시 전역 리스너도 제거는 cleanupListeners에서 함
+        
         el.classList.remove('picked-up');
 
         if(!isDragging) { 
-            // 탭 (이동 없이 터치 종료) -> 뒤집기
             flipPieceData(idx); 
+            cleanupListeners(); // 리스너 정리
             pickedPieceIdx = null; 
             ghostEl.style.display = 'none';
             renderPieces(); 
@@ -643,11 +651,8 @@ function rotatePieceData(idx) {
     const oldShape = p.currentShape;
     const newShape = rotateMatrix(oldShape);
     
-    // 회전 시도: 충돌 없으면 적용
-    // (드래그 중 회전 시 Ghost 업데이트 필요)
     p.currentShape = newShape;
     
-    // UI 즉시 업데이트
     if(pickedPieceIdx === idx) {
         const el = document.getElementById(`p-${idx}`);
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
@@ -658,13 +663,11 @@ function rotatePieceData(idx) {
             else b.style.visibility = 'hidden';
             el.appendChild(b);
         }));
+        
         // 회전 후 Ghost 업데이트
-        if(isDragging) {
-            // 현재 마우스/터치 위치를 알기 어려우므로(이벤트 밖), 
-            // Ghost는 다음 move 이벤트에서 갱신되거나, 강제로 현재 el 위치 기준 갱신
-            const rect = el.getBoundingClientRect();
-            updateGhost(idx, rect.left, rect.top);
-        }
+        // 현재 위치 기준으로 고스트 강제 갱신
+        const rect = el.getBoundingClientRect();
+        updateGhost(idx, rect.left + rect.width/2, rect.top + rect.height/2);
     } else renderPieces();
 }
 
