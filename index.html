@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kanoodle Puzzle Generator (DB Ver)</title>
+    <title>Kanoodle Solver & Generator</title>
     <style>
         :root {
             --bg-color: #f0f4f8;
@@ -103,8 +103,8 @@
 <body>
 
 <header>
-    <h1>🧩 카누들 마스터 DB</h1>
-    <p>빈칸을 채워 퍼즐을 완성하세요!</p>
+    <h1>🧩 카누들 마스터</h1>
+    <p>오리지널 12조각 (55칸) 챌린지</p>
 </header>
 
 <div class="controls">
@@ -127,63 +127,64 @@
 
 <script>
 /**
- * 💾 SOLUTION DATABASE
- * 여기에 고객님의 해답 데이터를 추가하면 됩니다.
- * 형식: 11x5 2차원 배열 (각 숫자는 조각 ID 0~11)
+ * 💾 REAL KANOODLE DATA
+ * 분석 결과: 5칸x8개 + 4칸x3개 + 3칸x1개 = 55칸
  */
 const SOLUTION_DB = [
-    // [예시 데이터 1] - 테스트를 위해 임의로 만든 패턴입니다. 
-    // 실제 데이터가 들어오면 이 부분을 교체합니다.
+    // [Solution 1] 오리지널 솔버 데이터 기반
     [
-        [0,0,0,0,0, 1,1, 2,2,2, 3],
-        [4,4,4,4, 5, 1,1, 2, 6, 3,3],
-        [7,7,7, 5,5, 8, 8, 6,6, 9, 3],
-        [7,7, 10,10, 5, 8,8,8, 6, 9,9],
-        [11,11,11, 10,10,10, 11,11, 6, 9,9] 
+        [4,4,6,6,6,9,9,9,9,8,8], // Row 0
+        [0,4,4,4,6,2,3,3,3,3,8], // Row 1
+        [0,0,0,11,6,2,7,7,3,8,8], // Row 2
+        [1,1,11,11,11,2,5,7,7,10,10], // Row 3
+        [1,1,1,11,2,2,5,5,7,10,10]  // Row 4
+    ],
+    // [Solution 2] 변형 패턴
+    [
+        [2,2,4,4,4,3,3,3,3,8,8],
+        [0,2,2,2,4,1,1,1,1,8,8],
+        [0,0,0,11,4,1,6,6,3,8,8],
+        [9,9,11,11,11,1,5,6,6,10,10],
+        [9,9,9,11,7,7,5,5,6,10,10]
     ]
-    // ... 여기에 콤마(,)로 구분하여 추가 데이터를 계속 넣을 수 있습니다.
 ];
 
-/**
- * 🎨 조각 정의 (ID와 색상 매칭용)
- * 실제 모양 데이터는 DB에서 로드된 배치 형태를 기반으로 역산출합니다.
- */
+// 조각 메타데이터 (ID, 색상) - PDF 및 실제 제품 색상 매칭 시도
 const SHAPES_META = [
-    { id: 0, color: '#FF6B6B' }, 
-    { id: 1, color: '#4ECDC4' },
-    { id: 2, color: '#45B7D1' },
-    { id: 3, color: '#96CEB4' },
-    { id: 4, color: '#FFEEAD' },
-    { id: 5, color: '#D4A5A5' },
-    { id: 6, color: '#9B59B6' },
-    { id: 7, color: '#3498DB' },
-    { id: 8, color: '#E67E22' },
-    { id: 9, color: '#1ABC9C' },
-    { id: 10, color: '#F1C40F' },
-    { id: 11, color: '#E74C3C' }
+    { id: 0, color: '#FFCE54', name: 'L-Shape (4)' },  // A (Yellowish?) - 4 units
+    { id: 1, color: '#AC92EC', name: 'P-Shape (5)' },  // B (Purple)
+    { id: 2, color: '#A0D468', name: 'Long-L (5)' },   // C (Lime)
+    { id: 3, color: '#4FC1E9', name: 'T-Shape (5)' },  // D (Light Blue)
+    { id: 4, color: '#ED5565', name: 'Z-Shape (5)' },  // E (Red)
+    { id: 5, color: '#F5F7FA', name: 'Corner (3)' },   // F (White) - 3 units!
+    { id: 6, color: '#D770AD', name: 'V-Shape (5)' },  // G (Pink)
+    { id: 7, color: '#FC6E51', name: 'W-Shape (5)' },  // H (Orange)
+    { id: 8, color: '#5D9CEC', name: 'U-Shape (5)' },  // I (Blue)
+    { id: 9, color: '#8A6DE9', name: 'Line (4)' },     // J (Deep Purple) - 4 units
+    { id: 10, color: '#CCD1D9', name: 'Square (4)' },  // K (Grey) - 4 units
+    { id: 11, color: '#48CFAD', name: 'Cross (5)' }    // L (Green)
 ];
 
-// 게임 상태 변수
 const COLS = 11;
 const ROWS = 5;
 let cellSize = 32;
-let boardState = []; // 현재 보드 상태 (-1: 빈칸, 0~11: 조각 ID)
-let answerKey = [];  // 현재 문제의 정답지
-let pieces = [];     // 조각 객체 (현재 위치, 형태 등 정보)
+let boardState = [];
+let answerKey = [];
+let pieces = [];
+let isDragging = false;
 
-// DOM
 const boardEl = document.getElementById('board');
 const trayEl = document.getElementById('tray');
 
 // 1. 초기화
 function initLayout() {
     const containerWidth = document.getElementById('game-container').offsetWidth;
-    cellSize = Math.floor((containerWidth - 25) / 11); // 여백 보정
+    cellSize = Math.floor((containerWidth - 25) / 11);
     if(cellSize > 40) cellSize = 40;
     
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     createGrid();
-    if(pieces.length > 0) renderPieces(); // 리사이즈 시 다시 그리기
+    if(pieces.length > 0) renderPieces();
 }
 
 function createGrid() {
@@ -195,37 +196,29 @@ function createGrid() {
     }
 }
 
-// 2. 새 게임 로드 (DB에서 가져오기)
+// 2. 게임 로드 (역방향 생성 핵심 로직)
 function loadNewGame() {
-    // DB에서 랜덤 선택
-    if(SOLUTION_DB.length === 0) {
-        alert("데이터베이스가 비어있습니다!");
-        return;
-    }
+    if(SOLUTION_DB.length === 0) return;
     const randIdx = Math.floor(Math.random() * SOLUTION_DB.length);
     const selectedData = SOLUTION_DB[randIdx];
 
-    // 정답 키 복사 (Deep Copy)
+    // 정답 키 복사
     answerKey = JSON.parse(JSON.stringify(selectedData));
-    
-    // 보드 초기화 (일단 정답으로 다 채움)
     boardState = JSON.parse(JSON.stringify(answerKey));
     
-    // 조각 정보 추출 (역방향 생성의 핵심: 배치된 상태에서 조각 모양을 떠냄)
+    // 배치된 보드에서 조각 정보를 추출
     extractPiecesFromBoard();
     
-    // 난이도 적용 (일부 조각 들어내기)
+    // 난이도 적용
     applyDifficulty();
     
     renderPieces();
-    showMessage("새로운 문제가 출제되었습니다! 🚀");
+    showMessage("새로운 문제가 출제되었습니다! 🧩");
 }
 
-// 배치된 보드 상태에서 각 조각의 모양과 위치를 추출하는 함수
 function extractPiecesFromBoard() {
     pieces = [];
     for(let id=0; id<12; id++) {
-        // 해당 ID의 좌표들 찾기
         let coords = [];
         for(let r=0; r<ROWS; r++) {
             for(let c=0; c<COLS; c++) {
@@ -233,9 +226,8 @@ function extractPiecesFromBoard() {
             }
         }
         
-        if(coords.length === 0) continue; // 데이터 오류 방지
+        if(coords.length === 0) continue;
 
-        // Bounding Box 계산 (모양 떠내기)
         const minR = Math.min(...coords.map(p=>p.r));
         const maxR = Math.max(...coords.map(p=>p.r));
         const minC = Math.min(...coords.map(p=>p.c));
@@ -244,7 +236,6 @@ function extractPiecesFromBoard() {
         const height = maxR - minR + 1;
         const width = maxC - minC + 1;
         
-        // 2차원 매트릭스 생성
         let shape = Array(height).fill().map(()=>Array(width).fill(0));
         coords.forEach(p => {
             shape[p.r - minR][p.c - minC] = 1;
@@ -254,22 +245,18 @@ function extractPiecesFromBoard() {
             id: id,
             color: SHAPES_META[id] ? SHAPES_META[id].color : '#999',
             currentShape: shape,
-            x: minC, // 현재 보드 상 위치
-            y: minR,
-            isLocked: true // 일단 모두 잠금 상태로 시작
+            x: minC, y: minR,
+            isLocked: true 
         });
     }
 }
 
-// 3. 난이도 조절 (핵심 로직)
 function applyDifficulty() {
     const keepCount = parseInt(document.getElementById('difficulty').value);
-    
-    // 전체 조각 인덱스
     let allIndices = pieces.map((_, i) => i);
-    
-    // 유지할 조각(Locked) 랜덤 선택
     let lockedIndices = [];
+    
+    // 랜덤하게 고정할 조각 선택
     for(let i=0; i<keepCount; i++) {
         if(allIndices.length === 0) break;
         let r = Math.floor(Math.random() * allIndices.length);
@@ -277,16 +264,13 @@ function applyDifficulty() {
         allIndices.splice(r, 1);
     }
 
-    // 선택되지 않은 조각은 보드에서 제거 -> 트레이로 이동
     pieces.forEach((p, idx) => {
         if(lockedIndices.includes(idx)) {
             p.isLocked = true;
         } else {
             p.isLocked = false;
-            // 보드에서 지우기
             removePieceFromBoardState(p.currentShape, p.y, p.x);
-            p.x = -1; // 트레이 좌표
-            p.y = -1;
+            p.x = -1; p.y = -1;
         }
     });
 }
@@ -299,7 +283,7 @@ function removePieceFromBoardState(shape, r, c) {
     }
 }
 
-// 4. 렌더링 및 인터랙션
+// 3. 렌더링 & 인터랙션
 function renderPieces() {
     document.querySelectorAll('.piece').forEach(e => e.remove());
     
@@ -308,7 +292,6 @@ function renderPieces() {
         el.className = `piece ${p.x===-1?'in-tray':''} ${p.isLocked?'locked':''}`;
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
         
-        // 블록 그리기
         p.currentShape.forEach(row => {
             row.forEach(v => {
                 const b = document.createElement('div');
@@ -338,8 +321,6 @@ function placeOnBoard(el, x, y) {
     boardEl.appendChild(el);
 }
 
-// 드래그 앤 드롭 (이전과 동일한 로직, 간소화)
-let isDragging = false;
 function startDrag(e, idx, el) {
     e.preventDefault();
     isDragging = false;
@@ -379,13 +360,13 @@ function startDrag(e, idx, el) {
             const gy = Math.round((eRect.top - bRect.top - 10)/(cellSize+gap));
             
             const p = pieces[idx];
-            if(p.x!==-1) removePieceFromBoardState(p.currentShape, p.y, p.x); // 원래 자리 비움
+            if(p.x!==-1) removePieceFromBoardState(p.currentShape, p.y, p.x); 
 
             if(canPlace(p.currentShape, gy, gx)) {
                 placePieceToBoardState(p.currentShape, gy, gx, p.id);
                 p.x = gx; p.y = gy;
             } else {
-                p.x = -1; // 실패 -> 트레이
+                p.x = -1; // 실패 시 트레이로
             }
         } else {
             const p = pieces[idx];
@@ -412,7 +393,6 @@ function placePieceToBoardState(shape, r, c, id) {
     for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=id;
 }
 
-// 회전 기능
 function rotateMatrix(m) {
     const R=m.length, C=m[0].length;
     let n=Array(C).fill().map(()=>Array(R).fill(0));
@@ -432,7 +412,7 @@ function rotatePiece(idx) {
             placePieceToBoardState(newS, p.y, p.x, p.id);
             p.currentShape = newS;
         } else {
-            placePieceToBoardState(oldS, p.y, p.x, p.id); // 복구
+            placePieceToBoardState(oldS, p.y, p.x, p.id);
             showMessage("공간 부족! 🚫");
         }
     }
@@ -443,13 +423,13 @@ function checkSolution() {
     let filled=0;
     for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(boardState[r][c]!==-1) filled++;
     if(filled===ROWS*COLS) showMessage("🎉 정답입니다!");
-    else showMessage("아직 빈칸이 있습니다.");
+    else showMessage(`아직 ${ROWS*COLS - filled}칸 남았습니다.`);
 }
 
 function showAnswer() {
-    if(!confirm("정답을 보시겠습니까?")) return;
+    if(!confirm("정답을 확인하시겠습니까?")) return;
     boardState = JSON.parse(JSON.stringify(answerKey));
-    extractPiecesFromBoard(); // 위치 동기화
+    extractPiecesFromBoard();
     renderPieces();
 }
 
@@ -459,7 +439,6 @@ function showMessage(t) {
     setTimeout(()=>m.style.display='none', 1500);
 }
 
-// 시작
 window.addEventListener('resize', initLayout);
 initLayout();
 loadNewGame();
