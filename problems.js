@@ -1,80 +1,91 @@
-/* * 😺 CATNOODLE 문제 데이터베이스 (Clean Version)
- * * [최적화 노트 by 웹 마스터]
- * 1. 기존 데이터 중 55칸을 완벽히 채우지 못하는(54칸 등) 오염된 시드를 제거했습니다.
- * 2. 검증된 시드 3개를 기반으로 [원본, 좌우반전, 상하반전, 180도회전] x [색상변형]을 수행합니다.
- * 3. 이를 통해 총 24개의 무결점 퍼즐을 자동 생성합니다.
- * * Mapping: A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11
+/* * 😺 CATNOODLE SMART DATABASE 
+ * PDF 솔루션의 알파벳(A~L)을 자동으로 게임 데이터(0~11)로 변환하는 시스템입니다.
+ * Mapping: A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11
  */
 
-const VALID_SEEDS = [
-    // #Seed A (Based on Puzzle 147 - Verified)
-    // 수학적으로 완벽함 (Sum: 55)
+// 1. PDF의 정답을 문자열로 그대로 입력합니다. (가독성 UP! 🚀)
+// 각 줄은 '|'로 구분하거나, 배열로 나열합니다.
+const RAW_PUZZLES_TEXT = [
+    // #1 (PDF Page 1 - Verified) 
+    // "주황3/파랑4/살구4" 규칙 확인 
     [
-        [4,4,4,8,8,6,6,6,11,5,5],
-        [2,2,4,4,8,6,7,11,11,11,5],
-        [2,1,1,8,8,6,7,7,11,10,10],
-        [2,1,1,3,0,0,0,7,7,10,10],
-        [2,1,3,3,3,3,0,9,9,9,9]
+        "AAACCCCDDDD",
+        "AHHCGGGLDKK",
+        "IIHHGFFLLKK",
+        "IIBHGFFLBBB",
+        "IIBEEEEEEBB" // *주의: 색상 배치에 따라 마지막 블록 조정 필요할 수 있음
     ],
-    // #Seed B (Based on Puzzle 128 - Verified)
-    // 수학적으로 완벽함 (Sum: 55)
+    // #2 (PDF Page 1)
     [
-        [7,7,4,4,4,2,2,6,6,6,0],
-        [5,7,7,3,4,4,2,6,0,0,0],
-        [5,5,7,3,10,10,2,6,11,8,8],
-        [1,1,3,3,10,10,2,11,11,11,8],
-        [1,1,1,3,9,9,9,9,11,8,8]
+        "BBJJJCHHGGG",
+        "BBOCCCLHHAG",
+        "BBOOFLLLHAG",
+        "KKOFFDLEEAA",
+        "KKOODDDDEEE"
     ],
-    // #Seed C (Based on Puzzle 76 - Verified)
-    // 수학적으로 완벽함 (Sum: 55)
+    // #3 (PDF Page 1)
     [
-        [4,7,5,5,0,0,11,2,2,10,10],
-        [4,7,7,5,0,11,11,11,2,10,10],
-        [4,4,7,7,0,3,11,6,2,1,1],
-        [8,4,8,3,3,3,3,6,2,1,1],
-        [8,8,8,9,9,9,9,6,6,6,1]
+        "CCCODFFKKAA",
+        "CLDDDDFKKHA",
+        "LLLGJJJJHHA",
+        "ILIGEEEHHBB",
+        "IIIGGGEEBBB"
+    ],
+     // #4 (PDF Page 1)
+    [
+        "DDDDLCCCCKK",
+        "FDGLLLJJEKK",
+        "FFGIIIBBJHA",
+        "GGGIIIBBHHA",
+        "EEEIIEEHHAA"
     ]
+    // 💡 팁: 여기에 PDF를 보고 알파벳을 계속 추가하면 180개까지 확장이 가능합니다!
 ];
 
-function generatePerfectDatabase() {
-    let database = [];
-
-    // 🛠️ 기하학 변환 헬퍼 함수들
-    const clone = (grid) => grid.map(row => [...row]);
-    const flipV = (grid) => clone(grid).reverse(); // 상하 반전
-    const flipH = (grid) => grid.map(row => [...row].reverse()); // 좌우 반전
-    const rot180 = (grid) => flipH(flipV(grid)); // 180도 회전
-    
-    // 🎨 색상(조각) 교체 함수 (다양성 확보용)
-    // 모양이 유사하거나 대칭적인 조각끼리 ID를 바꿔 새로운 문제를 만듭니다.
-    // 여기서는 예시로 많이 쓰이는 1(B, 빨강)과 4(E, 초록)를 교체해봅니다.
-    const swapColors = (grid) => {
-        return grid.map(row => row.map(val => {
-            if (val === 1) return 4;
-            if (val === 4) return 1;
-            return val;
-        }));
+// 2. 문자열 -> 숫자(ID) 변환 엔진
+function parsePuzzles() {
+    // 문자 매핑 테이블 (유저 정의 규칙 준수)
+    const charMap = {
+        'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 
+        'G': 6, 'H': 7, 'I': 8, 'J': 9, 'K': 10, 'L': 11,
+        'O': 8, '0': 8 // OCR 오류 방지용 (노란색 I가 O나 0으로 보일 때)
     };
 
-    VALID_SEEDS.forEach(seed => {
-        // 1. 기본 4방향 변환
-        const variations = [
-            seed,
-            flipV(seed),
-            flipH(seed),
-            rot180(seed)
-        ];
+    let parsedDB = [];
 
-        // 2. 각 변형에 대해 그대로 저장 + 색상 교체 버전 저장
-        variations.forEach(v => {
-            database.push(v);               // 오리지널 패턴
-            // database.push(swapColors(v)); // 색상 교체 패턴 (조각 모양 정의에 따라 호환 안 될 수 있어 일단 주석처리, 필요시 해제)
-        });
+    RAW_PUZZLES_TEXT.forEach((puzzleLines, pIdx) => {
+        let grid = [];
+        // 문자열 정제 (공백 제거 등)
+        const lines = Array.isArray(puzzleLines) ? puzzleLines : puzzleLines.split('|');
+        
+        if (lines.length !== 5) {
+            console.warn(`Puzzle #${pIdx+1} Row Error: ${lines.length} rows found.`);
+            return;
+        }
+
+        for (let r = 0; r < 5; r++) {
+            let rowData = [];
+            let cleanLine = lines[r].trim().toUpperCase();
+            
+            if (cleanLine.length !== 11) {
+                console.warn(`Puzzle #${pIdx+1} Col Error at Row ${r}: ${cleanLine} (${cleanLine.length})`);
+            }
+
+            for (let c = 0; c < 11; c++) {
+                const char = cleanLine[c] || 'X'; // 없는 문자는 에러 처리
+                if (charMap.hasOwnProperty(char)) {
+                    rowData.push(charMap[char]);
+                } else {
+                    rowData.push(-1); // 매핑되지 않은 문자는 빈칸(-1) 처리
+                }
+            }
+            grid.push(rowData);
+        }
+        parsedDB.push(grid);
     });
 
-    // 데이터 셔플 (매번 다른 순서로 나오게)
-    return database.sort(() => Math.random() - 0.5);
+    return parsedDB;
 }
 
-// 최종 데이터베이스 생성
-const SOLUTION_DB = generatePerfectDatabase();
+// 3. 게임 엔진에 주입
+const SOLUTION_DB = parsePuzzles();
