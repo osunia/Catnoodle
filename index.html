@@ -24,7 +24,7 @@
             --modal-text: #ffffff;
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; } /* 박스 크기 계산 통일 */
 
         body {
             font-family: 'Gowun Dodum', sans-serif;
@@ -78,38 +78,40 @@
         .btn-reset { background: var(--reset-btn); }
         .btn-answer { background: var(--secondary-btn); }
 
-        /* 게임 유닛: 보드와 트레이를 감싸는 컨테이너 */
+        /* 1. 게임 유닛: Fit-Content 적용으로 너비 자동 맞춤 */
         #game-unit {
             display: flex; flex-direction: column; align-items: center;
-            justify-content: center; /* 수직 중앙 정렬 */
             position: relative;
             flex: 1 1 auto; 
-            width: auto; /* JS에서 제어 */
+            width: fit-content; /* 🚀 핵심: 내용물(보드) 크기에 딱 맞게 조절 */
+            min-width: 300px; /* 최소 너비 안전장치 */
         }
 
-        /* 보드와 트레이 공통 스타일 */
+        /* 보드와 트레이 공통 */
         .game-panel {
-            display: grid;
-            /* 그리드 컬럼/로우는 JS나 인라인 스타일로 제어될 수 있음, 기본값 설정 */
-            grid-template-columns: repeat(11, var(--cell-size));
-            grid-template-rows: repeat(5, var(--cell-size));
-            gap: 2px;
+            width: 100%; /* 부모(game-unit) 너비를 꽉 채움 */
             background-color: var(--board-bg);
             padding: 10px; border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             position: relative; flex-shrink: 0;
             border: 4px solid #dfe6e9;
             touch-action: none;
-            box-sizing: content-box; /* 패딩, 보더 포함 크기 계산 명확화 */
         }
 
-        #board { z-index: 10; }
+        #board {
+            display: grid;
+            /* 그리드 크기가 전체 유닛의 너비를 결정함 */
+            grid-template-columns: repeat(11, var(--cell-size));
+            grid-template-rows: repeat(5, var(--cell-size));
+            gap: 2px;
+            z-index: 10;
+        }
+
         #tray { 
+            display: block;
             z-index: 9; 
-            background-color: var(--tray-bg); /* 같은 색상이지만 변수 분리 */
-            /* 트레이는 그리드 셀이 없으므로 display grid 해제 또는 유지? 
-               조각 배치를 위해 absolute position 사용하므로 relative 유지 */
-            display: block; 
+            margin-bottom: 10px;
+            /* 높이는 JS에서 보드와 동일하게 설정됨 */
         }
 
         .cell {
@@ -127,7 +129,7 @@
             z-index: 5;
             margin-top: -6px; 
             margin-bottom: -6px;
-            flex: 0 0 auto; /* 크기 고정 */
+            flex: 0 0 auto;
         }
         .joint {
             width: 24px; height: 100%;
@@ -136,25 +138,34 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5), 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        /* 오버레이 */
-        #board-overlay, #tray-overlay {
+        /* 2. 오버레이: 보드판 중앙 정렬 */
+        #board-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            display: none; justify-content: center; align-items: center;
+            background: rgba(0, 0, 0, 0.65);
+            display: none; 
+            flex-direction: column; /* 세로 정렬 */
+            justify-content: center; /* 수직 중앙 */
+            align-items: center; /* 수평 중앙 */
             z-index: 5000; border-radius: 8px;
             backdrop-filter: blur(2px);
             animation: fadeIn 0.3s ease-out;
         }
-        #board-overlay { background: rgba(0, 0, 0, 0.65); flex-direction: column; }
-        #tray-overlay { background: rgba(0, 0, 0, 0.65); } /* 트레이도 어둡게만 처리 */
+        #tray-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            z-index: 50; border-radius: 8px;
+        }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 결과 메시지 박스 (보드 중앙) */
         #board-message-box {
-            background: transparent; padding: 10px;
-            text-align: center; width: 100%;
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: transparent; 
+            padding: 10px;
+            text-align: center; 
+            width: 100%;
             display: flex; flex-direction: column; align-items: center; gap: 15px;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         #board-message-box h2 {
             margin: 0; color: #ffffff;
@@ -166,14 +177,14 @@
             margin: 0; color: #ecf0f1; font-size: 1rem;
             text-shadow: 0 1px 5px rgba(0,0,0,0.5);
         }
-        /* 2. 새 게임 버튼을 보드 오버레이로 이동 */
+        
         .btn-restart {
             padding: 12px 30px; font-size: 1.2rem; background: #6ab04c; color: white;
             border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
             box-shadow: 0 5px 15px rgba(106, 176, 76, 0.4);
             animation: pulse 1.5s infinite;
             font-family: 'Gowun Dodum', sans-serif;
-            margin-top: 10px;
+            margin-top: 5px;
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
@@ -215,7 +226,7 @@
             border: 2px dashed rgba(255,255,255,0.9);
         }
 
-        /* 모달 */
+        /* 모달 공통 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.6); z-index: 6000;
@@ -405,21 +416,16 @@ function executeReset() {
     showMessage("초기화되었습니다!");
 }
 
-// 1. & 5. 화면 맞춤 자동 리사이징 및 크기 동기화
 function initLayout() {
     const headerH = document.querySelector('header').offsetHeight;
     const controlsH = document.querySelector('.controls').offsetHeight;
-    
-    // 이음매 높이 등 여백 고려
     const jointsH = 24; 
     const margin = 20;
     
-    // 남은 높이를 반반 나누어 가질 것임 (보드5칸 + 트레이5칸 정도 비율)
-    // 실제로는 보드가 5칸이고 트레이도 그 정도 높이를 가져야 함.
+    // 남은 높이를 반반(약간 여유있게) 배분
     const availableH = window.innerHeight - headerH - controlsH - jointsH - margin;
     const availableW = window.innerWidth - 20;
 
-    // 논리적 높이: 보드(5칸) + 트레이(5칸) = 10칸
     const logicalRows = 10; 
     const logicalCols = 11;
 
@@ -432,16 +438,13 @@ function initLayout() {
 
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     
-    // 게임 유닛 너비 고정 (보드 너비와 일치)
-    // 보드 너비: 11 * cell + 10 * 2(gap) + 20(padding) + 8(border)
-    const boardTotalW = (11 * cellSize) + (10 * 2) + 20 + 8;
-    const boardTotalH = (5 * cellSize) + (4 * 2) + 20 + 8; // 높이도 계산
-
-    gameUnitEl.style.width = `${boardTotalW}px`;
+    // 💡 게임 유닛 너비는 CSS fit-content로 자동 조절되므로 JS 설정 불필요
+    // 트레이 높이만 보드와 맞추기 (보드 높이 = 5칸 + 패딩 + 보더)
+    const boardInnerH = (5 * cellSize) + (4 * 2); // 5 rows * size + 4 gaps
+    // padding(10*2) + border(4*2) = 28px
+    const totalH = boardInnerH + 28; 
     
-    // 1. 트레이 크기 = 보드 크기 강제 동기화
-    trayEl.style.height = `${boardTotalH}px`;
-    // 트레이 너비는 flex column + align center + unit width 고정으로 자동 일치
+    trayEl.style.height = `${totalH}px`;
 
     createGrid();
     if(pieces.length > 0) renderPieces();
@@ -456,8 +459,7 @@ function createGrid() {
     }
     boardEl.appendChild(ghostEl);
     
-    // 오버레이 다시 추가 (innerHTML 초기화 되었으므로)
-    // 2. 보드 내 오버레이에 메시지 + 버튼 포함
+    // 오버레이 다시 생성 (innerHTML 초기화됨)
     const overlayDiv = document.createElement('div');
     overlayDiv.id = 'board-overlay';
     overlayDiv.innerHTML = `
