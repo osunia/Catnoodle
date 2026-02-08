@@ -42,7 +42,7 @@
 
         header { 
             flex: 0 0 auto;
-            /* 3. 제목 위 패딩 추가 */
+            /* 제목 위 패딩 유지 */
             padding-top: 15px; 
             margin: 5px 0 5px; 
             text-align: center; display: flex; align-items: center; gap: 10px; 
@@ -56,7 +56,7 @@
         }
         
         .title-icon {
-            width: 40px; height: 40px;
+            width: 42px; height: 42px; /* 아이콘 크기 살짝 키움 */
             object-fit: contain;
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
         }
@@ -91,18 +91,18 @@
             min-width: 300px;
             margin: 0;
             
-            /* PC Default: 기존 상단 패딩 유지 */
+            /* PC Default */
             justify-content: flex-start; 
             padding-top: 3vh; 
             padding-bottom: 20px; 
         }
 
-        /* 4. 모바일 레이아웃 조정: 중앙 정렬하되 살짝 위로 */
+        /* 모바일 레이아웃: 중앙 정렬 + 살짝 위로 */
         @media (max-width: 700px) {
             #game-unit {
-                justify-content: center; /* 수직 중앙 */
+                justify-content: center; 
                 padding-top: 0;
-                padding-bottom: 30px; /* 하단 패딩을 줘서 전체적으로 위로 밀어올림 (약 15px 효과) */
+                padding-bottom: 40px; /* 아래쪽 여백을 더 주어 전체적으로 위로 올림 */
             }
         }
 
@@ -209,7 +209,6 @@
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
             transition: transform 0.1s; pointer-events: auto;
-            /* 중요: 연결부가 뒤로 숨을 수 있도록 스택 컨텍스트 생성 */
             isolation: isolate; 
         }
         .piece.on-board { position: absolute; gap: 2px; }
@@ -226,8 +225,8 @@
         .block {
             width: var(--cell-size); height: var(--cell-size);
             border-radius: 50%;
-            position: relative; /* 연결부 배치를 위해 relative */
-            z-index: 2; /* 연결부보다 위에 오도록 */
+            position: relative; 
+            z-index: 2; /* 구슬이 연결부(z-index:-1) 위에 오도록 설정 */
             
             background-image: 
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%),
@@ -240,33 +239,34 @@
             border: none;
         }
         
-        /* 1. 연결부(조인트) 스타일 */
+        /* 1. 연결부(조인트) 스타일 수정 */
+        /* 핵심: 두께를 줄이고(25%), 어둡게 처리(brightness)하여 뒤로 물러나 보이게 함 */
         .connector-h, .connector-v {
             position: absolute;
-            background-color: inherit; /* 부모(구슬) 색상 상속 */
-            z-index: -1; /* 구슬 뒤로 숨기 */
-            box-shadow: inset 0 0 4px rgba(0,0,0,0.2); /* 약간의 입체감 */
+            background-color: inherit; 
+            z-index: -1; 
+            filter: brightness(0.7); /* 어둡게 만들어 깊이감 부여 */
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.5); /* 안쪽 그림자만 사용하여 매립된 느낌 */
         }
-        /* 가로 연결 (오른쪽으로) */
+        /* 가로 연결 */
         .connector-h {
             top: 50%; left: 50%;
-            width: calc(100% + 4px); /* 다음 구슬 중심까지 */
-            height: 40%; /* 구슬보다 얇게 */
+            width: calc(100% + 4px); 
+            height: 25%; /* 40% -> 25% 로 축소 */
             transform: translateY(-50%);
         }
-        /* 세로 연결 (아래쪽으로) */
+        /* 세로 연결 */
         .connector-v {
             top: 50%; left: 50%;
-            height: calc(100% + 4px); /* 아래 구슬 중심까지 */
-            width: 40%; /* 구슬보다 얇게 */
+            height: calc(100% + 4px); 
+            width: 25%; /* 40% -> 25% 로 축소 */
             transform: translateX(-50%);
         }
 
-        /* 2. 비활성화(Locked) 스타일 복구: 연한 회색 사선 */
+        /* 2. 비활성화(Locked) 스타일 (연한 회색 사선) */
         .piece.locked .block {
             filter: brightness(0.9) grayscale(0.4);
             background-image: 
-                /* 빗살무늬 패턴 (연한 흰색/투명) */
                 repeating-linear-gradient(
                     45deg,
                     rgba(255,255,255,0.2),
@@ -274,7 +274,6 @@
                     transparent 5px,
                     transparent 10px
                 ),
-                /* 기존 구체 느낌 */
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
         }
 
@@ -331,7 +330,7 @@
 
 <header>
     <h1>
-        <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Cat/3D/cat_3d.png" alt="Cat" class="title-icon">
+        <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Cat%20face/3D/cat_face_3d.png" alt="Cat Face" class="title-icon">
         CATNOODLE
         <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Puzzle%20piece/3D/puzzle_piece_3d.png" alt="Puzzle" class="title-icon">
     </h1>
@@ -579,7 +578,6 @@ function createGrid() {
     
     const overlayDiv = document.createElement('div');
     overlayDiv.id = 'board-overlay';
-    // 2. 메시지 박스 이모지 조정
     overlayDiv.innerHTML = `
         <div id="board-message-box">
             <h2>축하합니다!<br>냥누들 마스터!</h2>
@@ -613,7 +611,6 @@ function loadNewGameLogic() {
         randomizeTrayPositions();
         renderPieces();
     }, 50);
-    // 2. 메시지 이모지 정리
     showMessage("새로운 게임 시작!");
 }
 
@@ -721,7 +718,6 @@ function renderPieces() {
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
         el.style.zIndex = p.zIndex || 100;
         
-        // 1. 연결부 생성 로직 추가
         p.currentShape.forEach((row, r) => {
             row.forEach((v, c) => {
                 const b = document.createElement('div');
@@ -729,13 +725,11 @@ function renderPieces() {
                     b.className = 'block'; 
                     b.style.backgroundColor = p.color; 
                     
-                    // 오른쪽 연결부 (현재 블록이 있고, 오른쪽에도 블록이 있을 때)
                     if(c + 1 < row.length && row[c+1]) {
                         const h = document.createElement('div');
                         h.className = 'connector-h';
                         b.appendChild(h);
                     }
-                    // 아래쪽 연결부 (현재 블록이 있고, 아래쪽에도 블록이 있을 때)
                     if(r + 1 < p.currentShape.length && p.currentShape[r+1][c]) {
                         const v = document.createElement('div');
                         v.className = 'connector-v';
@@ -1082,9 +1076,6 @@ function flipPieceData(idx) {
 function updateVisualsInDrag(idx) {
     const p = pieces[idx];
     if(pickedPieceIdx === idx) {
-        // 드래그 중 업데이트 시에도 연결부(joint)를 다시 그려야 함
-        renderPieces(); // 전체 렌더링을 호출하는 대신 부분 업데이트 로직에 연결부 추가 필요하나,
-                        // 코드가 복잡해지므로 renderPieces()를 재활용하거나 아래와 같이 수정
         
         const el = document.getElementById(`p-${idx}`);
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
