@@ -6,12 +6,12 @@
     <title>CATNOODLE</title>
     <style>
         :root {
-            --bg-color: #e9ecef;
+            --bg-color: #f5f6fa;
             --board-bg: #2d3436;
-            --hole-color: #1a1d1e;
+            --hole-color: #151819;
             --tray-bg: #ffffff;
-            --primary-btn: #6c5ce7;
-            --secondary-btn: #ff7675;
+            --primary-btn: #4834d4;
+            --secondary-btn: #eb4d4b;
             --text-color: #2d3436;
             --cell-size: 32px;
         }
@@ -30,55 +30,57 @@
         }
 
         header { 
-            margin: 15px 0 10px; 
+            margin: 20px 0 15px; 
             text-align: center; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            gap: 10px;
+            gap: 12px;
         }
         
-        h1 { margin: 0; font-size: 1.8rem; color: #2d3436; font-weight: 800; letter-spacing: -0.5px; }
+        h1 { margin: 0; font-size: 2rem; color: #2d3436; font-weight: 800; letter-spacing: -1px; }
         
         .btn-help {
-            width: 24px; height: 24px;
+            width: 26px; height: 26px;
             border-radius: 50%;
             background: #b2bec3;
             color: white;
             border: none;
             font-weight: bold;
-            font-size: 0.9rem;
+            font-size: 1rem;
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
         }
+        .btn-help:hover { background: #636e72; }
 
         .controls {
-            display: flex; gap: 10px; margin-bottom: 15px;
+            display: flex; gap: 12px; margin-bottom: 20px;
             flex-wrap: wrap; justify-content: center; z-index: 20;
         }
 
         select, button.game-btn {
-            padding: 10px 16px; border-radius: 6px; border: none; font-size: 0.95rem;
-            cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            font-weight: 700; color: white; transition: transform 0.1s;
+            padding: 10px 18px; border-radius: 8px; border: none; font-size: 0.95rem;
+            cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            font-weight: 700; color: white; transition: transform 0.1s, box-shadow 0.1s;
         }
-        select { background: #636e72; color: white; border-radius: 20px; }
-        .btn-gen { background: var(--primary-btn); border-radius: 20px;}
-        .btn-check { background: #00b894; border-radius: 20px;}
-        .btn-answer { background: var(--secondary-btn); border-radius: 20px;}
-        button:active { transform: scale(0.96); }
+        select { background: #636e72; color: white; }
+        .btn-gen { background: var(--primary-btn); }
+        .btn-check { background: #6ab04c; }
+        .btn-answer { background: var(--secondary-btn); }
+        button:active { transform: scale(0.97); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
         #game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 25px;
             width: 95%;
-            max-width: 1000px;
+            max-width: 1100px;
             padding: 10px;
         }
 
-        @media (min-width: 800px) {
+        @media (min-width: 850px) {
             #game-container {
                 flex-direction: row;
                 align-items: flex-start;
@@ -86,13 +88,13 @@
             }
             #board { margin-top: 0; }
             #tray { 
-                width: 340px; 
-                /* 트레이 높이 고정 (조각이 줄어도 크기 유지) */
-                height: 450px; 
+                width: 380px; 
+                height: 500px; /* 고정 높이 */
                 overflow-y: auto;
             }
         }
 
+        /* 보드 디자인 */
         #board {
             display: grid;
             grid-template-columns: repeat(11, var(--cell-size));
@@ -100,58 +102,84 @@
             gap: 2px;
             background-color: var(--board-bg);
             padding: 10px; 
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
             position: relative;
             flex-shrink: 0;
+            border: 4px solid #dfe6e9;
         }
 
         .cell {
             width: var(--cell-size); height: var(--cell-size);
             background-color: var(--hole-color);
             border-radius: 50%;
-            box-shadow: inset 1px 1px 4px rgba(0,0,0,0.5);
+            box-shadow: inset 1px 1px 5px rgba(0,0,0,0.6);
         }
 
+        /* 트레이 디자인 개선 */
         #tray {
             width: 100%;
             min-height: 250px;
             background-color: var(--tray-bg);
             border-radius: 16px;
-            padding: 15px;
+            padding: 20px;
             display: flex; flex-wrap: wrap;
-            /* 조각 밀집: 위쪽부터 채우고(start), 가운데 정렬, 간격 좁힘 */
             align-content: flex-start; 
             justify-content: center; 
-            gap: 8px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border: 2px solid #dfe6e9;
+            /* 조각 간 밀도 조절 (간격 넓힘) */
+            gap: 15px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            border: 2px solid #dcdde1;
         }
 
+        /* 조각 공통 스타일 */
         .piece {
-            position: absolute; display: grid; gap: 2px;
-            cursor: grab; touch-action: none; z-index: 100;
+            display: grid; 
+            gap: 1px; /* 구슬 간 간격을 1px로 줄여 일체감 향상 */
+            cursor: grab; 
+            touch-action: none; 
+            z-index: 100;
             transition: transform 0.1s;
             pointer-events: auto;
         }
+
+        /* 보드 위 조각 */
+        .piece.on-board {
+            position: absolute;
+            gap: 2px; /* 보드 위에서는 구멍 간격(2px)에 맞춤 */
+        }
         
+        /* 트레이 안 조각 */
+        .piece.in-tray { 
+            position: relative; 
+            transform: scale(0.9); /* 약간만 축소 */
+            left: auto !important; 
+            top: auto !important; 
+            margin: 5px; /* 조각끼리 닿지 않게 여백 추가 */
+        }
+
+        /* 드래그 중인 조각 */
         .piece.picked-up {
+            position: fixed; /* 절대 위치 */
             cursor: grabbing;
-            opacity: 0.9;
-            filter: drop-shadow(0 15px 15px rgba(0,0,0,0.3));
+            opacity: 0.95;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));
             transform: scale(1.05);
             pointer-events: none; 
             z-index: 9999;
+            gap: 2px; /* 드래그 중에는 보드 규격 따름 */
         }
         
-        .piece.in-tray { position: relative; transform: scale(0.85); left: auto !important; top: auto !important; }
-        .piece.locked { cursor: not-allowed; filter: grayscale(0.3) brightness(0.9); pointer-events: none; }
+        .piece.locked { cursor: not-allowed; filter: grayscale(0.2) opacity(0.9); pointer-events: none; }
         
         .block {
             width: var(--cell-size); height: var(--cell-size);
             border-radius: 50%;
-            box-shadow: inset -3px -3px 5px rgba(0,0,0,0.2), inset 3px 3px 5px rgba(255,255,255,0.4), 1px 1px 2px rgba(0,0,0,0.2);
-            border: 1px solid rgba(0,0,0,0.1);
+            /* 플라스틱 구슬 질감 강화 */
+            box-shadow: inset -4px -4px 8px rgba(0,0,0,0.25), 
+                        inset 3px 3px 8px rgba(255,255,255,0.4), 
+                        1px 1px 2px rgba(0,0,0,0.2);
+            border: 0.5px solid rgba(0,0,0,0.1);
         }
 
         /* 모달 스타일 */
@@ -159,24 +187,28 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5); z-index: 3000;
             display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(2px);
         }
         .modal {
-            background: white; padding: 25px; border-radius: 12px;
-            max-width: 300px; width: 90%; text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: white; padding: 30px; border-radius: 16px;
+            max-width: 320px; width: 90%; text-align: left;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
         }
-        .modal h3 { margin-top: 0; margin-bottom: 15px; color: var(--primary-btn); text-align: center;}
-        .modal ul { padding-left: 20px; font-size: 0.9rem; color: #555; line-height: 1.8; margin: 0; }
-        .modal span.key { font-weight: bold; color: #2d3436; background: #dfe6e9; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;}
-        .modal button { margin-top: 20px; background: #2d3436; width: 100%; border-radius: 8px;}
+        .modal h3 { margin-top: 0; margin-bottom: 20px; color: var(--primary-btn); text-align: center; font-size: 1.2rem;}
+        .modal ul { padding-left: 0; list-style: none; font-size: 0.95rem; color: #555; line-height: 2.2; margin: 0; }
+        .modal li { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f2f6; }
+        .modal li:last-child { border-bottom: none; }
+        .modal span.key { font-weight: bold; color: #2d3436; background: #dfe6e9; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem;}
+        .modal button { margin-top: 25px; background: #2d3436; width: 100%; border-radius: 10px; padding: 12px;}
 
         #message {
             position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(45, 52, 54, 0.95); color: white;
-            padding: 15px 30px; border-radius: 50px;
+            padding: 16px 32px; border-radius: 50px;
             display: none; z-index: 2000; text-align: center;
-            font-weight: 600; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            font-size: 1.1rem;
         }
     </style>
 </head>
@@ -207,13 +239,10 @@
     <div class="modal" onclick="event.stopPropagation()">
         <h3>조작 방법</h3>
         <ul>
-            <li><span class="key">클릭</span> 조각 들기 / 놓기</li>
-            <li><span class="key">휠</span> 회전 (90도)</li>
-            <li><span class="key">우클릭</span> <b>조각 뒤집기</b></li>
-            <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
-            <li><span class="key">터치</span> 회전</li>
-            <li><span class="key">드래그</span> 이동</li>
-            <li><span class="key">더블탭</span> 뒤집기</li>
+            <li><span>조각 들기 / 놓기</span> <span class="key">클릭</span></li>
+            <li><span>회전 (90도)</span> <span class="key">휠 / 터치</span></li>
+            <li><span>조각 뒤집기</span> <span class="key">우클릭 / 더블탭</span></li>
+            <li><span>이동</span> <span class="key">드래그</span></li>
         </ul>
         <button class="game-btn" onclick="toggleModal()">닫기</button>
     </div>
@@ -222,52 +251,52 @@
 <div id="message"></div>
 
 <script>
+// 🛠️ 1. 우클릭 방지 & 제어 
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 /**
- * 🛠️ SHAPE DEFINITIONS (Kanoodle 200 Version)
- * 이미지 3 (Solution 139) 기반 정밀 분석 결과
+ * 🛠️ SHAPE DEFINITIONS (차트 이미지 기반 최종 수정)
+ * 11x5 = 55칸에 정확히 맞추기 위해 F는 3칸 조각으로 판명됨.
  */
 const SHAPES_DEF = [
-    // A: Orange (L-Short, 4 units)
+    // A: Orange (L-Short, 4 units) - 이미지 그대로
     { id: 0, color: '#f39c12', shape: [[1,0],[1,0],[1,1]] }, 
     
-    // B: Red (P-Pentomino, 5 units)
-    { id: 1, color: '#e74c3c', shape: [[1,1,1],[0,1,1]] }, 
+    // B: Red (P-Pentomino, 5 units) - 차트 B 참조
+    { id: 1, color: '#c0392b', shape: [[1,1],[1,1],[0,1]] }, 
     
-    // C: Dark Blue (Long L, 5 units) - "완벽한 긴 ㄱ자"
-    { id: 2, color: '#2c3e50', shape: [[1,1,1,1],[1,0,0,0]] }, 
+    // C: Dark Blue (Long L, 5 units) - 완벽한 ㄱ자
+    { id: 2, color: '#2980b9', shape: [[1,1,1,1],[1,0,0,0]] }, 
     
-    // D: Pink (Y-Pentomino, 5 units)
-    { id: 3, color: '#ff9ff3', shape: [[1,0],[1,1],[1,0],[1,0]] }, 
+    // D: Light Pink (Cross/t, 5 units) - 차트 D 참조
+    { id: 3, color: '#ffcccc', shape: [[0,1],[0,1],[1,1],[0,1]] }, 
     
-    // E: Green (P-Pentomino, 5 units) - *B와 모양 동일* (Duplicate)
-    { id: 4, color: '#27ae60', shape: [[1,1,1],[0,1,1]] }, 
+    // E: Green (P-Pentomino, 5 units) - 차트 E 참조 (B와 모양 동일)
+    { id: 4, color: '#27ae60', shape: [[1,1],[1,1],[0,1]] }, 
     
-    // F: White (Skew/Z-Short, 4 units)
-    { id: 5, color: '#ecf0f1', shape: [[1,1,0],[0,1,1]] }, 
+    // F: White (Small-L, 3 units) - 55칸 맞춤을 위한 핵심 조각
+    { id: 5, color: '#ffffff', shape: [[1,1],[0,1]] }, 
     
-    // G: Light Blue (V-Long, 5 units)
-    { id: 6, color: '#3498db', shape: [[1,1,1],[0,0,1],[0,0,1]] }, 
+    // G: Light Blue (Big-V, 5 units) - 차트 G 참조
+    { id: 6, color: '#82ccdd', shape: [[1,0,0],[1,0,0],[1,1,1]] }, 
     
-    // H: Magenta (W, 5 units)
-    { id: 7, color: '#e056fd', shape: [[1,0,0],[1,1,0],[0,1,1]] }, 
+    // H: Magenta/Pink (W, 5 units) - 차트 H 참조
+    { id: 7, color: '#fd79a8', shape: [[1,0,0],[1,1,0],[0,1,1]] }, 
     
-    // I: Yellow (U-shape, 5 units)
-    { id: 8, color: '#f1c40f', shape: [[1,1],[0,1],[1,1]] }, 
+    // I: Yellow (U-shape, 5 units) - 차트 I 참조
+    { id: 8, color: '#f1c40f', shape: [[1,0,1],[1,1,1]] }, 
     
-    // J: Purple (Line, 4 units) - *4칸 주의*
-    { id: 9, color: '#9b59b6', shape: [[1,1,1,1]] }, 
+    // J: Purple (Line, 4 units) - 차트 J 참조
+    { id: 9, color: '#8e44ad', shape: [[1],[1],[1],[1]] }, 
     
-    // K: Lime (Square, 4 units)
-    { id: 10, color: '#badc58', shape: [[1,1],[1,1]] }, 
+    // K: Lime (Square, 4 units) - 차트 K 참조
+    { id: 10, color: '#b8e994', shape: [[1,1],[1,1]] }, 
     
-    // L: Grey (Plus/Cross, 5 units)
+    // L: Grey (Plus, 5 units) - 차트 L 참조
     { id: 11, color: '#95a5a6', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
 ];
 
 // Kanoodle 200 Level 6 Puzzle 139 Solution Mapping
-// A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11
 const SOLUTION_DB = [
     [
         [7,7,4,4,4,1,1,1,6,6,6], // H H E E E B B B G G G
@@ -296,12 +325,12 @@ function toggleModal() {
 }
 
 function initLayout() {
-    const isDesktop = window.innerWidth >= 800;
+    const isDesktop = window.innerWidth >= 850;
     const containerWidth = document.getElementById('game-container').offsetWidth;
-    const targetWidth = isDesktop ? 600 : containerWidth;
+    const targetWidth = isDesktop ? 650 : containerWidth;
     
     cellSize = Math.floor((targetWidth - 25) / 11);
-    if(cellSize > 48) cellSize = 48; 
+    if(cellSize > 50) cellSize = 50; 
     
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     createGrid();
@@ -319,7 +348,6 @@ function createGrid() {
 
 function loadNewGame() {
     if(pickedPieceIdx !== null) releasePiece();
-    // 데이터베이스가 1개뿐이므로 항상 0번 인덱스 로드 (추후 추가 가능)
     const randIdx = 0; 
     answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[randIdx]));
     boardState = JSON.parse(JSON.stringify(answerKey));
@@ -395,7 +423,9 @@ function renderPieces() {
         if(pickedPieceIdx === idx && document.getElementById(`p-${idx}`)) return;
 
         const el = document.createElement('div');
-        el.className = `piece ${p.x===-1?'in-tray':''} ${p.isLocked?'locked':''}`;
+        // 클래스 구분: 보드 위 vs 트레이 안
+        const isInTray = p.x === -1;
+        el.className = `piece ${isInTray ? 'in-tray' : 'on-board'} ${p.isLocked?'locked':''}`;
         el.id = `p-${idx}`;
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
         
@@ -408,7 +438,7 @@ function renderPieces() {
             });
         });
 
-        if(p.x !== -1) placeOnBoard(el, p.x, p.y);
+        if(!isInTray) placeOnBoard(el, p.x, p.y);
         else trayEl.appendChild(el);
 
         if(!p.isLocked) setupInteraction(el, idx);
@@ -422,7 +452,6 @@ function placeOnBoard(el, x, y) {
     const top = padding + y * (cellSize + gap);
     el.style.left = `${left}px`;
     el.style.top = `${top}px`;
-    el.style.position = 'absolute';
     boardEl.appendChild(el);
 }
 
@@ -431,17 +460,17 @@ function setupInteraction(el, idx) {
     el.addEventListener('touchstart', (e) => handleTouchStart(e, idx, el), {passive: false});
 }
 
-// 🖱️ PC 우클릭 수정: mousedown 이벤트 내에서 처리
+// 🖱️ PC 핸들러
 function handleMouseDown(e, idx, el) {
     e.stopPropagation();
 
-    // 우클릭 (Button 2): 즉시 뒤집기
+    // 우클릭: 즉시 뒤집기
     if(e.button === 2) {
         flipPieceData(idx);
         return;
     }
 
-    if(e.button !== 0) return; // 좌클릭 외 무시
+    if(e.button !== 0) return; // 좌클릭만 허용
     
     if(pickedPieceIdx === null) pickUpPiece(idx, el, e.clientX, e.clientY);
     else if (pickedPieceIdx === idx) dropPiece(idx, el, e.clientX, e.clientY);
@@ -453,8 +482,10 @@ function handleMouseDown(e, idx, el) {
 
 function pickUpPiece(idx, el, startX, startY) {
     pickedPieceIdx = idx;
+    // 클래스 교체로 스타일 변경 (z-index, fixed position 등)
+    el.classList.remove('in-tray', 'on-board');
     el.classList.add('picked-up');
-    el.classList.remove('in-tray');
+    
     document.body.appendChild(el);
     moveAt(el, startX, startY);
 
@@ -479,7 +510,7 @@ function onWheel(e) {
 
 function onGlobalClick(e) {
     if(pickedPieceIdx !== null) {
-        if(e.button === 2) return; // 우클릭은 global click 무시
+        if(e.button === 2) return; 
         if(e.target.closest(`#p-${pickedPieceIdx}`)) return;
         dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
     }
@@ -527,7 +558,7 @@ function cleanupListeners() {
     document.removeEventListener('mousedown', onGlobalClick);
 }
 
-// Mobile Logic
+// 📱 Mobile Logic
 function handleTouchStart(e, idx, el) {
     if(e.touches.length > 1) return;
     e.preventDefault();
@@ -539,8 +570,10 @@ function handleTouchStart(e, idx, el) {
 
     isDragging = false;
     pickedPieceIdx = idx;
+    
+    el.classList.remove('in-tray', 'on-board');
     el.classList.add('picked-up');
-    el.classList.remove('in-tray');
+    
     document.body.appendChild(el);
     moveAt(el, touch.clientX, touch.clientY);
 
@@ -590,6 +623,7 @@ function updatePieceShape(idx, p, oldShape, newShape) {
             placePieceToBoardState(oldShape, p.y, p.x, p.id);
         }
     }
+    // 시각적 즉시 업데이트 (들고 있는 동안)
     if(pickedPieceIdx === idx) {
         const el = document.getElementById(`p-${idx}`);
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
