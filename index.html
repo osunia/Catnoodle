@@ -433,8 +433,6 @@ const SHAPES_DEF = [
     { id: 11, color: '#95a5a6', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
 ];
 
-/* * SOLUTION_DB is loaded from problems.js */
-
 const COLS = 11;
 const ROWS = 5;
 let cellSize = 32;
@@ -453,7 +451,7 @@ let dragStartGridY = -1;
 let lastValidGhostPos = null; 
 let globalZIndex = 100;
 
-// 2. 현재 문제 인덱스 저장 변수
+// 중복 방지를 위한 이전 문제 인덱스
 let currentProblemIdx = -1;
 
 const boardEl = document.getElementById('board');
@@ -591,8 +589,7 @@ function loadNewGameLogic() {
     
     // 2. 랜덤 문제 로직 (중복 방지)
     let newIdx;
-    // DB가 1개 이상일 때만 루프를 돌며, 이전과 다른 인덱스를 찾음
-    if (SOLUTION_DB.length > 1) {
+    if (typeof SOLUTION_DB !== 'undefined' && SOLUTION_DB.length > 1) {
         do {
             newIdx = Math.floor(Math.random() * SOLUTION_DB.length);
         } while (newIdx === currentProblemIdx);
@@ -601,7 +598,13 @@ function loadNewGameLogic() {
     }
     currentProblemIdx = newIdx;
 
-    answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[newIdx]));
+    if(typeof SOLUTION_DB !== 'undefined') {
+        answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[newIdx]));
+    } else {
+        // Fallback if problems.js not loaded
+        answerKey = [[7,7,4,4,4,1,1,1,6,6,6],[3,7,7,0,4,4,1,1,5,5,6],[3,3,7,0,0,0,11,8,8,5,6],[3,2,2,2,2,11,11,11,8,10,10],[3,2,9,9,9,9,11,8,8,10,10]];
+    }
+
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard();
     applyDifficulty();
@@ -703,6 +706,51 @@ function applyDifficulty() {
 
 function removePieceFromBoardState(shape, r, c) {
     for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=-1;
+}
+
+// 회전/반전 시 호출되어 DOM을 업데이트하는 함수
+function updateVisualsInDrag(idx) {
+    const p = pieces[idx];
+    if(pickedPieceIdx === idx) {
+        // 1. 현재 잡고 있는 조각(DOM)을 새로운 형태(currentShape)로 다시 그림
+        const el = document.getElementById(`p-${idx}`);
+        
+        // 기존 그리드 스타일 초기화 및 내용 비우기
+        el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
+        el.innerHTML = '';
+
+        // 새로운 형태에 맞춰 블록 및 연결부 재생성
+        p.currentShape.forEach((row, r) => {
+            row.forEach((v, c) => {
+                const b = document.createElement('div');
+                if(v) { 
+                    b.className = 'block'; 
+                    b.style.backgroundColor = p.color;
+                    
+                    const atom = document.createElement('div');
+                    atom.className = 'visual-atom';
+                    atom.style.backgroundColor = p.color;
+                    b.appendChild(atom);
+
+                    // 연결부 재생성
+                    if(c + 1 < row.length && row[c+1]) {
+                        const h = document.createElement('div'); h.className = 'connector-h'; b.appendChild(h);
+                    }
+                    if(r + 1 < p.currentShape.length && p.currentShape[r+1][c]) {
+                        const v = document.createElement('div'); v.className = 'connector-v'; b.appendChild(v);
+                    }
+                } else {
+                    b.style.visibility = 'hidden';
+                }
+                el.appendChild(b);
+            });
+        });
+
+        // 2. 고스트(미리보기)도 업데이트
+        updateGhost(idx);
+    } else {
+        renderPieces();
+    }
 }
 
 function renderPieces() {
@@ -1057,12 +1105,13 @@ function handleTouchStart(e, idx, el) {
     document.addEventListener('touchend', onTouchEnd);
 }
 
-// Logic Utils
+// Logic Utils (Re-rendering Fix)
 function rotatePieceData(idx) {
     const p = pieces[idx];
     const oldShape = p.currentShape;
     const newShape = rotateMatrix(oldShape);
     p.currentShape = newShape;
+    // Fix: 즉시 렌더링 호출
     updateVisualsInDrag(idx);
 }
 
@@ -1071,15 +1120,8 @@ function flipPieceData(idx) {
     const oldShape = p.currentShape;
     const newShape = oldShape.map(row => [...row].reverse());
     p.currentShape = newShape;
+    // Fix: 즉시 렌더링 호출
     updateVisualsInDrag(idx);
-}
-
-function updateVisualsInDrag(idx) {
-    const p = pieces[idx];
-    if(pickedPieceIdx === idx) {
-        renderPieces();
-        updateGhost(idx);
-    } else renderPieces();
 }
 
 function rotateMatrix(m) {
