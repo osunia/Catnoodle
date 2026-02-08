@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CATNOODLE</title>
+    <title>CATNOODLE - Verification Mode</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
@@ -198,7 +198,7 @@
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        .piece {
+                .piece {
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
             transition: transform 0.1s; pointer-events: auto;
@@ -590,18 +590,21 @@ function loadNewGameLogic() {
     if(bOverlay) bOverlay.style.display = 'none';
     
     let newIdx;
-    if (typeof SOLUTION_DB !== 'undefined' && SOLUTION_DB.length > 1) {
-        do {
-            newIdx = Math.floor(Math.random() * SOLUTION_DB.length);
-        } while (newIdx === currentProblemIdx);
+    if (typeof SOLUTION_DB !== 'undefined' && SOLUTION_DB.length > 0) {
+        // ✨ [수정됨] 무작위 대신 순차적으로 증가 (검증용)
+        newIdx = currentProblemIdx + 1;
+        
+        // 180번(마지막)을 넘어가면 다시 처음(0번)으로 돌아감
+        if (newIdx >= SOLUTION_DB.length) {
+            newIdx = 0;
+        }
     } else {
         newIdx = 0;
     }
     currentProblemIdx = newIdx;
 
     if(typeof SOLUTION_DB !== 'undefined') {
-        // ✨ [여기!] 현재 풀고 있는 문제 번호를 콘솔에 큼지막하게 출력합니다.
-        // 이전에 만든 시스템 코드(database.js)의 .id 속성을 활용합니다.
+        // ✨ 현재 풀고 있는 문제 번호를 콘솔에 큼지막하게 출력
         const currentPuzzle = SOLUTION_DB[newIdx];
         if (currentPuzzle.id) {
             console.log(`%c🧩 현재 플레이 중인 퍼즐: #${currentPuzzle.id}`, "background: #2d3436; color: #badc58; font-size: 16px; font-weight: bold; padding: 6px; border-radius: 4px;");
