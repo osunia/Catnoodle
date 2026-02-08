@@ -11,21 +11,21 @@ const RAW_PUZZLES_TEXT = [
     [
         "AAACCCCDDDD",
         "AHHCGGGLDKK",
-        "IIHHGFFLLKK",
-        "IIBHGFFLBBB",
-        "IIBEEEEEEBB" // *주의: 색상 배치에 따라 마지막 블록 조정 필요할 수 있음
+        "IIHHGFLLLKK",
+        "IEEHGFFLBBB",
+        "IIEEEJJJJBB" // *주의: 색상 배치에 따라 마지막 블록 조정 필요할 수 있음
     ],
     // #2 (PDF Page 1)
     [
-        "BBJJJCHHGGG",
-        "BBOCCCLHHAG",
-        "BBOOFLLLHAG",
-        "KKOFFDLEEAA",
-        "KKOODDDDEEE"
+        "BJJJJCHHGGG",
+        "BBCCCCLHHAG",
+        "BBIIFLLLHAG",
+        "KKIFFDLEEAA",
+        "KKIIDDDDEEE"
     ],
     // #3 (PDF Page 1)
     [
-        "CCCODFFKKAA",
+        "CCCCDFFKKAA",
         "CLDDDDFKKHA",
         "LLLGJJJJHHA",
         "ILIGEEEHHBB",
@@ -34,10 +34,18 @@ const RAW_PUZZLES_TEXT = [
      // #4 (PDF Page 1)
     [
         "DDDDLCCCCKK",
-        "FDGLLLJJEKK",
-        "FFGIIIBBJHA",
-        "GGGIIIBBHHA",
-        "EEEIIEEHHAA"
+        "FDGLLLBBCKK",
+        "FFGILIBBBHA",
+        "GGGIIIEEHHA",
+        "JJJJEEEHHAA"
+    ],
+    // #5 (PDF Page 1)
+    [
+        "EKKDDDDLAAA",
+        "EKKIDILLLHA",
+        "EEGIIICLHHB",
+        "FEGCCCCHHBB",
+        "FFGGGJJJJBB"
     ]
     // 💡 팁: 여기에 PDF를 보고 알파벳을 계속 추가하면 180개까지 확장이 가능합니다!
 ];
