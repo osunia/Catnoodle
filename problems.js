@@ -674,10 +674,10 @@ const RAW_PUZZLES_TEXT = [
     // #84
     [
         "BBBCCCCLGGG",
-        "BBECIDLLLHG",
-        "FFEEIDDLLHG",
-        "OFIEJDAHHKK",
-        "OOIEJDAAAKK"
+        "BBECJDLLLHG",
+        "FFEEJDDLHHG",
+        "IFIEJDAHHKK",
+        "IIIEJDAAAKK"
     ],
     // #85
     [
@@ -826,10 +826,10 @@ const RAW_PUZZLES_TEXT = [
     ],
     // #103
     [
-        "JJJIDDDIIII",
+        "JJJJDDDDIII",
         "KKGFFLDHIEI",
         "KKGFLLLHHEE",
-        "BBGGGLAHHEE",
+        "BBGGGLCAHHE",
         "BBBCCCCAAAE"
     ],
     // #104
@@ -1059,10 +1059,10 @@ const RAW_PUZZLES_TEXT = [
     ],
     // #132
     [
-        "AADDDLLJJJJ",
-        "ABBDFFLLHEC",
+        "AADDDDLJJJJ",
+        "ABBDFLLLHEC",
         "ABBFFGLHHEC",
-        "IBIKKGGLHEC",
+        "IBIKKGHHEEC",
         "IIIKKGGGECC" // Spacing fixed
     ],
     // #133
@@ -1131,11 +1131,11 @@ const RAW_PUZZLES_TEXT = [
     ],
     // #141
     [
-        "JDDDEEELGGG",
-        "JADEEELLHHG",
-        "JAAEELLHHHG",
-        "JFFBBIICDHK",
-        "FFBBCCCCDHK"
+        "JDDDDEELGGG",
+        "JADEEELLLHG",
+        "JAAAIIILHHG",
+        "JFBBICIHHKK",
+        "FFBBBCCCCKK"
     ],
     // #142
     [
@@ -1356,11 +1356,11 @@ const RAW_PUZZLES_TEXT = [
     ],
     // #169
     [
-        "EEEJJJLAAAC",
-        "KKEEHHLLAAC",
-        "KKBBBHLGACC",
+        "EEEJJJJLAAC",
+        "KKEEHHLLLAC",
+        "KKBBBHHLGAC",
         "FFDBBIHIGCC",
-        "FDDDDIGGGGG"
+        "FDDDDIIIGGG"
     ],
     // #170
     [
