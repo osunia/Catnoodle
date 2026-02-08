@@ -37,12 +37,10 @@
             overflow: hidden;
             touch-action: none; 
             user-select: none; -webkit-user-select: none;
-            /* 1. 하단 여백 보장 (그림자 짤림 방지) */
-            padding-bottom: 20px; 
         }
 
         header { 
-            flex: 0 0 auto;
+            flex: 0 0 auto; /* 크기 고정 */
             margin: 10px 0 5px; 
             text-align: center; display: flex; align-items: center; gap: 10px; 
         }
@@ -67,7 +65,7 @@
         }
 
         .controls { 
-            flex: 0 0 auto;
+            flex: 0 0 auto; /* 크기 고정 */
             display: flex; gap: 8px; margin-bottom: 5px; 
             flex-wrap: wrap; justify-content: center; z-index: 20; 
         }
@@ -81,27 +79,26 @@
         .btn-reset { background: var(--reset-btn); }
         .btn-answer { background: var(--secondary-btn); }
 
-        /* 게임 유닛 컨테이너 */
+        /* 🚀 핵심 수정: 남은 공간을 모두 차지하고(flex: 1), 내부를 중앙 정렬 */
         #game-unit {
-            display: flex; flex-direction: column; align-items: center;
+            flex: 1; /* 남은 세로 공간 모두 차지 */
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; /* 수직 중앙 정렬 */
+            align-items: center;     /* 수평 중앙 정렬 */
+            
             position: relative;
-            flex: 1 1 auto; 
-            width: fit-content;
-            min-width: 300px;
-            margin: 10px 0;
-            /* 하단 패딩 추가로 flex item이 바닥에 붙는 것 방지 */
-            padding-bottom: 10px; 
+            width: 100%;
+            min-height: 0; /* 중요: Flex 자식이 오버플로우 되지 않게 */
+            padding: 10px 0 20px 0; /* 상하 안전 여백 */
         }
 
         .game-panel {
-            width: 100%;
+            /* width는 JS에서 보드 그리드에 맞춰 fit-content로 제어되거나 100% */
             background-color: var(--board-bg);
             padding: 10px; border-radius: 12px;
             border: 4px solid var(--border-color);
-            /* 그림자 유지 */
-            box-shadow: 
-                0 20px 40px rgba(0,0,0,0.3), 
-                0 10px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 10px 10px rgba(0,0,0,0.2);
             position: relative; flex-shrink: 0;
             touch-action: none;
         }
@@ -117,7 +114,7 @@
         #tray { 
             display: block;
             z-index: 9; 
-            /* 마진 바텀 제거 (game-unit 패딩으로 대체) */
+            /* 높이는 JS에서 보드와 동일하게 맞춤 */
         }
 
         .cell {
@@ -144,14 +141,13 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
         }
 
-        /* 오버레이 스타일 */
+        /* 오버레이 */
         #board-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.65);
             display: none; 
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: center; align-items: center;
             z-index: 5000; border-radius: 8px;
             backdrop-filter: blur(2px);
             animation: fadeIn 0.3s ease-out;
@@ -166,10 +162,8 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         #board-message-box {
-            background: transparent; 
-            padding: 10px;
-            text-align: center; 
-            width: 100%;
+            background: transparent; padding: 10px;
+            text-align: center; width: 100%;
             display: flex; flex-direction: column; align-items: center; gap: 15px;
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
@@ -232,7 +226,7 @@
             border: 2px dashed rgba(255,255,255,0.9);
         }
 
-        /* 모달 공통 스타일 */
+        /* 모달 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.6); z-index: 6000;
@@ -406,15 +400,12 @@ const trayOverlay = document.getElementById('tray-overlay');
 const boardOverlay = document.getElementById('board-overlay'); 
 const ghostEl = document.getElementById('ghost');
 
-// Functions
 function openHelp() { document.getElementById('helpModal').style.display = 'flex'; }
 function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
 function confirmShowAnswer() { document.getElementById('answerModal').style.display = 'flex'; }
 function closeAnswer() { document.getElementById('answerModal').style.display = 'none'; }
 function confirmReset() { document.getElementById('resetModal').style.display = 'flex'; }
 function closeReset() { document.getElementById('resetModal').style.display = 'none'; }
-
-// 3. 생성 버튼 모달 제어
 function confirmNewGame() { 
     const count = document.getElementById('difficulty').value;
     document.getElementById('gen-count-text').innerText = `${count}개`;
@@ -445,21 +436,22 @@ function executeReset() {
 }
 
 function executeNewGame() {
-    closeGen(); // 모달 닫기
-    loadNewGameLogic(); // 실제 게임 로드 로직
+    closeGen();
+    loadNewGameLogic();
 }
 
 function initLayout() {
     const headerH = document.querySelector('header').offsetHeight;
     const controlsH = document.querySelector('.controls').offsetHeight;
     const jointsH = 24; 
-    // 1. 하단 여백 대폭 증가 (그림자 및 여유 공간 확보)
-    const margin = 80; 
     
-    const availableH = window.innerHeight - headerH - controlsH - jointsH - margin;
+    // 사용 가능한 높이: 헤더, 컨트롤, 이음매, 상하 여백 제거
+    // 상하 여백 10px+20px = 30px
+    const availableH = window.innerHeight - headerH - controlsH - jointsH - 30;
     const availableW = window.innerWidth - 20;
 
-    const logicalRows = 10; 
+    // 논리적 비율: 보드(5)+트레이(5)+@ = 약 10.5 그리드
+    const logicalRows = 10.5; 
     const logicalCols = 11;
 
     const sizeByWidth = Math.floor((availableW - 30) / logicalCols);
@@ -471,6 +463,12 @@ function initLayout() {
 
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     
+    // 게임판 너비 강제 고정 (보드 기준)
+    const boardInnerW = (11 * cellSize) + (10 * 2); // cols * size + gaps
+    const totalW = boardInnerW + 20 + 8; // padding + border
+    gameUnitEl.style.width = `${totalW}px`;
+
+    // 트레이 높이는 보드와 동일하게
     const boardInnerH = (5 * cellSize) + (4 * 2); 
     const totalH = boardInnerH + 28; // padding + border
     
@@ -478,24 +476,20 @@ function initLayout() {
 
     createGrid();
     if(pieces.length > 0) {
-        // 2. 리사이즈 시 트레이 밖 조각 안쪽으로 밀어넣기
         constrainTrayPieces();
         renderPieces();
     }
 }
 
-// 2. 트레이 내부 조각 위치 보정 함수
 function constrainTrayPieces() {
     const trayW = trayEl.clientWidth;
     const trayH = trayEl.clientHeight;
     
     pieces.forEach(p => {
-        if (p.x === -1) { // 트레이에 있는 조각만
+        if (p.x === -1) { 
             const pW = p.currentShape[0].length * cellSize;
             const pH = p.currentShape.length * cellSize;
             
-            // 트레이 범위 밖이면 안쪽으로 clamp
-            // padding(10px) 고려하여 10 ~ max-10 사이로 제한
             p.trayX = Math.max(10, Math.min(p.trayX, trayW - pW - 10));
             p.trayY = Math.max(10, Math.min(p.trayY, trayH - pH - 10));
         }
@@ -523,9 +517,7 @@ function createGrid() {
     boardEl.appendChild(overlayDiv);
 }
 
-// 기존 loadNewGame을 로직 함수로 분리
 function loadNewGame() {
-    // 최초 실행용 (그냥 실행)
     loadNewGameLogic();
 }
 
