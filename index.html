@@ -198,12 +198,10 @@
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-                .piece {
+        .piece {
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
-            transition: transform 0.1s; 
-            /* ⚠️ 수정됨: 컨테이너 자체는 이벤트를 통과시킴 */
-            pointer-events: none; 
+            transition: transform 0.1s; pointer-events: auto;
             isolation: isolate; 
         }
         .piece.on-board { position: absolute; gap: 2px; }
@@ -214,15 +212,12 @@
             transform: scale(1.05); pointer-events: none; z-index: 9999;
             gap: 2px; transition: none; 
         }
-        /* locked는 이미 pointer-events: none이므로 유지 */
         .piece.locked { cursor: not-allowed; pointer-events: none; }
         
         .block {
             width: var(--cell-size); height: var(--cell-size);
             position: relative; 
             border-radius: 50%;
-            /* ⚠️ 추가됨: 실제 보이는 블럭만 이벤트를 받음 */
-            pointer-events: auto; 
         }
 
         .visual-atom {
@@ -440,43 +435,6 @@ const SHAPES_DEF = [
 
 /* * SOLUTION_DB is loaded from problems.js */
 
-// 예: let currentLevel = SOLUTION_DB[levelIndex]; 라고 된 부분 바로 밑에 추가
-
-console.log(`%c 🔥 현재 플레이 중: #${currentLevel.id}번 문제 `, 'background: #222; color: #bada55; font-size: 16px; padding: 4px; border-radius: 4px;');
-
-// --- 🕵️‍♂️ 데이터 무결성 검사기 (Anomaly Detector) ---
-function scanForAnomalies() {
-    console.group("🕵️‍♂️ 이상한 조각 탐색 시작...");
-    let anomalyCount = 0;
-
-    SOLUTION_DB.forEach((puzzle) => {
-        // 1. 각 알파벳(색깔)별로 블록 개수를 셉니다.
-        let counts = {};
-        for(let r=0; r<5; r++) {
-            for(let c=0; c<11; c++) {
-                let val = puzzle[r][c];
-                if(val !== -1) { // 빈칸이 아니면
-                    counts[val] = (counts[val] || 0) + 1;
-                }
-            }
-        }
-
-        // 2. 규칙 위반 검사
-        // 일반적인 폴리오미노 퍼즐은 조각당 블록이 3~5개여야 합니다.
-        // 3개 미만(1,2)이거나 6개 이상이면 OCR 오류일 확률이 99%입니다.
-        let strangePieces = [];
-        for (const [charCode, count] of Object.entries(counts)) {
-            // 문자(숫자)로 변환
-            let charName = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[charCode]; 
-            
-            // 🚨 기준: 블록이 3개 미만이거나 6개 이상이면 "이상함"으로 간주
-            if (count < 3 || count > 5) {
-                strangePieces.push(`${charName}(${count}개)`);
-            }
-        }
-
-        // 3. 이상한 조각이 발견되면 경고
-    
 const COLS = 11;
 const ROWS = 5;
 let cellSize = 32;
