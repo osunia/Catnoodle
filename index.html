@@ -29,8 +29,7 @@
         }
 
         header { 
-            margin: 20px 0 15px; 
-            text-align: center; 
+            margin: 20px 0 15px; text-align: center; 
             display: flex; align-items: center; justify-content: center; gap: 12px;
         }
         
@@ -94,13 +93,14 @@
 
         /* 📦 트레이 */
         #tray {
-            width: 100%; min-height: 400px; /* 모바일 높이 넉넉하게 */
+            width: 100%; min-height: 400px; 
             background-color: var(--tray-bg);
             border-radius: 16px;
             position: relative; 
             box-shadow: 0 8px 20px rgba(0,0,0,0.08);
             border: 2px solid #dcdde1;
-            overflow: hidden;
+            /* 중요: overflow를 hidden으로 하되 내부 패딩을 줘서 잘림 방지 */
+            overflow: hidden; 
             transition: all 0.3s ease;
         }
         
@@ -127,18 +127,16 @@
         }
 
         .piece.on-board { position: absolute; gap: 2px; }
-        .piece.in-tray { position: absolute; transform: scale(0.95); transition: left 0.3s, top 0.3s; }
+        .piece.in-tray { position: absolute; transform: scale(0.9); }
 
         .piece.picked-up {
             position: fixed; cursor: grabbing;
             opacity: 0.95; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));
             transform: scale(1.05); pointer-events: none; z-index: 9999;
             gap: 2px;
-            /* 중요: 드래그 중에는 transition 없애야 딜레이 없음 */
             transition: none; 
         }
         
-        /* 🔒 고정 조각 빗금 */
         .piece.locked { cursor: not-allowed; pointer-events: none; }
         .piece.locked .block {
             border: 1px solid rgba(0,0,0,0.3);
@@ -176,7 +174,6 @@
         .modal h3 { margin-top: 0; margin-bottom: 20px; color: var(--primary-btn); text-align: center; font-size: 1.2rem;}
         #helpModal ul { padding-left: 0; list-style: none; font-size: 0.95rem; color: #555; line-height: 2.2; margin: 0; }
         #helpModal li { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f2f6; }
-        #helpModal li:last-child { border-bottom: none; }
         #helpModal span.key { font-weight: bold; color: #2d3436; background: #dfe6e9; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem;}
         
         #answerModal { text-align: center; }
@@ -280,12 +277,12 @@ let boardState = [];
 let answerKey = [];
 let pieces = [];
 let pickedPieceIdx = null;
-// 드래그 보정용 변수
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 let isDragging = false;
 let startX = 0;
 let startY = 0;
+let lastTapTime = 0;
 
 const boardEl = document.getElementById('board');
 const trayEl = document.getElementById('tray');
@@ -360,14 +357,14 @@ function extractPiecesFromBoard() {
 }
 
 function randomizeTrayPositions() {
-    const trayW = trayEl.clientWidth;
-    const trayH = trayEl.clientHeight;
+    const trayW = trayEl.clientWidth || 350;
+    const trayH = trayEl.clientHeight || 400;
     const trayPieces = pieces.filter(p => !p.isLocked && p.x === -1);
     
     trayPieces.forEach(p => {
         const pWidth = p.currentShape[0].length * cellSize;
         const pHeight = p.currentShape.length * cellSize;
-        // 잘림 방지: 넉넉한 패딩(20px) 안쪽에 배치
+        // 2. 잘림 방지 (Safety Zone)
         const randX = Math.random() * (trayW - pWidth - 20);
         const randY = Math.random() * (trayH - pHeight - 20);
         p.trayX = Math.max(10, randX);
@@ -400,9 +397,7 @@ function removePieceFromBoardState(shape, r, c) {
 }
 
 function renderPieces() {
-    // 렌더링 시 기존 DOM과 동기화
     document.querySelectorAll('.piece').forEach(e => {
-        // 현재 들고 있는 조각은 다시 그리지 않음 (끊김 방지)
         if(pickedPieceIdx === null || e.id !== `p-${pickedPieceIdx}`) e.remove();
     });
 
@@ -448,7 +443,7 @@ function setupInteraction(el, idx) {
     el.addEventListener('touchstart', (e) => handleTouchStart(e, idx, el), {passive: false});
 }
 
-// 🖱️ PC Interaction (Relative Dragging)
+// 🖱️ PC Interaction (Improved)
 function handleMouseDown(e, idx, el) {
     e.stopPropagation();
     if(e.button === 2) { flipPieceData(idx); return; }
@@ -474,7 +469,6 @@ function pickUpPiece(idx, el, startX, startY) {
     el.classList.add('picked-up');
     document.body.appendChild(el);
     
-    // 초기 위치 설정 (튀지 않게)
     el.style.left = `${startX - dragOffsetX}px`;
     el.style.top = `${startY - dragOffsetY}px`;
 
@@ -486,7 +480,6 @@ function pickUpPiece(idx, el, startX, startY) {
 function onMouseMove(e) {
     if(pickedPieceIdx !== null) {
         const el = document.getElementById(`p-${pickedPieceIdx}`);
-        // Offset 유지 이동
         el.style.left = `${e.clientX - dragOffsetX}px`;
         el.style.top = `${e.clientY - dragOffsetY}px`;
     }
@@ -510,25 +503,42 @@ function releasePiece() {
     }
 }
 
-// Drop Logic: Use Element Position, Not Mouse Pointer
 function dropPiece(idx, el, clientX, clientY) {
     const bRect = boardEl.getBoundingClientRect();
+    const tRect = trayEl.getBoundingClientRect();
     const p = pieces[idx];
     const elRect = el.getBoundingClientRect();
     let placed = false;
     
-    // 관용적 판정: 조각의 '중심'이 보드 영역 안에 있으면 시도
-    const pieceCenterX = elRect.left + elRect.width / 2;
-    const pieceCenterY = elRect.top + elRect.height / 2;
-
-    if(pieceCenterX > bRect.left && pieceCenterX < bRect.right && 
-       pieceCenterY > bRect.top && pieceCenterY < bRect.bottom) {
+    // 1. 트레이 위에 놓았는지 확인 (충돌 무시, 좌표만 확인)
+    const centerX = elRect.left + elRect.width/2;
+    const centerY = elRect.top + elRect.height/2;
+    
+    if (centerX > tRect.left && centerX < tRect.right && 
+        centerY > tRect.top && centerY < tRect.bottom) {
+        // 트레이에 놓기 (마우스 위치 그대로 반영하되 경계만 체크)
+        if(p.x !== -1) removePieceFromBoardState(p.currentShape, p.y, p.x);
         
+        p.x = -1; p.y = -1;
+        // 상대 좌표 계산
+        const relTx = elRect.left - tRect.left;
+        const relTy = elRect.top - tRect.top;
+        
+        // 잘림 방지 (경계 체크)
+        const pWidth = p.currentShape[0].length * cellSize;
+        const pHeight = p.currentShape.length * cellSize;
+        const trayW = trayEl.clientWidth;
+        const trayH = trayEl.clientHeight;
+        
+        p.trayX = Math.max(5, Math.min(relTx, trayW - pWidth - 5));
+        p.trayY = Math.max(5, Math.min(relTy, trayH - pHeight - 5));
+        
+    } else if (centerX > bRect.left && centerX < bRect.right && 
+               centerY > bRect.top && centerY < bRect.bottom) {
+        // 보드에 놓기 (관용적 판정)
         const gap = 2; const padding = 10;
-        // 위치 계산 (CSS padding 고려)
         const relX = elRect.left - bRect.left - padding;
         const relY = elRect.top - bRect.top - padding;
-        
         const gx = Math.round(relX / (cellSize + gap));
         const gy = Math.round(relY / (cellSize + gap));
 
@@ -539,28 +549,27 @@ function dropPiece(idx, el, clientX, clientY) {
             p.x = gx; p.y = gy;
             placed = true;
         } else {
+            // 유효하지 않으면 트레이로 (랜덤)
             returnToTrayRandomly(p);
         }
     } else {
+        // 허공에 놓으면 트레이로
         if(p.x !== -1) removePieceFromBoardState(p.currentShape, p.y, p.x);
         returnToTrayRandomly(p);
     }
 
     cleanupListeners();
-    pickedPieceIdx = null; // 놓는 순간 초기화
+    pickedPieceIdx = null; 
     renderPieces();
-    
     if(placed) checkWinCondition();
 }
 
 function returnToTrayRandomly(p) {
+    p.x = -1; p.y = -1;
     const trayW = trayEl.clientWidth || 350;
     const trayH = trayEl.clientHeight || 400;
     const pWidth = p.currentShape[0].length * cellSize;
     const pHeight = p.currentShape.length * cellSize;
-    
-    p.x = -1; p.y = -1;
-    // 트레이 내 랜덤 위치 재설정 (겹침 허용, 화면 밖 나감 방지)
     p.trayX = Math.random() * (trayW - pWidth - 20) + 10;
     p.trayY = Math.random() * (trayH - pHeight - 20) + 10;
 }
@@ -586,7 +595,7 @@ function handleTouchStart(e, idx, el) {
     startX = touch.clientX;
     startY = touch.clientY;
     
-    // 터치 시점의 offset 계산
+    // Offset 계산
     const rect = el.getBoundingClientRect();
     dragOffsetX = touch.clientX - rect.left;
     dragOffsetY = touch.clientY - rect.top;
@@ -596,15 +605,15 @@ function handleTouchStart(e, idx, el) {
     el.classList.add('picked-up');
     document.body.appendChild(el);
     
-    // 즉시 위치 이동 (딜레이 없음)
+    // 즉시 이동
     el.style.left = `${touch.clientX - dragOffsetX}px`;
     el.style.top = `${touch.clientY - dragOffsetY}px`;
 
     const onTouchMove = (ev) => {
         ev.preventDefault(); 
         const t = ev.touches[0];
-        // 드래그 임계값 5px
-        if (Math.abs(t.clientX - startX) > 5 || Math.abs(t.clientY - startY) > 5) {
+        // 드래그 임계값 10px로 증가 (실수 방지)
+        if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) {
             isDragging = true;
         }
         if (isDragging) {
@@ -631,7 +640,6 @@ function handleTouchStart(e, idx, el) {
     document.addEventListener('touchend', onTouchEnd);
 }
 
-// Logic Utils
 function rotatePieceData(idx) {
     const p = pieces[idx];
     const oldShape = p.currentShape;
@@ -658,7 +666,6 @@ function updatePieceShape(idx, p, oldShape, newShape) {
             placePieceToBoardState(oldShape, p.y, p.x, p.id);
         }
     }
-    // 즉시 DOM 업데이트 (끊김 방지)
     if(pickedPieceIdx === idx) {
         const el = document.getElementById(`p-${idx}`);
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
