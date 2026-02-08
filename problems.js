@@ -46,6 +46,78 @@ const RAW_PUZZLES_TEXT = [
         "EEGIIICLHHB",
         "FEGCCCCHHBB",
         "FFGGGJJJJBB"
+    ],
+        // #5 (PDF Page 1)
+    [
+        "EKKDDDDLAAA",
+        "EKKIDILLLHA",
+        "EEGIIICLHHB",
+        "FEGCCCCHHBB",
+        "FFGGGJJJJBB"
+    ],
+        // #5 (PDF Page 1)
+    [
+        "EKKDDDDLAAA",
+        "EKKIDILLLHA",
+        "EEGIIICLHHB",
+        "FEGCCCCHHBB",
+        "FFGGGJJJJBB"
+    ],
+        // #6 (PDF Page 1)
+    [
+        "FFIIIBBDGGG",
+        "CFILIBBDDEG",
+        "CHLLLBADEEG",
+        "CHHLAAADEKK",
+        "CCHHJJJJEKK"
+    ],
+            // #7 (PDF Page 1)
+    [
+        "GGGKKBBBIII",
+        "JCGKKBBHIEI",
+        "JCGLAAAHHEE",
+        "JCLLLFADHHE",
+        "JCCLFFDDDDE"
+    ],
+            // #8 (PDF Page 1)
+    [
+        "HHDDDDIIEKK",
+        "FHHDAAAIEKK",
+        "FFHLACIIEEG",
+        "BBLLLCCCCEG",
+        "BBBLJJJJGGG"
+    ],
+            // #9 (PDF Page 1)
+    [
+        "IIIGGGBBBAA",
+        "IEIGFFLBBHA",
+        "EEDGFLLLHHA",
+        "EDDDDHLHHKK",
+        "EJJJJCCCCKK"
+    ],
+            // #10 (PDF Page 1)
+    [
+        "JJJJIIFFECC",
+        "GGGHHIFLEEC",
+        "GAHHIILLLEC",
+        "GAHBBKKLDEC",
+        "AABBBKKDDDD"
+    ],
+            // #11 (PDF Page 1)
+    [
+        "KKBBGAAAEEH",
+        "KKBBGAEEEHH",
+        "IILBGGGCHHF",
+        "ILLLCCCCDFF",
+        "IILJJJJDDDD"
+    ],
+            // #12 (PDF Page 1)
+    [
+        "AAAJJJJBBII",
+        "AHHLEEEBBBI",
+        "HHLLLDEEGII",
+        "HFCLDDDDGKK",
+        "FFCCCCGGGKK"
     ]
     // 💡 팁: 여기에 PDF를 보고 알파벳을 계속 추가하면 180개까지 확장이 가능합니다!
 ];
