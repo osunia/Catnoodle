@@ -81,7 +81,6 @@
         .btn-reset { background: var(--reset-btn); }
         .btn-answer { background: var(--secondary-btn); }
 
-        /* 게임 유닛 컨테이너 */
         #game-unit {
             display: flex; flex-direction: column; align-items: center;
             position: relative;
@@ -94,7 +93,6 @@
             padding-bottom: 20px; 
         }
 
-        /* 모바일 레이아웃 */
         @media (max-width: 700px) {
             #game-unit {
                 justify-content: center; 
@@ -152,7 +150,6 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
         }
 
-        /* 오버레이 */
         #board-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.65);
@@ -201,7 +198,6 @@
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* 조각 스타일 */
         .piece {
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
@@ -218,16 +214,9 @@
         }
         .piece.locked { cursor: not-allowed; pointer-events: none; }
         
-        /* [구조 변경] 
-           .block : 위치를 잡는 투명한 컨테이너 (relative)
-           .visual-atom : 실제 눈에 보이는 구슬 (absolute, z-index: 2)
-           .connector-h/v : 연결부 (absolute, z-index: 1)
-           -> 이렇게 하면 연결부가 무조건 구슬 뒤로 갑니다.
-        */
         .block {
             width: var(--cell-size); height: var(--cell-size);
             position: relative; 
-            /* 배경색 없음, 투명 컨테이너 */
             border-radius: 50%;
         }
 
@@ -235,41 +224,36 @@
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             border-radius: 50%;
-            z-index: 2; /* 연결부보다 위에 배치 */
-            
-            /* 구슬 디자인 (매트한 느낌) */
+            z-index: 2; 
             background-image: 
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%),
                 radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.2) 100%);
-            
             box-shadow: 
                 inset -2px -2px 6px rgba(0,0,0,0.15), 
                 inset 1px 1px 2px rgba(255,255,255,0.15), 
                 1px 1px 3px rgba(0,0,0,0.2); 
         }
 
-        /* 연결부 스타일 */
         .connector-h, .connector-v {
             position: absolute;
-            background-color: inherit; /* 부모 색상 상속 */
-            z-index: 1; /* 구슬(z-index:2) 뒤로 배치 */
-            box-shadow: inset 0 0 4px rgba(0,0,0,0.3); /* 약간 어둡게 */
-            filter: brightness(0.85); /* 구슬보다 살짝 어둡게 해서 뒤에 있는 느낌 */
+            background-color: inherit; 
+            z-index: 1; 
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.3); 
+            filter: brightness(0.85); 
         }
         .connector-h {
             top: 50%; left: 50%;
             width: calc(100% + 4px); 
-            height: 40%; /* 너비 유지 */
+            height: 40%; 
             transform: translateY(-50%);
         }
         .connector-v {
             top: 50%; left: 50%;
             height: calc(100% + 4px); 
-            width: 40%; /* 너비 유지 */
+            width: 40%; 
             transform: translateX(-50%);
         }
 
-        /* Locked 스타일 */
         .piece.locked .visual-atom {
             filter: brightness(0.9) grayscale(0.4);
             background-image: 
@@ -282,7 +266,6 @@
                 ),
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
         }
-        /* 잠긴 조각의 연결부도 회색조로 */
         .piece.locked .connector-h, .piece.locked .connector-v {
             filter: brightness(0.8) grayscale(0.4);
         }
@@ -300,7 +283,6 @@
             box-shadow: 0 0 5px rgba(255,255,255,0.5);
         }
 
-        /* 모달 공통 스타일 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.6); z-index: 6000;
@@ -431,6 +413,8 @@
 
 <div id="message"></div>
 
+<script src="problems.js"></script>
+
 <script>
 document.addEventListener('contextmenu', event => event.preventDefault());
 
@@ -449,9 +433,9 @@ const SHAPES_DEF = [
     { id: 11, color: '#95a5a6', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
 ];
 
-const SOLUTION_DB = [
-    [[7,7,4,4,4,1,1,1,6,6,6],[3,7,7,0,4,4,1,1,5,5,6],[3,3,7,0,0,0,11,8,8,5,6],[3,2,2,2,2,11,11,11,8,10,10],[3,2,9,9,9,9,11,8,8,10,10]]
-];
+/* * 중요: SOLUTION_DB는 이제 problems.js 파일에 정의되어 있습니다.
+ * 이 파일에서는 SOLUTION_DB 변수를 바로 사용할 수 있습니다.
+ */
 
 const COLS = 11;
 const ROWS = 5;
@@ -523,8 +507,6 @@ function initLayout() {
     const headerH = document.querySelector('header').offsetHeight;
     const controlsH = document.querySelector('.controls').offsetHeight;
     const jointsH = 24; 
-    
-    // 모바일/PC 분기 처리 없이 레이아웃 계산 로직은 동일하되, CSS Flexbox가 정렬을 담당
     const margin = 50; 
     
     const availableH = window.innerHeight - headerH - controlsH - jointsH - margin;
@@ -547,12 +529,10 @@ function initLayout() {
     
     const boardInnerW = (11 * cellSize) + (10 * 2); 
     const totalW = boardInnerW + 20 + 8; 
-    
     gameUnitEl.style.width = `${totalW}px`;
 
     const boardInnerH = (5 * cellSize) + (4 * 2); 
     const totalH = boardInnerH + 28; 
-    
     trayEl.style.height = `${totalH}px`;
 
     createGrid();
@@ -588,7 +568,6 @@ function createGrid() {
     
     const overlayDiv = document.createElement('div');
     overlayDiv.id = 'board-overlay';
-    // 2. 메시지 박스 이모지 조정
     overlayDiv.innerHTML = `
         <div id="board-message-box">
             <h2>축하합니다!<br>냥누들 마스터!</h2>
@@ -609,7 +588,8 @@ function loadNewGameLogic() {
     const bOverlay = document.getElementById('board-overlay');
     if(bOverlay) bOverlay.style.display = 'none';
     
-    const randIdx = 0; 
+    // 🌐 랜덤 문제 로직: DB 길이만큼 랜덤 인덱스 생성
+    const randIdx = Math.floor(Math.random() * SOLUTION_DB.length);
     answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[randIdx]));
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard();
@@ -622,7 +602,6 @@ function loadNewGameLogic() {
         randomizeTrayPositions();
         renderPieces();
     }, 50);
-    // 2. 메시지 이모지 정리
     showMessage("새로운 게임 시작!");
 }
 
@@ -730,29 +709,18 @@ function renderPieces() {
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
         el.style.zIndex = p.zIndex || 100;
         
-        // 1. 조인트 레이어링 수정 로직
-        // .block (relative 컨테이너)
-        //   -> .visual-atom (absolute, z-index: 2) : 실제 구슬
-        //   -> .connector (absolute, z-index: 1) : 연결부 (구슬 뒤로)
         p.currentShape.forEach((row, r) => {
             row.forEach((v, c) => {
                 const b = document.createElement('div');
                 if(v) { 
                     b.className = 'block'; 
-                    b.style.backgroundColor = p.color; // connector 상속용
+                    b.style.backgroundColor = p.color; 
                     
-                    // 1-1. 실제 눈에 보이는 구슬 (visual-atom) 생성 및 추가
                     const atom = document.createElement('div');
                     atom.className = 'visual-atom';
-                    // 구슬은 색상을 직접 가지지 않고 스타일(.visual-atom)의 그라데이션을 따르거나, 
-                    // 필요하다면 여기서 배경색을 줄 수도 있지만, 현재 CSS는 background-image 사용 중.
-                    // 단, 그라데이션이 '투명도'를 쓰므로 밑색(b.style.backgroundColor)이 보임?
-                    // -> .block에 bg-color가 있으면 .connector 위로 올라오지 못함(같은 레벨).
-                    // -> 따라서 .visual-atom에 bg-color를 줘야 함.
                     atom.style.backgroundColor = p.color;
                     b.appendChild(atom);
 
-                    // 1-2. 연결부 생성 (b의 자식으로 추가, z-index로 제어)
                     if(c + 1 < row.length && row[c+1]) {
                         const h = document.createElement('div'); h.className = 'connector-h'; b.appendChild(h);
                     }
@@ -1098,13 +1066,7 @@ function flipPieceData(idx) {
 function updateVisualsInDrag(idx) {
     const p = pieces[idx];
     if(pickedPieceIdx === idx) {
-        // 드래그 중 업데이트 - 렌더링 재사용
         renderPieces();
-        
-        /* (참고: 최적화를 위해 원래 부분 업데이트만 하는 것이 좋으나, 
-           구조가 복잡해졌으므로(atom+connectors) renderPieces()를 호출하여 
-           DOM을 새로 그리는 것이 가장 안전하고 코드가 간결함)
-        */
         updateGhost(idx);
     } else renderPieces();
 }
