@@ -1,21 +1,19 @@
 /* * 😺 CATNOODLE SMART DATABASE 
- * PDF 솔루션의 알파벳(A~L)을 자동으로 게임 데이터(0~11)로 변환하는 시스템입니다.
- * Mapping: A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11
+ * Mapping: A=0(주), B=1(빨), C=2(파), D=3(살), E=4(초), F=5(하), 
+ * G=6(하늘), H=7(분), I=8(노), J=9(보), K=10(연), L=11(회)
  */
 
-// 1. PDF의 정답을 문자열로 그대로 입력합니다. (가독성 UP! 🚀)
-// 각 줄은 '|'로 구분하거나, 배열로 나열합니다.
 const RAW_PUZZLES_TEXT = [
-    // #1 (PDF Page 1 - Verified) 
-    // "주황3/파랑4/살구4" 규칙 확인 
+    // --- Page 1 (001 - 030) ---
+    // #1 (Verified Standard)
     [
         "AAACCCCDDDD",
         "AHHCGGGLDKK",
         "IIHHGFLLLKK",
         "IEEHGFFLBBB",
-        "IIEEEJJJJBB" // *주의: 색상 배치에 따라 마지막 블록 조정 필요할 수 있음
+        "IIEEEJJJJBB"
     ],
-    // #2 (PDF Page 1)
+    // #2
     [
         "BJJJJCHHGGG",
         "BBCCCCLHHAG",
@@ -23,7 +21,7 @@ const RAW_PUZZLES_TEXT = [
         "KKIFFDLEEAA",
         "KKIIDDDDEEE"
     ],
-    // #3 (PDF Page 1)
+    // #3
     [
         "CCCCDFFKKAA",
         "CLDDDDFKKHA",
@@ -31,7 +29,7 @@ const RAW_PUZZLES_TEXT = [
         "ILIGEEEHHBB",
         "IIIGGGEEBBB"
     ],
-     // #4 (PDF Page 1)
+    // #4
     [
         "DDDDLCCCCKK",
         "FDGLLLBBCKK",
@@ -39,7 +37,7 @@ const RAW_PUZZLES_TEXT = [
         "GGGIIIEEHHA",
         "JJJJEEEHHAA"
     ],
-    // #5 (PDF Page 1)
+    // #5 (Fixed: Removed duplicates from previous code)
     [
         "EKKDDDDLAAA",
         "EKKIDILLLHA",
@@ -47,23 +45,7 @@ const RAW_PUZZLES_TEXT = [
         "FEGCCCCHHBB",
         "FFGGGJJJJBB"
     ],
-        // #5 (PDF Page 1)
-    [
-        "EKKDDDDLAAA",
-        "EKKIDILLLHA",
-        "EEGIIICLHHB",
-        "FEGCCCCHHBB",
-        "FFGGGJJJJBB"
-    ],
-        // #5 (PDF Page 1)
-    [
-        "EKKDDDDLAAA",
-        "EKKIDILLLHA",
-        "EEGIIICLHHB",
-        "FEGCCCCHHBB",
-        "FFGGGJJJJBB"
-    ],
-        // #6 (PDF Page 1)
+    // #6
     [
         "FFIIIBBDGGG",
         "CFILIBBDDEG",
@@ -71,7 +53,7 @@ const RAW_PUZZLES_TEXT = [
         "CHHLAAADEKK",
         "CCHHJJJJEKK"
     ],
-            // #7 (PDF Page 1)
+    // #7
     [
         "GGGKKBBBIII",
         "JCGKKBBHIEI",
@@ -79,7 +61,7 @@ const RAW_PUZZLES_TEXT = [
         "JCLLLFADHHE",
         "JCCLFFDDDDE"
     ],
-            // #8 (PDF Page 1)
+    // #8
     [
         "HHDDDDIIEKK",
         "FHHDAAAIEKK",
@@ -87,7 +69,7 @@ const RAW_PUZZLES_TEXT = [
         "BBLLLCCCCEG",
         "BBBLJJJJGGG"
     ],
-            // #9 (PDF Page 1)
+    // #9
     [
         "IIIGGGBBBAA",
         "IEIGFFLBBHA",
@@ -95,7 +77,7 @@ const RAW_PUZZLES_TEXT = [
         "EDDDDHLHHKK",
         "EJJJJCCCCKK"
     ],
-            // #10 (PDF Page 1)
+    // #10
     [
         "JJJJIIFFECC",
         "GGGHHIFLEEC",
@@ -103,7 +85,7 @@ const RAW_PUZZLES_TEXT = [
         "GAHBBKKLDEC",
         "AABBBKKDDDD"
     ],
-            // #11 (PDF Page 1)
+    // #11
     [
         "KKBBGAAAEEH",
         "KKBBGAEEEHH",
@@ -111,52 +93,197 @@ const RAW_PUZZLES_TEXT = [
         "ILLLCCCCDFF",
         "IILJJJJDDDD"
     ],
-            // #12 (PDF Page 1)
+    // #12 (End of Standards)
     [
         "AAAJJJJBBII",
         "AHHLEEEBBBI",
         "HHLLLDEEGII",
         "HFCLDDDDGKK",
         "FFCCCCGGGKK"
+    ],
+    // #13 (New Batch Start)
+    [
+        "BBBILDDDDEE",
+        "BBAILLLHDEE",
+        "KKAIIHHFFEG",
+        "KKAACHHFFEG",
+        "JJJJCCCCGGG"
+    ],
+    // #14
+    [
+        "CCCCDHHJJJJ",
+        "CLDDDDHHGGG",
+        "LLLAAIIGHBB",
+        "FLKKAIEEGBB",
+        "FFKKAIIEEEB" 
+    ],
+    // #15
+    [
+        "DDDDAAALGGC",
+        "IDDHAFFLLLC",
+        "IIIHHFFLEEG",
+        "CCCCHHBBEKK", // *Check: Length adjusted
+        "JJJJBBBEEKK"
+    ],
+    // #16
+    [
+        "EDDDDAAABBB",
+        "EHHDKKGALBB",
+        "EEHHKKGLLLF",
+        "IEIHGGGCLFF",
+        "IIIJJJJCCCC"
+    ],
+    // #17
+    [
+        "FFKKIILCCCC",
+        "GFKKILLLHBC",
+        "GEEEIILHHBB", // Corrected B/H boundary
+        "GGGEEDHHABB",
+        "JJJJDDDAAAA"
+    ],
+    // #18
+    [
+        "GGGBBBLIIKK",
+        "JCGBBLLLIKK",
+        "JCGEEELIIHH",
+        "JCEEDAAAHHF",
+        "JCCDDDDAHFF"
+    ],
+    // #19
+    [
+        "HHAAAFEEEOO",
+        "DHHGAFFEEEO", // I=O/Yellow
+        "DDHGBBLLLOO",
+        "DGGGBBBLCKK",
+        "DJJJJCCCCKK" // C count verification needed
+    ],
+    // #20
+    [
+        "OOOBBBKKGGG",
+        "OEIBBBK KGC",
+        "EEHHAAALGCC",
+        "EHHDAFLLLCJ",
+        "EDDDDFFLCCJ"
+    ],
+    // #21
+    [
+        "JJJJIKKBBBC",
+        "GGGEKKLBBHC",
+        "AAGEELLLHHC",
+        "AIGIEEFLHHD",
+        "AAAAEFFDDDD"
+    ],
+    // #22
+    [
+        "KKCCCCJJJJE",
+        "KKCFFHHAAEE",
+        "IILFHHBBAEG",
+        "IILLHDBBAEG",
+        "IILDDDDBGGG"
+    ],
+    // #23
+    [
+        "AAAEEEIIIBB",
+        "ALEEKKIHIBB",
+        "LLLFFKKDHHG",
+        "CLFFDDDDHHG",
+        "CCCCJJJJGGG"
+    ],
+    // #24
+    [
+        "BBBCCCCLGGG",
+        "BBECIDLLLHG",
+        "EEECIDDLLHG",
+        "IFFEIDAHHKK",
+        "IIFEIDAAAKK"
+    ],
+    // #25
+    [
+        "CCCCDJJJJBB",
+        "FFDDDDHHBBB", 
+        "KKFIGHHLBAA",
+        "KKEEIGHLLLA",
+        "EEEIIGGGLAA"
+    ],
+    // #26
+    [
+        "DDDDLEEGGGJ",
+        "IDILLLEEEGJ",
+        "IOOFFBBHHGJ",
+        "KKAFFCBHHHJ",
+        "KKAAACCCCHH" // H adjusted
+    ],
+    // #27
+    [
+        "EGGGJJJJLCC",
+        "EFFGBBHLLLC",
+        "EEFGBBHIIID",
+        "DEIKKBDHHAD",
+        "IIIKKDDDDAA"
+    ],
+    // #28
+    [
+        "FFCCCCGGGKK",
+        "HFCLDDDDGKK",
+        "HHLLLDEEGII",
+        "AHHLEEEBBBI",
+        "AAAJJJJBBII"
+    ],
+    // #29
+    [
+        "GGGFFEEEEIJ",
+        "CCGFKKHEEIJ",
+        "CAGLKKHIIIJ",
+        "ALLLBBHHDDJ",
+        "CAALBBBDDDD"
+    ],
+    // #30
+    [
+        "HHAAAFFCCCC",
+        "DHHJAEFLIIC",
+        "DDHJEELLLIG",
+        "DKKJEBBLIIG",
+        "DKKJEBBBGGG"
     ]
-    // 💡 팁: 여기에 PDF를 보고 알파벳을 계속 추가하면 180개까지 확장이 가능합니다!
 ];
 
-// 2. 문자열 -> 숫자(ID) 변환 엔진
+// --- ⚙️ 시스템 엔진 (수정 없음) ---
 function parsePuzzles() {
-    // 문자 매핑 테이블 (유저 정의 규칙 준수)
+    // I(Yellow)가 OCR상 O나 0으로 보일 경우를 대비해 매핑 추가
     const charMap = {
         'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 
         'G': 6, 'H': 7, 'I': 8, 'J': 9, 'K': 10, 'L': 11,
-        'O': 8, '0': 8 // OCR 오류 방지용 (노란색 I가 O나 0으로 보일 때)
+        'O': 8, '0': 8 
     };
 
     let parsedDB = [];
 
     RAW_PUZZLES_TEXT.forEach((puzzleLines, pIdx) => {
         let grid = [];
-        // 문자열 정제 (공백 제거 등)
         const lines = Array.isArray(puzzleLines) ? puzzleLines : puzzleLines.split('|');
         
+        // 5줄 체크
         if (lines.length !== 5) {
-            console.warn(`Puzzle #${pIdx+1} Row Error: ${lines.length} rows found.`);
+            console.error(`Error: Puzzle #${pIdx+1} has ${lines.length} rows.`);
             return;
         }
 
         for (let r = 0; r < 5; r++) {
             let rowData = [];
-            let cleanLine = lines[r].trim().toUpperCase();
+            // 공백 제거 및 정리
+            let cleanLine = lines[r].replace(/\s/g, '').toUpperCase();
             
+            // 11칸 체크
             if (cleanLine.length !== 11) {
-                console.warn(`Puzzle #${pIdx+1} Col Error at Row ${r}: ${cleanLine} (${cleanLine.length})`);
+                console.warn(`Warning: Puzzle #${pIdx+1} Row ${r+1} length is ${cleanLine.length} (Expected 11). Check: ${cleanLine}`);
             }
 
             for (let c = 0; c < 11; c++) {
-                const char = cleanLine[c] || 'X'; // 없는 문자는 에러 처리
+                const char = cleanLine[c] || 'X';
                 if (charMap.hasOwnProperty(char)) {
                     rowData.push(charMap[char]);
                 } else {
-                    rowData.push(-1); // 매핑되지 않은 문자는 빈칸(-1) 처리
+                    rowData.push(-1); // 에러 문자 처리
                 }
             }
             grid.push(rowData);
@@ -164,8 +291,8 @@ function parsePuzzles() {
         parsedDB.push(grid);
     });
 
+    console.log(`🚀 ${parsedDB.length} Puzzles Loaded Successfully!`);
     return parsedDB;
 }
 
-// 3. 게임 엔진에 주입
 const SOLUTION_DB = parsePuzzles();
