@@ -22,7 +22,6 @@
             --cell-size: 32px; 
             --modal-bg: #1e1e1e;
             --modal-text: #ffffff;
-            /* 새로 추가된 테두리 색상 변수 */
             --border-color: #3d4648; 
         }
 
@@ -38,6 +37,8 @@
             overflow: hidden;
             touch-action: none; 
             user-select: none; -webkit-user-select: none;
+            /* 1. 하단 여백 보장 (그림자 짤림 방지) */
+            padding-bottom: 20px; 
         }
 
         header { 
@@ -87,24 +88,20 @@
             flex: 1 1 auto; 
             width: fit-content;
             min-width: 300px;
-            /* 상하 여백 약간 추가 */
             margin: 10px 0;
+            /* 하단 패딩 추가로 flex item이 바닥에 붙는 것 방지 */
+            padding-bottom: 10px; 
         }
 
-        /* 보드와 트레이 공통 스타일 수정 */
         .game-panel {
             width: 100%;
             background-color: var(--board-bg);
             padding: 10px; border-radius: 12px;
-            
-            /* 1. 테두리 색상 변경 (짙은 회색) */
             border: 4px solid var(--border-color);
-
-            /* 2. 그림자 변경 (더 깊고 뜬 느낌) */
+            /* 그림자 유지 */
             box-shadow: 
                 0 20px 40px rgba(0,0,0,0.3), 
                 0 10px 10px rgba(0,0,0,0.2);
-            
             position: relative; flex-shrink: 0;
             touch-action: none;
         }
@@ -120,7 +117,7 @@
         #tray { 
             display: block;
             z-index: 9; 
-            margin-bottom: 10px;
+            /* 마진 바텀 제거 (game-unit 패딩으로 대체) */
         }
 
         .cell {
@@ -130,7 +127,6 @@
             box-shadow: inset 1px 1px 4px rgba(0,0,0,0.6);
         }
 
-        /* 이음매 스타일 수정 (테두리와 어울리게) */
         #joints-container {
             display: flex; justify-content: space-between;
             width: 90%; 
@@ -143,7 +139,6 @@
         .joint {
             width: 24px; height: 100%;
             background: #151819; 
-            /* 이음매에도 약간의 테두리 느낌 추가 */
             border: 2px solid var(--border-color);
             border-radius: 4px;
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
@@ -209,7 +204,7 @@
         .piece.in-tray { position: absolute; transform: scale(0.9); }
         .piece.picked-up {
             position: fixed; cursor: grabbing;
-            opacity: 0.95; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4)); /* 드래그 시 그림자 더 진하게 */
+            opacity: 0.95; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4)); 
             transform: scale(1.05); pointer-events: none; z-index: 9999;
             gap: 2px; transition: none; 
         }
@@ -286,7 +281,7 @@
         <option value="4" selected>4개</option>
         <option value="6">6개</option>
     </select>
-    <button class="game-btn btn-gen" onclick="loadNewGame()">생성</button>
+    <button class="game-btn btn-gen" onclick="confirmNewGame()">생성</button>
     <button class="game-btn btn-reset" onclick="confirmReset()">초기화</button>
     <button class="game-btn btn-answer" onclick="confirmShowAnswer()">정답</button>
 </div>
@@ -299,7 +294,7 @@
             <div id="board-message-box">
                 <h2>축하합니다! 🎉<br>당신은 냥누들 마스터!</h2>
                 <p>모든 퍼즐을 완성하셨습니다.</p>
-                <button class="btn-restart" onclick="loadNewGame()">새 게임 시작 🐱</button>
+                <button class="btn-restart" onclick="executeNewGame()">새 게임 시작 🐱</button>
             </div>
         </div>
     </div>
@@ -344,6 +339,20 @@
         <div class="modal-btn-group">
             <button class="btn-no" onclick="closeReset()">아니오</button>
             <button class="btn-yes" onclick="executeReset()">예</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="genModal" onclick="closeGen()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3>새 게임</h3>
+        <p style="text-align:center; color:#ddd; margin: 20px 0;">
+            <span id="gen-count-text" style="color:var(--reset-btn); font-weight:bold;">4개</span> 고정으로<br>
+            새로운 게임을 만들까요?
+        </p>
+        <div class="modal-btn-group">
+            <button class="btn-no" onclick="closeGen()">아니오</button>
+            <button class="btn-yes" onclick="executeNewGame()">예</button>
         </div>
     </div>
 </div>
@@ -405,6 +414,14 @@ function closeAnswer() { document.getElementById('answerModal').style.display = 
 function confirmReset() { document.getElementById('resetModal').style.display = 'flex'; }
 function closeReset() { document.getElementById('resetModal').style.display = 'none'; }
 
+// 3. 생성 버튼 모달 제어
+function confirmNewGame() { 
+    const count = document.getElementById('difficulty').value;
+    document.getElementById('gen-count-text').innerText = `${count}개`;
+    document.getElementById('genModal').style.display = 'flex'; 
+}
+function closeGen() { document.getElementById('genModal').style.display = 'none'; }
+
 function executeShowAnswer() {
     closeAnswer();
     boardState = JSON.parse(JSON.stringify(answerKey));
@@ -427,15 +444,20 @@ function executeReset() {
     showMessage("초기화되었습니다!");
 }
 
+function executeNewGame() {
+    closeGen(); // 모달 닫기
+    loadNewGameLogic(); // 실제 게임 로드 로직
+}
+
 function initLayout() {
     const headerH = document.querySelector('header').offsetHeight;
     const controlsH = document.querySelector('.controls').offsetHeight;
     const jointsH = 24; 
-    // 3. 여백 계산 수정 (창에 너무 붙지 않도록 더 넉넉하게)
-    const margin = 50; // 기존 20 -> 50으로 증가
+    // 1. 하단 여백 대폭 증가 (그림자 및 여유 공간 확보)
+    const margin = 80; 
     
     const availableH = window.innerHeight - headerH - controlsH - jointsH - margin;
-    const availableW = window.innerWidth - margin; // 가로 여백도 적용
+    const availableW = window.innerWidth - 20;
 
     const logicalRows = 10; 
     const logicalCols = 11;
@@ -455,7 +477,29 @@ function initLayout() {
     trayEl.style.height = `${totalH}px`;
 
     createGrid();
-    if(pieces.length > 0) renderPieces();
+    if(pieces.length > 0) {
+        // 2. 리사이즈 시 트레이 밖 조각 안쪽으로 밀어넣기
+        constrainTrayPieces();
+        renderPieces();
+    }
+}
+
+// 2. 트레이 내부 조각 위치 보정 함수
+function constrainTrayPieces() {
+    const trayW = trayEl.clientWidth;
+    const trayH = trayEl.clientHeight;
+    
+    pieces.forEach(p => {
+        if (p.x === -1) { // 트레이에 있는 조각만
+            const pW = p.currentShape[0].length * cellSize;
+            const pH = p.currentShape.length * cellSize;
+            
+            // 트레이 범위 밖이면 안쪽으로 clamp
+            // padding(10px) 고려하여 10 ~ max-10 사이로 제한
+            p.trayX = Math.max(10, Math.min(p.trayX, trayW - pW - 10));
+            p.trayY = Math.max(10, Math.min(p.trayY, trayH - pH - 10));
+        }
+    });
 }
 
 function createGrid() {
@@ -473,13 +517,19 @@ function createGrid() {
         <div id="board-message-box">
             <h2>축하합니다! 🎉<br>당신은 냥누들 마스터!</h2>
             <p>모든 퍼즐을 완성하셨습니다.</p>
-            <button class="btn-restart" onclick="loadNewGame()">새 게임 시작 🐱</button>
+            <button class="btn-restart" onclick="executeNewGame()">새 게임 시작 🐱</button>
         </div>
     `;
     boardEl.appendChild(overlayDiv);
 }
 
+// 기존 loadNewGame을 로직 함수로 분리
 function loadNewGame() {
+    // 최초 실행용 (그냥 실행)
+    loadNewGameLogic();
+}
+
+function loadNewGameLogic() {
     if(pickedPieceIdx !== null) releasePiece();
     trayOverlay.style.display = 'none';
     const bOverlay = document.getElementById('board-overlay');
