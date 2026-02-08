@@ -94,6 +94,39 @@
             border: 2px dashed rgba(255,255,255,0.9);
         }
 
+        /* 💡 NEW: 보드 완료 오버레이 스타일 */
+        #board-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.65); /* 투명도 높은 검정 판 */
+            display: none; /* 기본 숨김 */
+            justify-content: center; align-items: center;
+            z-index: 5000; /* 조각들보다 훨씬 위에 배치하여 클릭 차단 */
+            border-radius: 12px;
+            backdrop-filter: blur(2px);
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #board-message-box {
+            background: white;
+            padding: 20px 40px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            /* 문구가 잘리지 않도록 넓게 */
+            width: 85%; 
+            max-width: 450px;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #board-message-box h2 {
+            margin: 0; color: var(--primary-btn);
+            font-size: 1.4rem; line-height: 1.5;
+            word-break: keep-all; /* 단어 단위 줄바꿈 */
+        }
+        #board-message-box p {
+            margin: 10px 0 0; color: #555; font-size: 1rem;
+        }
+
         #tray {
             width: 100%; min-height: 300px; flex-grow: 1;
             background-color: var(--tray-bg);
@@ -104,13 +137,13 @@
         
         #tray-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.95);
+            background: rgba(255,255,255,0.8); /* 살짝 투명 */
             display: none; flex-direction: column; 
             justify-content: center; align-items: center; z-index: 50; text-align: center;
         }
-        #tray-overlay h2 { color: var(--primary-btn); margin-bottom: 20px; font-size: 1.5rem; line-height: 1.4; }
+        /* 트레이 오버레이에는 텍스트 없이 버튼만 큼직하게 */
         #tray-overlay button {
-            padding: 15px 30px; font-size: 1.2rem; background: #6ab04c; color: white;
+            padding: 16px 40px; font-size: 1.3rem; background: #6ab04c; color: white;
             border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
             box-shadow: 0 5px 15px rgba(106, 176, 76, 0.4);
             animation: pulse 1.5s infinite;
@@ -154,7 +187,6 @@
             box-shadow: 0 15px 40px rgba(0,0,0,0.2);
             animation: popIn 0.2s ease-out;
         }
-        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal h3 { margin-top: 0; margin-bottom: 20px; color: var(--primary-btn); text-align: center; font-size: 1.2rem;}
         #helpModal ul { padding-left: 0; list-style: none; font-size: 0.95rem; color: #555; line-height: 2.2; margin: 0; }
         #helpModal li { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f2f6; }
@@ -197,10 +229,15 @@
 <div id="game-container">
     <div id="board">
         <div id="ghost" class="ghost-piece" style="display:none;"></div>
+        <div id="board-overlay">
+            <div id="board-message-box">
+                <h2>축하합니다! 🎉<br>당신은 냥누들 마스터!</h2>
+                <p>모든 퍼즐을 완성하셨습니다.</p>
+            </div>
+        </div>
     </div>
     <div id="tray">
         <div id="tray-overlay">
-            <h2>축하합니다!<br>당신은 냥누들 마스터입니다!</h2>
             <button onclick="loadNewGame()">새 게임 시작 🐱</button>
         </div>
     </div>
@@ -269,13 +306,12 @@ let startY = 0;
 let dragStartGridX = -1;
 let dragStartGridY = -1;
 let lastValidGhostPos = null; 
-
-// 💡 NEW: Z-Index 전역 변수
 let globalZIndex = 100;
 
 const boardEl = document.getElementById('board');
 const trayEl = document.getElementById('tray');
 const trayOverlay = document.getElementById('tray-overlay');
+const boardOverlay = document.getElementById('board-overlay'); // NEW
 const ghostEl = document.getElementById('ghost');
 
 function openHelp() { document.getElementById('helpModal').style.display = 'flex'; }
@@ -308,18 +344,20 @@ function createGrid() {
         boardEl.appendChild(div);
     }
     boardEl.appendChild(ghostEl);
+    boardEl.appendChild(boardOverlay); // Overlay must be appended last
 }
 
 function loadNewGame() {
     if(pickedPieceIdx !== null) releasePiece();
     trayOverlay.style.display = 'none';
+    boardOverlay.style.display = 'none'; // NEW: 보드 오버레이 숨김
+    
     const randIdx = 0; 
     answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[randIdx]));
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard();
     applyDifficulty();
     
-    // Z-Index 초기화
     globalZIndex = 100;
     pieces.forEach(p => p.zIndex = globalZIndex++);
 
@@ -348,7 +386,7 @@ function extractPiecesFromBoard() {
         pieces.push({
             id: id, color: SHAPES_DEF[id].color, currentShape: shape,
             x: minC, y: minR, trayX: 0, trayY: 0, isLocked: true,
-            zIndex: 100 // 기본값
+            zIndex: 100
         });
     }
 }
@@ -436,7 +474,6 @@ function renderPieces() {
         el.className = `piece ${isInTray ? 'in-tray' : 'on-board'} ${p.isLocked?'locked':''}`;
         el.id = `p-${idx}`;
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
-        // 💡 Z-Index 적용
         el.style.zIndex = p.zIndex || 100;
         
         p.currentShape.forEach(row => {
@@ -513,7 +550,7 @@ function updateGhost(idx) {
         
         ghostEl.style.left = `${result.pxX}px`;
         ghostEl.style.top = `${result.pxY}px`;
-        ghostEl.style.zIndex = globalZIndex + 1; // 고스트는 항상 가장 위에
+        ghostEl.style.zIndex = globalZIndex + 1; 
     } else {
         lastValidGhostPos = null; 
         ghostEl.style.display = 'none';
@@ -532,7 +569,6 @@ function handleMouseDown(e, idx, el) {
     }
 
     if(pickedPieceIdx === null) {
-        // 💡 Z-Index 상승
         pieces[idx].zIndex = ++globalZIndex;
         el.style.zIndex = pieces[idx].zIndex;
 
@@ -671,19 +707,18 @@ function cleanupListeners() {
     document.removeEventListener('touchstart', onGlobalTouchStart); 
 }
 
-// 📱 Mobile Logic (Tracking ID Applied)
+// 📱 Mobile Logic
 function handleTouchStart(e, idx, el) {
     e.preventDefault(); e.stopPropagation();
 
     if (e.touches.length > 1 && pickedPieceIdx === idx) return;
     if(pickedPieceIdx !== null && pickedPieceIdx !== idx) return;
 
-    // 💡 Z-Index 상승
     pieces[idx].zIndex = ++globalZIndex;
     el.style.zIndex = pieces[idx].zIndex;
 
     const touch = e.touches[0];
-    const touchId = touch.identifier; // 💡 손가락 ID 기억
+    const touchId = touch.identifier;
 
     isDragging = false;
     startX = touch.clientX;
@@ -698,7 +733,6 @@ function handleTouchStart(e, idx, el) {
     const onTouchMove = (ev) => {
         ev.preventDefault();
         
-        // 💡 내 ID를 가진 손가락 찾기
         let myTouch = null;
         for(let i=0; i<ev.touches.length; i++) {
             if(ev.touches[i].identifier === touchId) {
@@ -706,7 +740,7 @@ function handleTouchStart(e, idx, el) {
                 break;
             }
         }
-        if(!myTouch) return; // 내 손가락 없으면 무시
+        if(!myTouch) return;
 
         if (Math.abs(myTouch.clientX - startX) > 10 || Math.abs(myTouch.clientY - startY) > 10) {
             isDragging = true;
@@ -718,7 +752,6 @@ function handleTouchStart(e, idx, el) {
     };
     
     const onTouchEnd = (ev) => {
-        // 내 손가락이 떨어졌는지 확인
         let myTouchStillActive = false;
         for(let i=0; i<ev.touches.length; i++) {
             if(ev.touches[i].identifier === touchId) {
@@ -726,7 +759,7 @@ function handleTouchStart(e, idx, el) {
                 break;
             }
         }
-        if(myTouchStillActive) return; // 아직 내 손가락이 붙어있음
+        if(myTouchStillActive) return;
 
         document.removeEventListener('touchmove', onTouchMove);
         document.removeEventListener('touchend', onTouchEnd);
@@ -817,7 +850,8 @@ function placePieceToBoardState(shape, r, c, id) {
 function checkWinCondition() {
     const remainingPieces = pieces.filter(p => p.x === -1).length;
     if(remainingPieces === 0) {
-        showMessage("축하합니다!\n당신은 냥누들 마스터입니다!");
+        // 💡 NEW: 완성 시 오버레이 활성화 (조각 클릭 차단 및 메시지 표시)
+        boardOverlay.style.display = 'flex';
         trayOverlay.style.display = 'flex';
     }
 }
