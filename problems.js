@@ -967,6 +967,247 @@ const RAW_PUZZLES_TEXT = [
         "EEFFAHHLBBG",
         "IEIFADHHBBC",
         "IIIDDDDCCCC"
+    ],
+    // --- Page 5 (121 - 150) ---
+    // #121
+    [
+        "AEEEJJJJGGG", // Length corrected based on shape
+        "AAAEELCCCCG", // E/L adjusted
+        "IIBBLLLHHCG", // O -> I (Yellow)
+        "IBBBDLHHFKK", // K adjusted
+        "IIDDDDHFFKK"  // K adjusted
+    ],
+    // #122
+    [
+        "BDDDDEELCCJ",
+        "BDDEEELLCCJ",
+        "BBHHAAALGCJ",
+        "KKFHHIAIGCJ",
+        "KKFFHIIIGGG"
+    ],
+    // #123
+    [
+        "CCEEEGGGIII",
+        "CEEKKGHHIBI", // O -> I (Yellow)
+        "CAFKKGLHHBB",
+        "CAFFDLLLHBB",
+        "AADDDDLJJJJ"
+    ],
+    // #124
+    [
+        "DDDDLLHHJJJ",
+        "CCDLLLHHGGG", // L count check
+        "CAFFLIIHGBB", // O -> I
+        "CAFKKIEEGBB",
+        "CAAKKIOEEEB"
+    ],
+    // #125
+    [
+        "EFFDDDLCCJJ",
+        "EFBDDHLLCJJ",
+        "EEBBHHHLGCJ",
+        "IEIKKAHHGCJ",
+        "IIIKKAAAGGG"
+    ],
+    // #126
+    [
+        "FFBBBLJJJJD",
+        "EFIBBBLIIID",
+        "EEAAGLHHIDD",
+        "EKKAGHHCIID",
+        "EKKAGGGCCCC"
+    ],
+    // #127
+    [
+        "GGGDDDDHIII",
+        "GEBBDDHHILI",
+        "GEBBAHHFLLL", // F adjusted
+        "EEAAAKKFFLC",
+        "EJJJJKKCCCC"
+    ],
+    // #128
+    [
+        "HHEEECCGGGA",
+        "FHHDEECGAAA",
+        "FFHDKKCGLII",
+        "BBDDKKCLLLI",
+        "BBBDJJJJLII" // L adjusted
+    ],
+    // #129
+    [
+        "IIEEECCCCAA", // I (Yellow)
+        "IEEDDDDLCAG",
+        "IIHHDBLLLAG",
+        "KKFFHBBLLGG",
+        "KKFFHBBJJJJ"
+    ],
+    // #130
+    [
+        "JIIIDDDDLGG",
+        "JIBBDDLLLHG",
+        "JIIBBEELLHG",
+        "JFFCCEEAHHK",
+        "JFCCCCAAAKK"
+    ],
+    // #131
+    [
+        "KKBBBLLAAGG",
+        "KKBBELLAGGD",
+        "FFEEELHAGDD",
+        "IFICEEHHDDD",
+        "IOICCCCHHDD"
+    ],
+    // #132
+    [
+        "AADDDLLJJJJ",
+        "ABBDFFLLHEC",
+        "ABBFFGLHHEC",
+        "IBIKKGGLHEC",
+        "IIIKKGGGECC" // Spacing fixed
+    ],
+    // #133
+    [
+        "BAAADDDDGGG",
+        "BBIAIDHHGCG",
+        "BBIIIHHLGCG",
+        "KKFEEHHLGCC",
+        "KKFFEEELCCJ"
+    ],
+    // #134
+    [
+        "CCFFBBBLAAJ",
+        "CIFIBBLLLAJ",
+        "CIIIGKKLLAJ",
+        "CEEEGKKDHHJ",
+        "EEGGGDDDHHH"
+    ],
+    // #135
+    [
+        "DIIBBGGGKKE",
+        "DDIBBGHHKKE",
+        "DIIBAGLHHEE",
+        "DFAAALLHEEC",
+        "FFJJJJLCCCC"
+    ],
+    // #136
+    [
+        "ECCCCJJJJHB",
+        "ECFDDDDHHHB",
+        "EEFFDGHHLBA",
+        "IEIKKGHLLLA",
+        "IIIKKGGGLAA"
+    ],
+    // #137
+    [
+        "FFAAJJJJGGC",
+        "FLAAADDDHGC",
+        "LLLEEEIHHGC",
+        "CLEEKKIHHBB",
+        "CCCCKKIIBBB"
+    ],
+    // #138
+    [
+        "GGGEEJJJJBB",
+        "GIIEEEELBBB",
+        "GIDDDLLLLHA",
+        "CIIFFKKLHHA",
+        "CCCCFKKHHAA"
+    ],
+    // #139
+    [
+        "HHEEEBBBGGG",
+        "DHHAEBBFFFG",
+        "DHHAAALIFIG",
+        "DCCCCLLLIIG",
+        "DJJJJLLIIKK"
+    ],
+    // #140
+    [
+        "IIDEEEJJJJF",
+        "IDDDDEHHFFF",
+        "IIAABBBLLHG",
+        "KKACBBLLLHG",
+        "KKACCCCLGGG"
+    ],
+    // #141
+    [
+        "JDDDEEELGGG",
+        "JADEEELLHHG",
+        "JAAEELLHHHG",
+        "JFFBBIICDHK",
+        "FFBBCCCCDHK"
+    ],
+    // #142
+    [
+        "KKJJJJIIEEE",
+        "KKDDDIIEEEA",
+        "CCCCDLHHAGA",
+        "CBBDLLHHAGG",
+        "BBBFLLHHGGG"
+    ],
+    // #143
+    [
+        "AAEKKGGGBBC",
+        "AEEKKGHHBBC",
+        "AEIIIGLHHBC",
+        "FEIDILLLHCC", // C filled
+        "FFDDDDLJJJJ"
+    ],
+    // #144
+    [
+        "BBBCCCCLGGG",
+        "JBBCHHLLLEG",
+        "JDDDHHLLLEG",
+        "JFFDAHHEEKK",
+        "JFAAAIIEEKK"
+    ],
+    // #145
+    [
+        "CCAAIIIEGGG",
+        "BBAAIHIEFFG",
+        "BBALHHEEFFG",
+        "CDBLLLHHEKK", // Spacing fixed
+        "DDDDLJJJJKK"
+    ],
+    // #146
+    [
+        "DBBJJJJCEKK",
+        "DBBBCCCCEKK",
+        "DDHFFIIILEG",
+        "DHHFAILLLEG",
+        "HHAAAII LGGG" // Spacing fixed
+    ],
+    // #147
+    [
+        "EEEIIGGGLFF",
+        "CCEEIGHLLLF",
+        "CBBIIGHHLKK", // D filled
+        "CBBDAAAHHKK",
+        "CBDDDDAJJJJ"
+    ],
+    // #148
+    [
+        "FFIIIBBBGGG",
+        "CFIAILBBHEG",
+        "CKKAALLHHEG",
+        "CKKAALHHDEE",
+        "CCJJJJDDDEE"
+    ],
+    // #149
+    [
+        "GGGJJJJEEAA",
+        "GCCCCLEEAAA",
+        "GCFFLLLHHID",
+        "BFFKKLHHIDI",
+        "BBBKKHHDDDD"
+    ],
+    // #150
+    [
+        "HHAAAIILGGG",
+        "DHHFAILLLEG",
+        "DDFFIIILLEG",
+        "DBBFCCCCEKK",
+        "DBBJJJJCEKK"
     ]
 ];
 
