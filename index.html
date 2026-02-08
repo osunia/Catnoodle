@@ -38,7 +38,6 @@
             gap: 10px;
         }
         
-        /* 이모지 제거 및 타이틀 스타일 */
         h1 { margin: 0; font-size: 1.8rem; color: #2d3436; font-weight: 800; letter-spacing: -0.5px; }
         
         .btn-help {
@@ -87,9 +86,9 @@
             }
             #board { margin-top: 0; }
             #tray { 
-                width: 320px; 
+                width: 340px; 
                 /* 트레이 높이 고정 (조각이 줄어도 크기 유지) */
-                height: 400px; 
+                height: 450px; 
                 overflow-y: auto;
             }
         }
@@ -116,16 +115,15 @@
 
         #tray {
             width: 100%;
-            /* 모바일용 최소 높이 확보 */
-            min-height: 200px;
+            min-height: 250px;
             background-color: var(--tray-bg);
             border-radius: 16px;
             padding: 15px;
             display: flex; flex-wrap: wrap;
-            /* 조각 정렬 수정: 위쪽부터 채우고(start), 가운데 정렬 */
+            /* 조각 밀집: 위쪽부터 채우고(start), 가운데 정렬, 간격 좁힘 */
             align-content: flex-start; 
             justify-content: center; 
-            gap: 8px; /* 간격 좁힘 */
+            gap: 8px; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             border: 2px solid #dfe6e9;
         }
@@ -146,7 +144,7 @@
             z-index: 9999;
         }
         
-        .piece.in-tray { position: relative; transform: scale(0.8); left: auto !important; top: auto !important; }
+        .piece.in-tray { position: relative; transform: scale(0.85); left: auto !important; top: auto !important; }
         .piece.locked { cursor: not-allowed; filter: grayscale(0.3) brightness(0.9); pointer-events: none; }
         
         .block {
@@ -224,39 +222,60 @@
 <div id="message"></div>
 
 <script>
-/** * 🛠️ 1. 우클릭 방지 & 제어 
- * contextmenu 이벤트는 전역에서 차단하되, 로직은 handleMouseDown에서 처리
- */
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 /**
- * 🛠️ SHAPE DEFINITIONS
- * ID 5 수정 완료: 완벽한 ㄱ자 형태 (Vertical Long L)
+ * 🛠️ SHAPE DEFINITIONS (Kanoodle 200 Version)
+ * 이미지 3 (Solution 139) 기반 정밀 분석 결과
  */
 const SHAPES_DEF = [
-    { id: 0, color: '#8e44ad', shape: [[1,1,1,1]] }, 
-    { id: 1, color: '#dfe6e9', shape: [[1,1],[1,1]] }, 
-    { id: 2, color: '#e67e22', shape: [[1,1,1],[1,0,0]] }, 
-    { id: 3, color: '#f1c40f', shape: [[1,1,0],[0,1,1]] }, 
-    { id: 4, color: '#fd79a8', shape: [[1,1,1],[0,1,0]] }, 
+    // A: Orange (L-Short, 4 units)
+    { id: 0, color: '#f39c12', shape: [[1,0],[1,0],[1,1]] }, 
     
-    // [수정됨] ID 5: L-Long (Blue) - "완벽한 ㄱ자"
-    // 기존 J 형태에서 4칸 세로 + 오른쪽 아래 1칸 -> 4칸 세로 + 왼쪽 위 1칸 (ㄱ자)
-    // 혹은 [[1,1,1,1],[0,0,0,1]] (가로). 여기서는 세로형 ㄱ자로 정의
-    { id: 5, color: '#0984e3', shape: [[1,1],[1,0],[1,0],[1,0]] }, 
-
-    { id: 6, color: '#636e72', shape: [[0,1,0],[1,1,1],[0,1,0]] }, 
-    { id: 7, color: '#00cec9', shape: [[1,1,0],[0,1,1],[0,0,1]] }, 
-    { id: 8, color: '#d63031', shape: [[1,0,0],[1,1,0],[0,1,1]] }, 
-    { id: 9, color: '#ff7675', shape: [[1,0,1],[1,1,1]] }, 
-    { id: 10, color: '#fab1a0', shape: [[0,1],[1,1],[0,1],[0,1]] }, 
-    { id: 11, color: '#00b894', shape: [[1,0,0],[1,0,0],[1,1,1]] } 
+    // B: Red (P-Pentomino, 5 units)
+    { id: 1, color: '#e74c3c', shape: [[1,1,1],[0,1,1]] }, 
+    
+    // C: Dark Blue (Long L, 5 units) - "완벽한 긴 ㄱ자"
+    { id: 2, color: '#2c3e50', shape: [[1,1,1,1],[1,0,0,0]] }, 
+    
+    // D: Pink (Y-Pentomino, 5 units)
+    { id: 3, color: '#ff9ff3', shape: [[1,0],[1,1],[1,0],[1,0]] }, 
+    
+    // E: Green (P-Pentomino, 5 units) - *B와 모양 동일* (Duplicate)
+    { id: 4, color: '#27ae60', shape: [[1,1,1],[0,1,1]] }, 
+    
+    // F: White (Skew/Z-Short, 4 units)
+    { id: 5, color: '#ecf0f1', shape: [[1,1,0],[0,1,1]] }, 
+    
+    // G: Light Blue (V-Long, 5 units)
+    { id: 6, color: '#3498db', shape: [[1,1,1],[0,0,1],[0,0,1]] }, 
+    
+    // H: Magenta (W, 5 units)
+    { id: 7, color: '#e056fd', shape: [[1,0,0],[1,1,0],[0,1,1]] }, 
+    
+    // I: Yellow (U-shape, 5 units)
+    { id: 8, color: '#f1c40f', shape: [[1,1],[0,1],[1,1]] }, 
+    
+    // J: Purple (Line, 4 units) - *4칸 주의*
+    { id: 9, color: '#9b59b6', shape: [[1,1,1,1]] }, 
+    
+    // K: Lime (Square, 4 units)
+    { id: 10, color: '#badc58', shape: [[1,1],[1,1]] }, 
+    
+    // L: Grey (Plus/Cross, 5 units)
+    { id: 11, color: '#95a5a6', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
 ];
 
+// Kanoodle 200 Level 6 Puzzle 139 Solution Mapping
+// A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11
 const SOLUTION_DB = [
-    [[5,5,6,6,6,0,0,0,0,9,9],[11,5,5,5,6,3,3,2,2,2,9],[11,11,11,7,6,3,3,10,10,2,9],[4,4,4,7,7,8,8,10,10,10,9],[4,1,1,7,7,8,8,8,1,1,10]],
-    [[2,2,2,7,7,10,10,10,9,9,9],[2,6,6,6,7,7,11,10,10,4,9],[5,6,3,3,7,11,11,11,4,4,9],[5,6,3,3,8,8,11,1,1,4,0],[5,5,5,8,8,8,1,1,0,0,0]],
-    [[0,0,0,0,6,6,6,9,9,9,9],[1,1,5,5,6,10,10,2,2,2,9],[1,1,5,6,10,10,10,8,8,2,7],[11,5,5,4,4,4,3,3,8,7,7],[11,11,11,11,4,3,3,8,8,7,7]]
+    [
+        [7,7,4,4,4,1,1,1,6,6,6], // H H E E E B B B G G G
+        [3,7,7,0,4,4,1,1,5,5,6], // D H H A E E B B F F G
+        [3,3,7,0,0,0,11,8,8,5,6], // D D H A A A L I I F G
+        [3,2,2,2,2,11,11,11,8,10,10], // D C C C C L L L I K K
+        [3,2,9,9,9,9,11,8,8,10,10]  // D C J J J J L I I K K
+    ]
 ];
 
 const COLS = 11;
@@ -300,7 +319,8 @@ function createGrid() {
 
 function loadNewGame() {
     if(pickedPieceIdx !== null) releasePiece();
-    const randIdx = Math.floor(Math.random() * SOLUTION_DB.length);
+    // 데이터베이스가 1개뿐이므로 항상 0번 인덱스 로드 (추후 추가 가능)
+    const randIdx = 0; 
     answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[randIdx]));
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard();
@@ -411,14 +431,11 @@ function setupInteraction(el, idx) {
     el.addEventListener('touchstart', (e) => handleTouchStart(e, idx, el), {passive: false});
 }
 
-/**
- * 🖱️ PC MOUSE 핸들러 수정
- * - 우클릭(button 2) 감지 시 즉시 뒤집기 실행
- */
+// 🖱️ PC 우클릭 수정: mousedown 이벤트 내에서 처리
 function handleMouseDown(e, idx, el) {
     e.stopPropagation();
 
-    // 우클릭: 즉시 뒤집기 (들고 있든 아니든)
+    // 우클릭 (Button 2): 즉시 뒤집기
     if(e.button === 2) {
         flipPieceData(idx);
         return;
@@ -443,7 +460,6 @@ function pickUpPiece(idx, el, startX, startY) {
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('wheel', onWheel, {passive: false});
-    // Global mousedown handles drop on empty space
     document.addEventListener('mousedown', onGlobalClick);
 }
 
@@ -463,8 +479,7 @@ function onWheel(e) {
 
 function onGlobalClick(e) {
     if(pickedPieceIdx !== null) {
-        // 우클릭은 global click으로 처리하지 않음 (개별 핸들러에서 처리)
-        if(e.button === 2) return; 
+        if(e.button === 2) return; // 우클릭은 global click 무시
         if(e.target.closest(`#p-${pickedPieceIdx}`)) return;
         dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
     }
