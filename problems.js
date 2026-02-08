@@ -160,8 +160,8 @@ const RAW_PUZZLES_TEXT = [
     // #20
     [
         "OOOBBBKKGGG",
-        "OEIBBBK KGC",
-        "EEHHAAALGCC",
+        "OEIBBBKKGCJ",
+        "EEHHAAALGCJ",
         "EHHDAFLLLCJ",
         "EDDDDFFLCCJ"
     ],
@@ -634,10 +634,10 @@ const RAW_PUZZLES_TEXT = [
     // #79
     [
         "HHCCCCFFEKK",
-        "JHHDIICIFEKK",
+        "JHHDICIFEKK",
         "JAHDDIILEEG",
         "JADDBBLLLEG",
-        "JAADBBBLLGGG"
+        "JAADBBBLGGG"
     ],
     // #80
     [
