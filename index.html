@@ -344,13 +344,12 @@ function extractPiecesFromBoard() {
     }
 }
 
-// 💡 NEW: 초기 배치 시 겹침 최소화 알고리즘
+// 💡 초기 배치 시 겹침 최소화 알고리즘
 function randomizeTrayPositions() {
     const trayW = trayEl.clientWidth || 350;
     const trayH = trayEl.clientHeight || 400;
     const trayPieces = pieces.filter(p => !p.isLocked && p.x === -1);
     
-    // 이미 배치된 조각들의 영역 저장용 (x, y, w, h)
     let placedRects = [];
 
     trayPieces.forEach(p => {
@@ -360,12 +359,10 @@ function randomizeTrayPositions() {
         let bestX = 10, bestY = 10;
         let found = false;
 
-        // 50번 시도하여 안 겹치는 자리 찾기
         for(let i=0; i<50; i++) {
             const rx = Math.random() * (trayW - pWidth - 20);
             const ry = Math.random() * (trayH - pHeight - 20);
             
-            // 충돌 검사
             let overlap = false;
             for(let rect of placedRects) {
                 if(rx < rect.x + rect.w && rx + pWidth > rect.x &&
@@ -383,7 +380,6 @@ function randomizeTrayPositions() {
             }
         }
         
-        // 못 찾았으면 그냥 마지막 랜덤(혹은 안전하게 랜덤 다시) 겹치게 배치
         if(!found) {
              bestX = Math.max(10, Math.random() * (trayW - pWidth - 20));
              bestY = Math.max(10, Math.random() * (trayH - pHeight - 20));
@@ -606,15 +602,13 @@ function dropPiece(idx, el) {
         p.x = targetC; p.y = targetR;
         checkWinCondition();
     } else {
-        // 💡 NEW: 보드판 배치 실패 혹은 트레이에 놓았을 때 로직
+        // 트레이 자석 로직
         const trayRect = trayEl.getBoundingClientRect();
         const pieceRect = el.getBoundingClientRect();
         
-        // 조각 중심점
         const pieceCX = pieceRect.left + pieceRect.width / 2;
         const pieceCY = pieceRect.top + pieceRect.height / 2;
 
-        // 중심점이 트레이 안에 있는가?
         const insideTray = (
             pieceCX >= trayRect.left &&
             pieceCX <= trayRect.right &&
@@ -623,16 +617,12 @@ function dropPiece(idx, el) {
         );
 
         if (insideTray) {
-             // 트레이 안이라면 그 위치 유지 (자석처럼 붙지 않고 현재 위치 고수)
-             // 트레이 상대 좌표 계산
              let newTrayX = pieceRect.left - trayRect.left;
              let newTrayY = pieceRect.top - trayRect.top;
 
-             // 트레이 밖으로 너무 나가지 않게 clamp (선택사항, 안전장치)
              const trayW = trayEl.clientWidth || 350;
              const trayH = trayEl.clientHeight || 400;
              
-             // 약간의 여유를 두고 clamp (완전히 사라짐 방지)
              newTrayX = Math.max(-20, Math.min(newTrayX, trayW - 10));
              newTrayY = Math.max(-20, Math.min(newTrayY, trayH - 10));
 
@@ -640,7 +630,6 @@ function dropPiece(idx, el) {
              p.trayY = newTrayY;
              p.x = -1; p.y = -1;
         } else {
-            // 트레이 밖이고, 보드도 아니면 -> 랜덤 복귀 (분실 방지)
             returnToTrayRandomly(p);
         }
     }
@@ -669,7 +658,7 @@ function cleanupListeners() {
     document.removeEventListener('touchstart', onGlobalTouchStart); 
 }
 
-// 📱 Mobile Logic
+// 📱 Mobile Logic (FIXED: 순서 변경)
 function handleTouchStart(e, idx, el) {
     e.preventDefault(); e.stopPropagation();
 
@@ -705,7 +694,9 @@ function handleTouchStart(e, idx, el) {
         document.removeEventListener('touchmove', onTouchMove);
         document.removeEventListener('touchend', onTouchEnd);
         
-        el.classList.remove('picked-up');
+        // 🚨 중요 FIX: el.classList.remove('picked-up')을 여기서 하지 않음!
+        // dropPiece() 내부에서 좌표 계산을 마친 후 renderPieces()가 호출되며 DOM이 초기화되므로
+        // 수동으로 클래스를 지우는 과정이 오히려 좌표 계산에 방해가 됨.
 
         if(!isDragging) { 
             flipPieceData(idx);
