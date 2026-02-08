@@ -139,7 +139,7 @@ const RAW_PUZZLES_TEXT = [
         "GFKKILLLHBC",
         "GEEEIILHHBB", // Corrected B/H boundary
         "GGGEEDHHABB",
-        "JJJJDDDAAAA"
+        "JJJJDDDDAAA"
     ],
     // #18
     [
