@@ -600,10 +600,20 @@ function loadNewGameLogic() {
     currentProblemIdx = newIdx;
 
     if(typeof SOLUTION_DB !== 'undefined') {
+        // ✨ [여기!] 현재 풀고 있는 문제 번호를 콘솔에 큼지막하게 출력합니다.
+        // 이전에 만든 시스템 코드(database.js)의 .id 속성을 활용합니다.
+        const currentPuzzle = SOLUTION_DB[newIdx];
+        if (currentPuzzle.id) {
+            console.log(`%c🧩 현재 플레이 중인 퍼즐: #${currentPuzzle.id}`, "background: #2d3436; color: #badc58; font-size: 16px; font-weight: bold; padding: 6px; border-radius: 4px;");
+        } else {
+            console.log(`🧩 현재 퍼즐 Index: ${newIdx} (ID 정보 없음)`);
+        }
+
         answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[newIdx]));
     } else {
         // Fallback
         answerKey = [[7,7,4,4,4,1,1,1,6,6,6],[3,7,7,0,4,4,1,1,5,5,6],[3,3,7,0,0,0,11,8,8,5,6],[3,2,2,2,2,11,11,11,8,10,10],[3,2,9,9,9,9,11,8,8,10,10]];
+        console.log("⚠️ 데이터베이스가 로드되지 않아 기본 문제를 사용합니다.");
     }
 
     boardState = JSON.parse(JSON.stringify(answerKey));
