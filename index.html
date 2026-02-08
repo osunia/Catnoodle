@@ -37,8 +37,7 @@
             overflow: hidden;
             touch-action: none; 
             user-select: none; -webkit-user-select: none;
-            /* 1. 화면 양옆/하단에 최소한의 여백 확보 */
-            padding: 0 20px 20px 20px; 
+            padding-bottom: 20px; 
         }
 
         header { 
@@ -89,13 +88,12 @@
             flex: 1 1 auto; 
             width: fit-content;
             min-width: 300px;
-            /* 1. 상하 여백 추가 (게임기가 화면에 너무 꽉 차지 않게) */
-            margin: 20px 0;
+            margin: 10px 0;
             padding-bottom: 10px; 
         }
 
         .game-panel {
-            width: 100%;
+            width: 100%; 
             background-color: var(--board-bg);
             padding: 10px; border-radius: 12px;
             border: 4px solid var(--border-color);
@@ -123,7 +121,8 @@
             width: var(--cell-size); height: var(--cell-size);
             background-color: var(--hole-color);
             border-radius: 50%;
-            box-shadow: inset 1px 1px 4px rgba(0,0,0,0.6);
+            /* 구멍도 안쪽으로 파인 느낌 강화 */
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8), inset -1px -1px 2px rgba(255,255,255,0.1);
         }
 
         #joints-container {
@@ -149,7 +148,8 @@
             background: rgba(0, 0, 0, 0.65);
             display: none; 
             flex-direction: column;
-            justify-content: center; align-items: center;
+            justify-content: center;
+            align-items: center;
             z-index: 5000; border-radius: 8px;
             backdrop-filter: blur(2px);
             animation: fadeIn 0.3s ease-out;
@@ -207,28 +207,31 @@
             gap: 2px; transition: none; 
         }
         .piece.locked { cursor: not-allowed; pointer-events: none; }
-        .piece.locked .block {
-            border: 1px solid rgba(0,0,0,0.3);
-            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 5px, transparent 5px, transparent 10px);
-            filter: brightness(0.9);
-        }
         
-        /* 2. 무광 매트 구슬 (Matte Bead Style) */
+        /* 2. 3D 구슬 디자인 적용 */
         .block {
             width: var(--cell-size); height: var(--cell-size);
             border-radius: 50%;
-            /* 반사광을 줄이고 은은한 하이라이트와 그림자 적용 */
+            /* 기존 배경색은 JS에서 인라인으로 들어가므로, 여기서 그라데이션으로 덮어씀 */
+            /* 중요: background-color는 JS가 설정하고, 여기선 background-image로 입체감 표현 */
+            background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0) 20%),
+                              radial-gradient(circle at 50% 50%, rgba(255,255,255,0), rgba(0,0,0,0.2) 100%);
             box-shadow: 
-                inset 2px 2px 5px rgba(255,255,255,0.15), /* 상단 은은한 빛 */
-                inset -2px -2px 5px rgba(0,0,0,0.2),      /* 하단 부드러운 그림자 */
-                1px 1px 2px rgba(0,0,0,0.15);             /* 바닥 그림자 */
-            /* 테두리 제거로 더 매끄럽게 */
-            border: none;
+                inset -2px -2px 6px rgba(0,0,0,0.3), /* 안쪽 그림자 (구의 형태) */
+                1px 1px 2px rgba(0,0,0,0.3); /* 바깥 그림자 (접지감) */
+            border: none; /* 기존 테두리 제거 (입체감으로 대체) */
         }
-        
+        /* 잠긴 조각 스타일 */
+        .piece.locked .block {
+            filter: brightness(0.7) grayscale(0.3); /* 어둡게 */
+            background-image: 
+                repeating-linear-gradient(45deg, rgba(0,0,0,0.2), rgba(0,0,0,0.2) 5px, transparent 5px, transparent 10px),
+                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0) 20%); /* 빗금 + 약한 입체감 */
+        }
+
         .ghost-piece {
             position: absolute; display: grid; gap: 2px;
-            pointer-events: none; z-index: 50; opacity: 0.2;
+            pointer-events: none; z-index: 50; opacity: 0.3; /* 고스트 살짝 더 잘보이게 */
             transition: left 0.05s, top 0.05s;
         }
         .ghost-block {
@@ -236,6 +239,7 @@
             border-radius: 50%;
             background-color: white;
             border: 2px dashed rgba(255,255,255,0.9);
+            box-shadow: 0 0 5px rgba(255,255,255,0.5); /* 고스트 발광 효과 */
         }
 
         /* 모달 공통 스타일 */
@@ -460,9 +464,10 @@ function initLayout() {
     const margin = 80; 
     
     const availableH = window.innerHeight - headerH - controlsH - jointsH - margin;
-    const availableW = window.innerWidth - 20;
+    // 1. 가로 여백 대폭 증가 (양쪽 20씩 -> 40)
+    const availableW = window.innerWidth - 40;
 
-    const logicalRows = 10; 
+    const logicalRows = 10.5; 
     const logicalCols = 11;
 
     const sizeByWidth = Math.floor((availableW - 30) / logicalCols);
@@ -474,15 +479,14 @@ function initLayout() {
 
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     
-    // 💡 중요: 트레이와 보드의 너비를 강제 동기화 (픽셀 단위 계산)
-    const boardInnerW = (11 * cellSize) + (10 * 2); // 11 cols * size + 10 gaps
-    const totalW = boardInnerW + 20 + 8; // + padding(20) + border(8)
+    // 게임 유닛 너비 계산 (width 고정)
+    const boardInnerW = (11 * cellSize) + (10 * 2); 
+    const totalW = boardInnerW + 20 + 8; 
     
-    // 게임 유닛 너비 고정
     gameUnitEl.style.width = `${totalW}px`;
 
     const boardInnerH = (5 * cellSize) + (4 * 2); 
-    const totalH = boardInnerH + 28; // padding + border
+    const totalH = boardInnerH + 28; 
     
     trayEl.style.height = `${totalH}px`;
 
