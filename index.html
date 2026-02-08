@@ -22,9 +22,11 @@
             --cell-size: 32px; 
             --modal-bg: #1e1e1e;
             --modal-text: #ffffff;
+            /* 새로 추가된 테두리 색상 변수 */
+            --border-color: #3d4648; 
         }
 
-        * { box-sizing: border-box; } /* 박스 크기 계산 통일 */
+        * { box-sizing: border-box; }
 
         body {
             font-family: 'Gowun Dodum', sans-serif;
@@ -78,29 +80,37 @@
         .btn-reset { background: var(--reset-btn); }
         .btn-answer { background: var(--secondary-btn); }
 
-        /* 1. 게임 유닛: Fit-Content 적용으로 너비 자동 맞춤 */
+        /* 게임 유닛 컨테이너 */
         #game-unit {
             display: flex; flex-direction: column; align-items: center;
             position: relative;
             flex: 1 1 auto; 
-            width: fit-content; /* 🚀 핵심: 내용물(보드) 크기에 딱 맞게 조절 */
-            min-width: 300px; /* 최소 너비 안전장치 */
+            width: fit-content;
+            min-width: 300px;
+            /* 상하 여백 약간 추가 */
+            margin: 10px 0;
         }
 
-        /* 보드와 트레이 공통 */
+        /* 보드와 트레이 공통 스타일 수정 */
         .game-panel {
-            width: 100%; /* 부모(game-unit) 너비를 꽉 채움 */
+            width: 100%;
             background-color: var(--board-bg);
             padding: 10px; border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            
+            /* 1. 테두리 색상 변경 (짙은 회색) */
+            border: 4px solid var(--border-color);
+
+            /* 2. 그림자 변경 (더 깊고 뜬 느낌) */
+            box-shadow: 
+                0 20px 40px rgba(0,0,0,0.3), 
+                0 10px 10px rgba(0,0,0,0.2);
+            
             position: relative; flex-shrink: 0;
-            border: 4px solid #dfe6e9;
             touch-action: none;
         }
 
         #board {
             display: grid;
-            /* 그리드 크기가 전체 유닛의 너비를 결정함 */
             grid-template-columns: repeat(11, var(--cell-size));
             grid-template-rows: repeat(5, var(--cell-size));
             gap: 2px;
@@ -111,7 +121,6 @@
             display: block;
             z-index: 9; 
             margin-bottom: 10px;
-            /* 높이는 JS에서 보드와 동일하게 설정됨 */
         }
 
         .cell {
@@ -121,7 +130,7 @@
             box-shadow: inset 1px 1px 4px rgba(0,0,0,0.6);
         }
 
-        /* 이음매 */
+        /* 이음매 스타일 수정 (테두리와 어울리게) */
         #joints-container {
             display: flex; justify-content: space-between;
             width: 90%; 
@@ -134,18 +143,20 @@
         .joint {
             width: 24px; height: 100%;
             background: #151819; 
+            /* 이음매에도 약간의 테두리 느낌 추가 */
+            border: 2px solid var(--border-color);
             border-radius: 4px;
-            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5), 0 2px 5px rgba(0,0,0,0.3);
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
         }
 
-        /* 2. 오버레이: 보드판 중앙 정렬 */
+        /* 오버레이 스타일 */
         #board-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.65);
             display: none; 
-            flex-direction: column; /* 세로 정렬 */
-            justify-content: center; /* 수직 중앙 */
-            align-items: center; /* 수평 중앙 */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             z-index: 5000; border-radius: 8px;
             backdrop-filter: blur(2px);
             animation: fadeIn 0.3s ease-out;
@@ -188,7 +199,7 @@
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* 조각 */
+        /* 조각 스타일 */
         .piece {
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
@@ -198,7 +209,7 @@
         .piece.in-tray { position: absolute; transform: scale(0.9); }
         .piece.picked-up {
             position: fixed; cursor: grabbing;
-            opacity: 0.95; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));
+            opacity: 0.95; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4)); /* 드래그 시 그림자 더 진하게 */
             transform: scale(1.05); pointer-events: none; z-index: 9999;
             gap: 2px; transition: none; 
         }
@@ -226,7 +237,7 @@
             border: 2px dashed rgba(255,255,255,0.9);
         }
 
-        /* 모달 공통 */
+        /* 모달 공통 스타일 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.6); z-index: 6000;
@@ -420,11 +431,11 @@ function initLayout() {
     const headerH = document.querySelector('header').offsetHeight;
     const controlsH = document.querySelector('.controls').offsetHeight;
     const jointsH = 24; 
-    const margin = 20;
+    // 3. 여백 계산 수정 (창에 너무 붙지 않도록 더 넉넉하게)
+    const margin = 50; // 기존 20 -> 50으로 증가
     
-    // 남은 높이를 반반(약간 여유있게) 배분
     const availableH = window.innerHeight - headerH - controlsH - jointsH - margin;
-    const availableW = window.innerWidth - 20;
+    const availableW = window.innerWidth - margin; // 가로 여백도 적용
 
     const logicalRows = 10; 
     const logicalCols = 11;
@@ -438,11 +449,8 @@ function initLayout() {
 
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     
-    // 💡 게임 유닛 너비는 CSS fit-content로 자동 조절되므로 JS 설정 불필요
-    // 트레이 높이만 보드와 맞추기 (보드 높이 = 5칸 + 패딩 + 보더)
-    const boardInnerH = (5 * cellSize) + (4 * 2); // 5 rows * size + 4 gaps
-    // padding(10*2) + border(4*2) = 28px
-    const totalH = boardInnerH + 28; 
+    const boardInnerH = (5 * cellSize) + (4 * 2); 
+    const totalH = boardInnerH + 28; // padding + border
     
     trayEl.style.height = `${totalH}px`;
 
@@ -459,7 +467,6 @@ function createGrid() {
     }
     boardEl.appendChild(ghostEl);
     
-    // 오버레이 다시 생성 (innerHTML 초기화됨)
     const overlayDiv = document.createElement('div');
     overlayDiv.id = 'board-overlay';
     overlayDiv.innerHTML = `
