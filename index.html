@@ -80,20 +80,23 @@
         .btn-reset { background: var(--reset-btn); }
         .btn-answer { background: var(--secondary-btn); }
 
-        /* 게임 유닛 컨테이너 */
+        /* 게임 유닛 컨테이너 (위치 조정) */
         #game-unit {
             display: flex; flex-direction: column; align-items: center;
-            justify-content: center; 
+            /* 1. 상단 정렬로 변경하고 padding-top으로 시각적 1/3 지점 조정 */
+            justify-content: flex-start; 
+            padding-top: 3vh; /* 화면 높이의 3% 정도 내려서 시작 */
+            
             position: relative;
             flex: 1 1 auto; 
             width: fit-content;
             min-width: 300px;
-            margin: 10px 0;
-            padding-bottom: 10px; 
+            margin: 0;
+            padding-bottom: 20px; 
         }
 
         .game-panel {
-            width: 100%; 
+            width: 100%;
             background-color: var(--board-bg);
             padding: 10px; border-radius: 12px;
             border: 4px solid var(--border-color);
@@ -121,8 +124,7 @@
             width: var(--cell-size); height: var(--cell-size);
             background-color: var(--hole-color);
             border-radius: 50%;
-            /* 구멍도 안쪽으로 파인 느낌 강화 */
-            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8), inset -1px -1px 2px rgba(255,255,255,0.1);
+            box-shadow: inset 1px 1px 4px rgba(0,0,0,0.6);
         }
 
         #joints-container {
@@ -142,14 +144,13 @@
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
         }
 
-        /* 오버레이 스타일 */
+        /* 오버레이 */
         #board-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.65);
             display: none; 
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: center; align-items: center;
             z-index: 5000; border-radius: 8px;
             backdrop-filter: blur(2px);
             animation: fadeIn 0.3s ease-out;
@@ -208,30 +209,33 @@
         }
         .piece.locked { cursor: not-allowed; pointer-events: none; }
         
-        /* 2. 3D 구슬 디자인 적용 */
+        /* 3. 3D 구슬 디자인 리마스터 (자연스러운 입체감) */
         .block {
             width: var(--cell-size); height: var(--cell-size);
             border-radius: 50%;
-            /* 기존 배경색은 JS에서 인라인으로 들어가므로, 여기서 그라데이션으로 덮어씀 */
-            /* 중요: background-color는 JS가 설정하고, 여기선 background-image로 입체감 표현 */
-            background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0) 20%),
-                              radial-gradient(circle at 50% 50%, rgba(255,255,255,0), rgba(0,0,0,0.2) 100%);
+            /* 1단계: 넓고 은은한 하이라이트 (30% 위치에서 시작, 투명도 0.5) */
+            /* 2단계: 아래쪽의 깊고 넓은 그림자 */
+            background-image: 
+                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 40%),
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.3) 100%);
+            
             box-shadow: 
-                inset -2px -2px 6px rgba(0,0,0,0.3), /* 안쪽 그림자 (구의 형태) */
-                1px 1px 2px rgba(0,0,0,0.3); /* 바깥 그림자 (접지감) */
-            border: none; /* 기존 테두리 제거 (입체감으로 대체) */
+                inset -3px -3px 8px rgba(0,0,0,0.2), /* 내부 음영 깊게 */
+                inset 1px 1px 3px rgba(255,255,255,0.2), /* 상단 미세 반사 */
+                1px 1px 2px rgba(0,0,0,0.2); /* 외부 그림자 */
+            border: none;
         }
-        /* 잠긴 조각 스타일 */
+        
         .piece.locked .block {
-            filter: brightness(0.7) grayscale(0.3); /* 어둡게 */
+            filter: brightness(0.7) grayscale(0.3);
             background-image: 
                 repeating-linear-gradient(45deg, rgba(0,0,0,0.2), rgba(0,0,0,0.2) 5px, transparent 5px, transparent 10px),
-                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0) 20%); /* 빗금 + 약한 입체감 */
+                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), rgba(255,255,255,0) 40%);
         }
 
         .ghost-piece {
             position: absolute; display: grid; gap: 2px;
-            pointer-events: none; z-index: 50; opacity: 0.3; /* 고스트 살짝 더 잘보이게 */
+            pointer-events: none; z-index: 50; opacity: 0.3;
             transition: left 0.05s, top 0.05s;
         }
         .ghost-block {
@@ -239,7 +243,7 @@
             border-radius: 50%;
             background-color: white;
             border: 2px dashed rgba(255,255,255,0.9);
-            box-shadow: 0 0 5px rgba(255,255,255,0.5); /* 고스트 발광 효과 */
+            box-shadow: 0 0 5px rgba(255,255,255,0.5);
         }
 
         /* 모달 공통 스타일 */
@@ -461,11 +465,17 @@ function initLayout() {
     const headerH = document.querySelector('header').offsetHeight;
     const controlsH = document.querySelector('.controls').offsetHeight;
     const jointsH = 24; 
-    const margin = 80; 
+    
+    // 1. 패딩 계산 로직 (모바일 3vh, PC/태블릿은 더 크게)
+    // CSS #game-unit에 padding-top: 3vh가 있으므로 JS에서는 여백만 신경씀
+    const margin = 50; 
     
     const availableH = window.innerHeight - headerH - controlsH - jointsH - margin;
-    // 1. 가로 여백 대폭 증가 (양쪽 20씩 -> 40)
-    const availableW = window.innerWidth - 40;
+    
+    // 2. PC 좌우 여백 확보 (700px 이상일 때 넉넉하게)
+    const isDesktop = window.innerWidth > 700;
+    const sideMargin = isDesktop ? 160 : 40; // PC 160, 모바일 40
+    const availableW = window.innerWidth - sideMargin;
 
     const logicalRows = 10.5; 
     const logicalCols = 11;
@@ -479,7 +489,6 @@ function initLayout() {
 
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     
-    // 게임 유닛 너비 계산 (width 고정)
     const boardInnerW = (11 * cellSize) + (10 * 2); 
     const totalW = boardInnerW + 20 + 8; 
     
