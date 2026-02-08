@@ -26,7 +26,7 @@
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; 
             overflow: hidden; 
-            touch-action: none; /* 중요: 브라우저 기본 제스처 차단 */
+            touch-action: none; 
             user-select: none; -webkit-user-select: none;
         }
 
@@ -52,7 +52,7 @@
             gap: 25px; width: 95%; max-width: 1100px; padding: 10px;
             height: calc(100vh - 150px);
             overflow-y: auto; 
-            touch-action: none; /* 컨테이너에서도 터치 제스처 방지 */
+            touch-action: none; 
         }
 
         @media (min-width: 850px) {
@@ -266,10 +266,9 @@ let isDragging = false;
 let startX = 0;
 let startY = 0;
 
-// 💡 NEW: 중요 변수 - 제자리 탭 시 원래 위치 기억, 마지막 고스트 위치 기억
 let dragStartGridX = -1;
 let dragStartGridY = -1;
-let lastValidGhostPos = null; // {r, c}
+let lastValidGhostPos = null; 
 
 const boardEl = document.getElementById('board');
 const trayEl = document.getElementById('tray');
@@ -449,7 +448,7 @@ function getHoveredGridPosition(pieceIdx, el) {
 }
 
 
-// 👻 Ghost Update: "Memory Latching"
+// 👻 Ghost Update
 function updateGhost(idx) {
     const el = document.getElementById(`p-${idx}`);
     if(!el) return;
@@ -458,7 +457,6 @@ function updateGhost(idx) {
     const p = pieces[idx];
 
     if(result.valid) {
-        // 💡 중요: 유효한 위치를 찾으면 즉시 저장해둠 (드롭 시 사용)
         lastValidGhostPos = { r: result.r, c: result.c };
 
         ghostEl.style.display = 'grid';
@@ -474,26 +472,31 @@ function updateGhost(idx) {
         ghostEl.style.left = `${result.pxX}px`;
         ghostEl.style.top = `${result.pxY}px`;
     } else {
-        lastValidGhostPos = null; // 유효하지 않으면 null
+        lastValidGhostPos = null; 
         ghostEl.style.display = 'none';
     }
 }
 
 // 🖱️ PC Mouse
 function handleMouseDown(e, idx, el) {
-    e.stopPropagation();
+    e.stopPropagation(); // 이 조각에서 이벤트 버블링 중단
     if(e.button === 2) { flipPieceData(idx); return; } 
     if(e.button !== 0) return;
     
-    if(pickedPieceIdx !== null && pickedPieceIdx !== idx) return;
+    // 💡 핵심 수정: 내가 무언가 들고 있다면(pickedPieceIdx !== null)
+    // 지금 클릭한 게 내가 들고 있는 조각(idx)이 아니더라도,
+    // (예: 회전해서 마우스가 다른 조각 위에 올라가 있음)
+    // 무조건 '내려놓기'를 시도한다.
+    if(pickedPieceIdx !== null) {
+        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`));
+        return;
+    }
 
     if(pickedPieceIdx === null) {
         const rect = el.getBoundingClientRect();
         dragOffsetX = e.clientX - rect.left;
         dragOffsetY = e.clientY - rect.top;
         pickUpPiece(idx, el, e.clientX, e.clientY);
-    } else {
-        dropPiece(idx, el);
     }
 }
 
@@ -501,10 +504,9 @@ function pickUpPiece(idx, el, startX, startY) {
     pickedPieceIdx = idx;
     const p = pieces[idx];
     
-    // 💡 원래 위치 기억 (탭 제자리 튕김 방지용)
     dragStartGridX = p.x;
     dragStartGridY = p.y;
-    lastValidGhostPos = null; // 픽업 시 리셋
+    lastValidGhostPos = null; 
 
     if(p.x !== -1) {
         removePieceFromBoardState(p.currentShape, p.y, p.x);
@@ -538,6 +540,7 @@ function onWheel(e) {
 }
 
 function onGlobalClick(e) {
+    // 배경을 클릭했을 때도 드롭 시도
     if(pickedPieceIdx !== null) {
         if(e.button === 2) return; 
         dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`));
@@ -546,23 +549,21 @@ function onGlobalClick(e) {
 
 function onGlobalTouchStart(e) {
     if(pickedPieceIdx !== null && e.touches.length > 1) {
-        e.preventDefault(); // 중요: 핀치 줌 방지
+        e.preventDefault(); 
         rotatePieceData(pickedPieceIdx);
     }
 }
 
 function dropPiece(idx, el) {
-    // 🚀 수정: 저장된 Ghost 위치가 있으면 그걸 최우선으로 신뢰
     const p = pieces[idx];
     let targetR, targetC, isValid;
 
+    // 💡 고스트 위치가 있으면 무조건 거기로 드롭 (강력한 자석 효과)
     if (lastValidGhostPos) {
-        // Ghost가 보였던 위치가 있으면 무조건 거기 넣음 (손떨림 보정)
         targetR = lastValidGhostPos.r;
         targetC = lastValidGhostPos.c;
         isValid = true;
     } else {
-        // Ghost가 없었으면 다시 계산
         const result = getHoveredGridPosition(idx, el);
         targetR = result.r;
         targetC = result.c;
@@ -601,7 +602,7 @@ function cleanupListeners() {
     document.removeEventListener('touchstart', onGlobalTouchStart); 
 }
 
-// 📱 Mobile Logic (강화됨)
+// 📱 Mobile Logic
 function handleTouchStart(e, idx, el) {
     e.preventDefault(); e.stopPropagation();
 
@@ -622,12 +623,10 @@ function handleTouchStart(e, idx, el) {
     const onTouchMove = (ev) => {
         ev.preventDefault();
         const t = ev.touches[0];
-        // 드래그 감도 (10px 이상 움직여야 드래그로 인정)
         if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) {
             isDragging = true;
         }
         
-        // 🚀 회전 등으로 내부 HTML이 바뀌어도 el 자체는 유지되므로 좌표 갱신 계속 수행
         el.style.left = `${t.clientX - dragOffsetX}px`;
         el.style.top = `${t.clientY - dragOffsetY}px`;
         updateGhost(idx);
@@ -642,13 +641,10 @@ function handleTouchStart(e, idx, el) {
         el.classList.remove('picked-up');
 
         if(!isDragging) { 
-            // 💡 탭 (제자리 터치): 뒤집기 + 제자리 유지 로직
             flipPieceData(idx);
             
-            // 원래 있던 자리(dragStartGridX, Y)에 들어갈 수 있는지 확인
             const p = pieces[idx];
             if (dragStartGridX !== -1 && canPlace(p.currentShape, dragStartGridY, dragStartGridX)) {
-                // 제자리 성공!
                 placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
                 p.x = dragStartGridX; 
                 p.y = dragStartGridY;
@@ -657,10 +653,8 @@ function handleTouchStart(e, idx, el) {
                 ghostEl.style.display = 'none';
                 renderPieces();
             } else {
-                // 뒤집었는데 자리가 안 맞음 -> 다시 뒤집어서(원복) 제자리에 둠
-                // (사용자가 그냥 탭만 했는데 트레이로 날아가면 화나니까)
                 if(dragStartGridX !== -1) {
-                    flipPieceData(idx); // 원복
+                    flipPieceData(idx); 
                     placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
                     p.x = dragStartGridX; 
                     p.y = dragStartGridY;
@@ -669,12 +663,10 @@ function handleTouchStart(e, idx, el) {
                     ghostEl.style.display = 'none';
                     renderPieces();
                 } else {
-                    // 원래 트레이에 있던 녀석이면 드롭 시도 (맞으면 들어가고 아니면 트레이)
                     dropPiece(idx, el);
                 }
             }
         } else {
-            // 드래그 후 놓았을 때
             dropPiece(idx, el);
         }
     };
@@ -703,7 +695,6 @@ function updateVisualsInDrag(idx) {
     const p = pieces[idx];
     if(pickedPieceIdx === idx) {
         const el = document.getElementById(`p-${idx}`);
-        // 🚀 중요: el의 style.left/top은 건드리지 않고 내부 그리드만 변경
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
         el.innerHTML = '';
         p.currentShape.forEach(row => row.forEach(v => {
