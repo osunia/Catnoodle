@@ -587,7 +587,6 @@ function loadNewGameLogic() {
     const bOverlay = document.getElementById('board-overlay');
     if(bOverlay) bOverlay.style.display = 'none';
     
-    // 2. 랜덤 문제 로직 (중복 방지)
     let newIdx;
     if (typeof SOLUTION_DB !== 'undefined' && SOLUTION_DB.length > 1) {
         do {
@@ -601,7 +600,6 @@ function loadNewGameLogic() {
     if(typeof SOLUTION_DB !== 'undefined') {
         answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[newIdx]));
     } else {
-        // Fallback if problems.js not loaded
         answerKey = [[7,7,4,4,4,1,1,1,6,6,6],[3,7,7,0,4,4,1,1,5,5,6],[3,3,7,0,0,0,11,8,8,5,6],[3,2,2,2,2,11,11,11,8,10,10],[3,2,9,9,9,9,11,8,8,10,10]];
     }
 
@@ -708,18 +706,15 @@ function removePieceFromBoardState(shape, r, c) {
     for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=-1;
 }
 
-// 회전/반전 시 호출되어 DOM을 업데이트하는 함수
+// ⚠️ 버그 수정 핵심: 드래그 중에는 renderPieces를 호출하지 않고 요소만 업데이트
 function updateVisualsInDrag(idx) {
     const p = pieces[idx];
     if(pickedPieceIdx === idx) {
-        // 1. 현재 잡고 있는 조각(DOM)을 새로운 형태(currentShape)로 다시 그림
         const el = document.getElementById(`p-${idx}`);
-        
-        // 기존 그리드 스타일 초기화 및 내용 비우기
+        // 기존 요소를 재활용하여 이벤트 리스너 끊김 방지
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
-        el.innerHTML = '';
+        el.innerHTML = ''; // 내부만 비우고 다시 채움
 
-        // 새로운 형태에 맞춰 블록 및 연결부 재생성
         p.currentShape.forEach((row, r) => {
             row.forEach((v, c) => {
                 const b = document.createElement('div');
@@ -732,7 +727,6 @@ function updateVisualsInDrag(idx) {
                     atom.style.backgroundColor = p.color;
                     b.appendChild(atom);
 
-                    // 연결부 재생성
                     if(c + 1 < row.length && row[c+1]) {
                         const h = document.createElement('div'); h.className = 'connector-h'; b.appendChild(h);
                     }
@@ -745,8 +739,6 @@ function updateVisualsInDrag(idx) {
                 el.appendChild(b);
             });
         });
-
-        // 2. 고스트(미리보기)도 업데이트
         updateGhost(idx);
     } else {
         renderPieces();
@@ -1105,13 +1097,12 @@ function handleTouchStart(e, idx, el) {
     document.addEventListener('touchend', onTouchEnd);
 }
 
-// Logic Utils (Re-rendering Fix)
+// Logic Utils
 function rotatePieceData(idx) {
     const p = pieces[idx];
     const oldShape = p.currentShape;
     const newShape = rotateMatrix(oldShape);
     p.currentShape = newShape;
-    // Fix: 즉시 렌더링 호출
     updateVisualsInDrag(idx);
 }
 
@@ -1120,8 +1111,15 @@ function flipPieceData(idx) {
     const oldShape = p.currentShape;
     const newShape = oldShape.map(row => [...row].reverse());
     p.currentShape = newShape;
-    // Fix: 즉시 렌더링 호출
     updateVisualsInDrag(idx);
+}
+
+function updateVisualsInDrag(idx) {
+    const p = pieces[idx];
+    if(pickedPieceIdx === idx) {
+        renderPieces();
+        updateGhost(idx);
+    } else renderPieces();
 }
 
 function rotateMatrix(m) {
