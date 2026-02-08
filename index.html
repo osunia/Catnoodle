@@ -433,9 +433,7 @@ const SHAPES_DEF = [
     { id: 11, color: '#95a5a6', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
 ];
 
-/* * 중요: SOLUTION_DB는 이제 problems.js 파일에 정의되어 있습니다.
- * 이 파일에서는 SOLUTION_DB 변수를 바로 사용할 수 있습니다.
- */
+/* * SOLUTION_DB is loaded from problems.js */
 
 const COLS = 11;
 const ROWS = 5;
@@ -454,6 +452,9 @@ let dragStartGridX = -1;
 let dragStartGridY = -1;
 let lastValidGhostPos = null; 
 let globalZIndex = 100;
+
+// 2. 현재 문제 인덱스 저장 변수
+let currentProblemIdx = -1;
 
 const boardEl = document.getElementById('board');
 const trayEl = document.getElementById('tray');
@@ -588,9 +589,19 @@ function loadNewGameLogic() {
     const bOverlay = document.getElementById('board-overlay');
     if(bOverlay) bOverlay.style.display = 'none';
     
-    // 🌐 랜덤 문제 로직: DB 길이만큼 랜덤 인덱스 생성
-    const randIdx = Math.floor(Math.random() * SOLUTION_DB.length);
-    answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[randIdx]));
+    // 2. 랜덤 문제 로직 (중복 방지)
+    let newIdx;
+    // DB가 1개 이상일 때만 루프를 돌며, 이전과 다른 인덱스를 찾음
+    if (SOLUTION_DB.length > 1) {
+        do {
+            newIdx = Math.floor(Math.random() * SOLUTION_DB.length);
+        } while (newIdx === currentProblemIdx);
+    } else {
+        newIdx = 0;
+    }
+    currentProblemIdx = newIdx;
+
+    answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[newIdx]));
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard();
     applyDifficulty();
