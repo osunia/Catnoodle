@@ -42,7 +42,9 @@
 
         header { 
             flex: 0 0 auto;
-            margin: 10px 0 5px; 
+            /* 3. 제목 위 패딩 추가 */
+            padding-top: 15px; 
+            margin: 5px 0 5px; 
             text-align: center; display: flex; align-items: center; gap: 10px; 
         }
         
@@ -53,7 +55,6 @@
             display: flex; align-items: center; gap: 8px;
         }
         
-        /* 2. 제목 이모지 아이콘 스타일 */
         .title-icon {
             width: 40px; height: 40px;
             object-fit: contain;
@@ -90,18 +91,18 @@
             min-width: 300px;
             margin: 0;
             
-            /* PC Default: 기존 패딩 유지 */
+            /* PC Default: 기존 상단 패딩 유지 */
             justify-content: flex-start; 
             padding-top: 3vh; 
             padding-bottom: 20px; 
         }
 
-        /* 4. 모바일: 절대적 중앙 정렬 */
+        /* 4. 모바일 레이아웃 조정: 중앙 정렬하되 살짝 위로 */
         @media (max-width: 700px) {
             #game-unit {
-                justify-content: center; /* 수직 중앙 정렬 */
-                padding-top: 0; /* 상단 패딩 제거 */
-                padding-bottom: 0; /* 하단 패딩 제거 (body padding으로 충분) */
+                justify-content: center; /* 수직 중앙 */
+                padding-top: 0;
+                padding-bottom: 30px; /* 하단 패딩을 줘서 전체적으로 위로 밀어올림 (약 15px 효과) */
             }
         }
 
@@ -208,6 +209,8 @@
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
             transition: transform 0.1s; pointer-events: auto;
+            /* 중요: 연결부가 뒤로 숨을 수 있도록 스택 컨텍스트 생성 */
+            isolation: isolate; 
         }
         .piece.on-board { position: absolute; gap: 2px; }
         .piece.in-tray { position: absolute; transform: scale(0.9); }
@@ -219,31 +222,59 @@
         }
         .piece.locked { cursor: not-allowed; pointer-events: none; }
         
-        /* 1. 3D 구슬 디자인 리마스터 (매트한 구체) */
+        /* 구슬 디자인 */
         .block {
             width: var(--cell-size); height: var(--cell-size);
             border-radius: 50%;
-            /* 매트한 질감을 위해:
-               - 하이라이트(첫번째 줄): 투명도를 낮추고(0.3) 범위를 넓혀서 부드럽게 퍼지도록
-               - 외곽 음영(두번째 줄): 테두리로 갈수록 어두워지게 하여 구의 굴곡 표현
-            */
+            position: relative; /* 연결부 배치를 위해 relative */
+            z-index: 2; /* 연결부보다 위에 오도록 */
+            
             background-image: 
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%),
                 radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.2) 100%);
             
             box-shadow: 
-                inset -2px -2px 6px rgba(0,0,0,0.15), /* 내부 음영을 부드럽게 */
-                inset 1px 1px 2px rgba(255,255,255,0.15), /* 상단 림 라이트도 은은하게 */
-                1px 1px 3px rgba(0,0,0,0.2); /* 외부 그림자 */
+                inset -2px -2px 6px rgba(0,0,0,0.15), 
+                inset 1px 1px 2px rgba(255,255,255,0.15), 
+                1px 1px 3px rgba(0,0,0,0.2); 
             border: none;
         }
         
-        /* 3. 비활성화(Locked) 조각 스타일 개선 */
+        /* 1. 연결부(조인트) 스타일 */
+        .connector-h, .connector-v {
+            position: absolute;
+            background-color: inherit; /* 부모(구슬) 색상 상속 */
+            z-index: -1; /* 구슬 뒤로 숨기 */
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.2); /* 약간의 입체감 */
+        }
+        /* 가로 연결 (오른쪽으로) */
+        .connector-h {
+            top: 50%; left: 50%;
+            width: calc(100% + 4px); /* 다음 구슬 중심까지 */
+            height: 40%; /* 구슬보다 얇게 */
+            transform: translateY(-50%);
+        }
+        /* 세로 연결 (아래쪽으로) */
+        .connector-v {
+            top: 50%; left: 50%;
+            height: calc(100% + 4px); /* 아래 구슬 중심까지 */
+            width: 40%; /* 구슬보다 얇게 */
+            transform: translateX(-50%);
+        }
+
+        /* 2. 비활성화(Locked) 스타일 복구: 연한 회색 사선 */
         .piece.locked .block {
-            /* 사선 패턴 제거 및 밝기 조절 (너무 어둡지 않게) */
-            filter: brightness(0.85) grayscale(0.5);
-            /* 배경 이미지 패턴 제거, 기본 음영만 유지 */
+            filter: brightness(0.9) grayscale(0.4);
             background-image: 
+                /* 빗살무늬 패턴 (연한 흰색/투명) */
+                repeating-linear-gradient(
+                    45deg,
+                    rgba(255,255,255,0.2),
+                    rgba(255,255,255,0.2) 5px,
+                    transparent 5px,
+                    transparent 10px
+                ),
+                /* 기존 구체 느낌 */
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
         }
 
@@ -690,11 +721,30 @@ function renderPieces() {
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
         el.style.zIndex = p.zIndex || 100;
         
-        p.currentShape.forEach(row => {
-            row.forEach(v => {
+        // 1. 연결부 생성 로직 추가
+        p.currentShape.forEach((row, r) => {
+            row.forEach((v, c) => {
                 const b = document.createElement('div');
-                if(v) { b.className = 'block'; b.style.backgroundColor = p.color; }
-                else b.style.visibility = 'hidden';
+                if(v) { 
+                    b.className = 'block'; 
+                    b.style.backgroundColor = p.color; 
+                    
+                    // 오른쪽 연결부 (현재 블록이 있고, 오른쪽에도 블록이 있을 때)
+                    if(c + 1 < row.length && row[c+1]) {
+                        const h = document.createElement('div');
+                        h.className = 'connector-h';
+                        b.appendChild(h);
+                    }
+                    // 아래쪽 연결부 (현재 블록이 있고, 아래쪽에도 블록이 있을 때)
+                    if(r + 1 < p.currentShape.length && p.currentShape[r+1][c]) {
+                        const v = document.createElement('div');
+                        v.className = 'connector-v';
+                        b.appendChild(v);
+                    }
+
+                } else {
+                    b.style.visibility = 'hidden';
+                }
                 el.appendChild(b);
             });
         });
@@ -1032,15 +1082,29 @@ function flipPieceData(idx) {
 function updateVisualsInDrag(idx) {
     const p = pieces[idx];
     if(pickedPieceIdx === idx) {
+        // 드래그 중 업데이트 시에도 연결부(joint)를 다시 그려야 함
+        renderPieces(); // 전체 렌더링을 호출하는 대신 부분 업데이트 로직에 연결부 추가 필요하나,
+                        // 코드가 복잡해지므로 renderPieces()를 재활용하거나 아래와 같이 수정
+        
         const el = document.getElementById(`p-${idx}`);
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
         el.innerHTML = '';
-        p.currentShape.forEach(row => row.forEach(v => {
-            const b = document.createElement('div');
-            if(v) { b.className = 'block'; b.style.backgroundColor = p.color; }
-            else b.style.visibility = 'hidden';
-            el.appendChild(b);
-        }));
+        p.currentShape.forEach((row, r) => {
+            row.forEach((v, c) => {
+                const b = document.createElement('div');
+                if(v) { 
+                    b.className = 'block'; b.style.backgroundColor = p.color; 
+                    if(c + 1 < row.length && row[c+1]) {
+                        const h = document.createElement('div'); h.className = 'connector-h'; b.appendChild(h);
+                    }
+                    if(r + 1 < p.currentShape.length && p.currentShape[r+1][c]) {
+                        const v = document.createElement('div'); v.className = 'connector-v'; b.appendChild(v);
+                    }
+                }
+                else b.style.visibility = 'hidden';
+                el.appendChild(b);
+            });
+        });
         updateGhost(idx);
     } else renderPieces();
 }
