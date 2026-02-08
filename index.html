@@ -42,7 +42,6 @@
 
         header { 
             flex: 0 0 auto;
-            /* 제목 위 패딩 유지 */
             padding-top: 15px; 
             margin: 5px 0 5px; 
             text-align: center; display: flex; align-items: center; gap: 10px; 
@@ -56,7 +55,7 @@
         }
         
         .title-icon {
-            width: 42px; height: 42px; /* 아이콘 크기 살짝 키움 */
+            width: 40px; height: 40px;
             object-fit: contain;
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
         }
@@ -90,19 +89,17 @@
             width: fit-content;
             min-width: 300px;
             margin: 0;
-            
-            /* PC Default */
             justify-content: flex-start; 
             padding-top: 3vh; 
             padding-bottom: 20px; 
         }
 
-        /* 모바일 레이아웃: 중앙 정렬 + 살짝 위로 */
+        /* 모바일 레이아웃 */
         @media (max-width: 700px) {
             #game-unit {
                 justify-content: center; 
                 padding-top: 0;
-                padding-bottom: 40px; /* 아래쪽 여백을 더 주어 전체적으로 위로 올림 */
+                padding-bottom: 30px; 
             }
         }
 
@@ -221,13 +218,26 @@
         }
         .piece.locked { cursor: not-allowed; pointer-events: none; }
         
-        /* 구슬 디자인 */
+        /* [구조 변경] 
+           .block : 위치를 잡는 투명한 컨테이너 (relative)
+           .visual-atom : 실제 눈에 보이는 구슬 (absolute, z-index: 2)
+           .connector-h/v : 연결부 (absolute, z-index: 1)
+           -> 이렇게 하면 연결부가 무조건 구슬 뒤로 갑니다.
+        */
         .block {
             width: var(--cell-size); height: var(--cell-size);
-            border-radius: 50%;
             position: relative; 
-            z-index: 2; /* 구슬이 연결부(z-index:-1) 위에 오도록 설정 */
+            /* 배경색 없음, 투명 컨테이너 */
+            border-radius: 50%;
+        }
+
+        .visual-atom {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%;
+            z-index: 2; /* 연결부보다 위에 배치 */
             
+            /* 구슬 디자인 (매트한 느낌) */
             background-image: 
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%),
                 radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.2) 100%);
@@ -236,35 +246,31 @@
                 inset -2px -2px 6px rgba(0,0,0,0.15), 
                 inset 1px 1px 2px rgba(255,255,255,0.15), 
                 1px 1px 3px rgba(0,0,0,0.2); 
-            border: none;
         }
-        
-        /* 1. 연결부(조인트) 스타일 수정 */
-        /* 핵심: 두께를 줄이고(25%), 어둡게 처리(brightness)하여 뒤로 물러나 보이게 함 */
+
+        /* 연결부 스타일 */
         .connector-h, .connector-v {
             position: absolute;
-            background-color: inherit; 
-            z-index: -1; 
-            filter: brightness(0.7); /* 어둡게 만들어 깊이감 부여 */
-            box-shadow: inset 0 0 2px rgba(0,0,0,0.5); /* 안쪽 그림자만 사용하여 매립된 느낌 */
+            background-color: inherit; /* 부모 색상 상속 */
+            z-index: 1; /* 구슬(z-index:2) 뒤로 배치 */
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.3); /* 약간 어둡게 */
+            filter: brightness(0.85); /* 구슬보다 살짝 어둡게 해서 뒤에 있는 느낌 */
         }
-        /* 가로 연결 */
         .connector-h {
             top: 50%; left: 50%;
             width: calc(100% + 4px); 
-            height: 25%; /* 40% -> 25% 로 축소 */
+            height: 40%; /* 너비 유지 */
             transform: translateY(-50%);
         }
-        /* 세로 연결 */
         .connector-v {
             top: 50%; left: 50%;
             height: calc(100% + 4px); 
-            width: 25%; /* 40% -> 25% 로 축소 */
+            width: 40%; /* 너비 유지 */
             transform: translateX(-50%);
         }
 
-        /* 2. 비활성화(Locked) 스타일 (연한 회색 사선) */
-        .piece.locked .block {
+        /* Locked 스타일 */
+        .piece.locked .visual-atom {
             filter: brightness(0.9) grayscale(0.4);
             background-image: 
                 repeating-linear-gradient(
@@ -275,6 +281,10 @@
                     transparent 10px
                 ),
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
+        }
+        /* 잠긴 조각의 연결부도 회색조로 */
+        .piece.locked .connector-h, .piece.locked .connector-v {
+            filter: brightness(0.8) grayscale(0.4);
         }
 
         .ghost-piece {
@@ -330,7 +340,7 @@
 
 <header>
     <h1>
-        <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Cat%20face/3D/cat_face_3d.png" alt="Cat Face" class="title-icon">
+        <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Grinning%20cat/3D/grinning_cat_3d.png" alt="Cat" class="title-icon">
         CATNOODLE
         <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Puzzle%20piece/3D/puzzle_piece_3d.png" alt="Puzzle" class="title-icon">
     </h1>
@@ -578,6 +588,7 @@ function createGrid() {
     
     const overlayDiv = document.createElement('div');
     overlayDiv.id = 'board-overlay';
+    // 2. 메시지 박스 이모지 조정
     overlayDiv.innerHTML = `
         <div id="board-message-box">
             <h2>축하합니다!<br>냥누들 마스터!</h2>
@@ -611,6 +622,7 @@ function loadNewGameLogic() {
         randomizeTrayPositions();
         renderPieces();
     }, 50);
+    // 2. 메시지 이모지 정리
     showMessage("새로운 게임 시작!");
 }
 
@@ -718,27 +730,37 @@ function renderPieces() {
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
         el.style.zIndex = p.zIndex || 100;
         
+        // 1. 조인트 레이어링 수정 로직
+        // .block (relative 컨테이너)
+        //   -> .visual-atom (absolute, z-index: 2) : 실제 구슬
+        //   -> .connector (absolute, z-index: 1) : 연결부 (구슬 뒤로)
         p.currentShape.forEach((row, r) => {
             row.forEach((v, c) => {
                 const b = document.createElement('div');
                 if(v) { 
                     b.className = 'block'; 
-                    b.style.backgroundColor = p.color; 
+                    b.style.backgroundColor = p.color; // connector 상속용
                     
+                    // 1-1. 실제 눈에 보이는 구슬 (visual-atom) 생성 및 추가
+                    const atom = document.createElement('div');
+                    atom.className = 'visual-atom';
+                    // 구슬은 색상을 직접 가지지 않고 스타일(.visual-atom)의 그라데이션을 따르거나, 
+                    // 필요하다면 여기서 배경색을 줄 수도 있지만, 현재 CSS는 background-image 사용 중.
+                    // 단, 그라데이션이 '투명도'를 쓰므로 밑색(b.style.backgroundColor)이 보임?
+                    // -> .block에 bg-color가 있으면 .connector 위로 올라오지 못함(같은 레벨).
+                    // -> 따라서 .visual-atom에 bg-color를 줘야 함.
+                    atom.style.backgroundColor = p.color;
+                    b.appendChild(atom);
+
+                    // 1-2. 연결부 생성 (b의 자식으로 추가, z-index로 제어)
                     if(c + 1 < row.length && row[c+1]) {
-                        const h = document.createElement('div');
-                        h.className = 'connector-h';
-                        b.appendChild(h);
+                        const h = document.createElement('div'); h.className = 'connector-h'; b.appendChild(h);
                     }
                     if(r + 1 < p.currentShape.length && p.currentShape[r+1][c]) {
-                        const v = document.createElement('div');
-                        v.className = 'connector-v';
-                        b.appendChild(v);
+                        const v = document.createElement('div'); v.className = 'connector-v'; b.appendChild(v);
                     }
-
-                } else {
-                    b.style.visibility = 'hidden';
                 }
+                else b.style.visibility = 'hidden';
                 el.appendChild(b);
             });
         });
@@ -1076,26 +1098,13 @@ function flipPieceData(idx) {
 function updateVisualsInDrag(idx) {
     const p = pieces[idx];
     if(pickedPieceIdx === idx) {
+        // 드래그 중 업데이트 - 렌더링 재사용
+        renderPieces();
         
-        const el = document.getElementById(`p-${idx}`);
-        el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
-        el.innerHTML = '';
-        p.currentShape.forEach((row, r) => {
-            row.forEach((v, c) => {
-                const b = document.createElement('div');
-                if(v) { 
-                    b.className = 'block'; b.style.backgroundColor = p.color; 
-                    if(c + 1 < row.length && row[c+1]) {
-                        const h = document.createElement('div'); h.className = 'connector-h'; b.appendChild(h);
-                    }
-                    if(r + 1 < p.currentShape.length && p.currentShape[r+1][c]) {
-                        const v = document.createElement('div'); v.className = 'connector-v'; b.appendChild(v);
-                    }
-                }
-                else b.style.visibility = 'hidden';
-                el.appendChild(b);
-            });
-        });
+        /* (참고: 최적화를 위해 원래 부분 업데이트만 하는 것이 좋으나, 
+           구조가 복잡해졌으므로(atom+connectors) renderPieces()를 호출하여 
+           DOM을 새로 그리는 것이 가장 안전하고 코드가 간결함)
+        */
         updateGhost(idx);
     } else renderPieces();
 }
