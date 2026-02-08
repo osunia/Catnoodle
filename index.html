@@ -25,13 +25,11 @@
             margin: 0;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; overflow-x: hidden; touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
+            user-select: none; -webkit-user-select: none;
         }
 
         header { 
-            margin: 20px 0 15px; 
-            text-align: center; 
+            margin: 20px 0 15px; text-align: center; 
             display: flex; align-items: center; justify-content: center; gap: 12px;
         }
         
@@ -58,7 +56,7 @@
         }
         select { background: #636e72; color: white; }
         .btn-gen { background: var(--primary-btn); }
-        .btn-check { background: #6ab04c; }
+        /* 확인 버튼 삭제됨 */
         .btn-answer { background: var(--secondary-btn); }
         button:active { transform: scale(0.97); }
 
@@ -72,9 +70,7 @@
                 flex-direction: row; align-items: flex-start; justify-content: center;
             }
             #board { margin-top: 0; }
-            #tray { 
-                width: 400px; height: 500px; /* 고정 높이 */
-            }
+            #tray { width: 420px; height: 520px; }
         }
 
         #board {
@@ -96,18 +92,34 @@
             box-shadow: inset 1px 1px 5px rgba(0,0,0,0.6);
         }
 
-        /* 📦 트레이 스타일 (자유 배치용) */
+        /* 📦 트레이 & 승리 화면 */
         #tray {
-            width: 100%;
-            min-height: 350px; /* 모바일 높이 확보 */
+            width: 100%; min-height: 400px;
             background-color: var(--tray-bg);
             border-radius: 16px;
-            /* Flex 제거 -> Relative positioning으로 변경하여 자유 배치 */
             position: relative; 
             box-shadow: 0 8px 20px rgba(0,0,0,0.08);
             border: 2px solid #dcdde1;
-            overflow: hidden; /* 조각이 튀어나가지 않게 */
+            overflow: hidden;
+            transition: all 0.3s ease;
         }
+        
+        /* 승리 시 트레이 덮는 오버레이 */
+        #tray-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.95);
+            display: none; flex-direction: column; 
+            justify-content: center; align-items: center;
+            z-index: 50; text-align: center;
+        }
+        #tray-overlay h2 { color: var(--primary-btn); margin-bottom: 20px; font-size: 1.5rem; }
+        #tray-overlay button {
+            padding: 15px 30px; font-size: 1.2rem; background: #6ab04c; color: white;
+            border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
+            box-shadow: 0 5px 15px rgba(106, 176, 76, 0.4);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         .piece {
             display: grid; gap: 1px;
@@ -116,13 +128,7 @@
         }
 
         .piece.on-board { position: absolute; gap: 2px; }
-        
-        /* 트레이 안 조각: 절대 위치로 자유롭게 배치 */
-        .piece.in-tray { 
-            position: absolute; 
-            transform: scale(0.9); 
-            /* left, top은 JS에서 랜덤 지정 */
-        }
+        .piece.in-tray { position: absolute; transform: scale(0.95); } /* 트레이에서도 크기 유지 */
 
         .piece.picked-up {
             position: fixed; cursor: grabbing;
@@ -131,7 +137,20 @@
             gap: 2px;
         }
         
-        .piece.locked { cursor: not-allowed; filter: grayscale(0.2) opacity(0.9); pointer-events: none; }
+        /* 🔒 고정 조각 빗금 처리 */
+        .piece.locked { cursor: not-allowed; pointer-events: none; }
+        .piece.locked .block {
+            border: 1px solid rgba(0,0,0,0.3);
+            /* 빗금 패턴 */
+            background-image: repeating-linear-gradient(
+                45deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 5px,
+                transparent 5px,
+                transparent 10px
+            );
+            filter: brightness(0.9);
+        }
         
         .block {
             width: var(--cell-size); height: var(--cell-size);
@@ -157,13 +176,11 @@
 
         .modal h3 { margin-top: 0; margin-bottom: 20px; color: var(--primary-btn); text-align: center; font-size: 1.2rem;}
         
-        /* 도움말 모달 */
         #helpModal ul { padding-left: 0; list-style: none; font-size: 0.95rem; color: #555; line-height: 2.2; margin: 0; }
         #helpModal li { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f2f6; }
         #helpModal li:last-child { border-bottom: none; }
         #helpModal span.key { font-weight: bold; color: #2d3436; background: #dfe6e9; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem;}
         
-        /* 정답 확인 모달 */
         #answerModal { text-align: center; }
         #answerModal p { font-size: 1.1rem; color: #2d3436; margin-bottom: 25px; }
         .modal-btn-group { display: flex; gap: 10px; justify-content: center; }
@@ -177,9 +194,10 @@
             position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(45, 52, 54, 0.95); color: white;
-            padding: 16px 32px; border-radius: 50px;
+            padding: 20px 40px; border-radius: 50px;
             display: none; z-index: 2000; text-align: center;
-            font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-size: 1.1rem;
+            font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-size: 1.2rem;
+            white-space: pre-line; /* 줄바꿈 허용 */
         }
     </style>
 </head>
@@ -197,13 +215,17 @@
         <option value="6">어려움 (6개 고정)</option>
     </select>
     <button class="game-btn btn-gen" onclick="loadNewGame()">생성</button>
-    <button class="game-btn btn-check" onclick="checkSolution()">확인</button>
     <button class="game-btn btn-answer" onclick="confirmShowAnswer()">정답</button>
 </div>
 
 <div id="game-container">
     <div id="board"></div>
-    <div id="tray"></div>
+    <div id="tray">
+        <div id="tray-overlay">
+            <h2>축하합니다!<br>당신은 냥누들 마스터입니다!</h2>
+            <button onclick="loadNewGame()">새 게임 시작 🐱</button>
+        </div>
+    </div>
 </div>
 
 <div class="modal-overlay" id="helpModal" onclick="closeHelp()">
@@ -235,30 +257,23 @@
 <script>
 document.addEventListener('contextmenu', event => event.preventDefault());
 
-// 🛠️ SHAPE DEFINITIONS
 const SHAPES_DEF = [
-    { id: 0, color: '#f39c12', shape: [[1,0],[1,0],[1,1]] }, // A
-    { id: 1, color: '#c0392b', shape: [[1,1],[1,1],[0,1]] }, // B
-    { id: 2, color: '#2980b9', shape: [[1,1,1,1],[1,0,0,0]] }, // C
-    { id: 3, color: '#ffcccc', shape: [[0,1],[0,1],[1,1],[0,1]] }, // D
-    { id: 4, color: '#27ae60', shape: [[1,1],[1,1],[0,1]] }, // E
-    { id: 5, color: '#ffffff', shape: [[1,1],[0,1]] }, // F
-    { id: 6, color: '#82ccdd', shape: [[1,0,0],[1,0,0],[1,1,1]] }, // G
-    { id: 7, color: '#fd79a8', shape: [[1,0,0],[1,1,0],[0,1,1]] }, // H
-    { id: 8, color: '#f1c40f', shape: [[1,0,1],[1,1,1]] }, // I
-    { id: 9, color: '#8e44ad', shape: [[1],[1],[1],[1]] }, // J
-    { id: 10, color: '#b8e994', shape: [[1,1],[1,1]] }, // K
-    { id: 11, color: '#95a5a6', shape: [[0,1,0],[1,1,1],[0,1,0]] } // L
+    { id: 0, color: '#f39c12', shape: [[1,0],[1,0],[1,1]] }, 
+    { id: 1, color: '#c0392b', shape: [[1,1],[1,1],[0,1]] }, 
+    { id: 2, color: '#2980b9', shape: [[1,1,1,1],[1,0,0,0]] }, 
+    { id: 3, color: '#ffcccc', shape: [[0,1],[0,1],[1,1],[0,1]] }, 
+    { id: 4, color: '#27ae60', shape: [[1,1],[1,1],[0,1]] }, 
+    { id: 5, color: '#ffffff', shape: [[1,1],[0,1]] }, 
+    { id: 6, color: '#82ccdd', shape: [[1,0,0],[1,0,0],[1,1,1]] }, 
+    { id: 7, color: '#fd79a8', shape: [[1,0,0],[1,1,0],[0,1,1]] }, 
+    { id: 8, color: '#f1c40f', shape: [[1,0,1],[1,1,1]] }, 
+    { id: 9, color: '#8e44ad', shape: [[1],[1],[1],[1]] }, 
+    { id: 10, color: '#b8e994', shape: [[1,1],[1,1]] }, 
+    { id: 11, color: '#95a5a6', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
 ];
 
 const SOLUTION_DB = [
-    [
-        [7,7,4,4,4,1,1,1,6,6,6],
-        [3,7,7,0,4,4,1,1,5,5,6],
-        [3,3,7,0,0,0,11,8,8,5,6],
-        [3,2,2,2,2,11,11,11,8,10,10],
-        [3,2,9,9,9,9,11,8,8,10,10]
-    ]
+    [[7,7,4,4,4,1,1,1,6,6,6],[3,7,7,0,4,4,1,1,5,5,6],[3,3,7,0,0,0,11,8,8,5,6],[3,2,2,2,2,11,11,11,8,10,10],[3,2,9,9,9,9,11,8,8,10,10]]
 ];
 
 const COLS = 11;
@@ -272,8 +287,8 @@ let lastTapTime = 0;
 
 const boardEl = document.getElementById('board');
 const trayEl = document.getElementById('tray');
+const trayOverlay = document.getElementById('tray-overlay');
 
-// 모달 제어
 function openHelp() { document.getElementById('helpModal').style.display = 'flex'; }
 function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
 function confirmShowAnswer() { document.getElementById('answerModal').style.display = 'flex'; }
@@ -289,10 +304,8 @@ function initLayout() {
     const isDesktop = window.innerWidth >= 850;
     const containerWidth = document.getElementById('game-container').offsetWidth;
     const targetWidth = isDesktop ? 650 : containerWidth;
-    
     cellSize = Math.floor((targetWidth - 25) / 11);
     if(cellSize > 50) cellSize = 50; 
-    
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     createGrid();
     if(pieces.length > 0) renderPieces();
@@ -309,16 +322,22 @@ function createGrid() {
 
 function loadNewGame() {
     if(pickedPieceIdx !== null) releasePiece();
+    trayOverlay.style.display = 'none'; // 승리 화면 숨김
+    
     const randIdx = 0; 
     answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[randIdx]));
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard();
     applyDifficulty();
     
-    // 트레이 내 조각들 위치 섞기
-    randomizeTrayPositions();
-    renderPieces();
-    showMessage("새로운 게임 시작!");
+    // 트레이 초기화 (랜덤 위치 재설정)
+    // 약간의 딜레이를 주어 DOM이 준비된 후 배치
+    setTimeout(() => {
+        randomizeTrayPositions();
+        renderPieces();
+    }, 50);
+    
+    showMessage("새로운 게임 시작! 😺");
 }
 
 function extractPiecesFromBoard() {
@@ -326,44 +345,70 @@ function extractPiecesFromBoard() {
     for(let id=0; id<12; id++) {
         let coords = [];
         for(let r=0; r<ROWS; r++) {
-            for(let c=0; c<COLS; c++) {
-                if(boardState[r][c] === id) coords.push({r, c});
-            }
+            for(let c=0; c<COLS; c++) { if(boardState[r][c] === id) coords.push({r, c}); }
         }
         if(coords.length === 0) continue;
-
         const minR = Math.min(...coords.map(p=>p.r));
-        const maxR = Math.max(...coords.map(p=>p.r));
         const minC = Math.min(...coords.map(p=>p.c));
-        
-        const height = maxR - minR + 1;
+        const height = Math.max(...coords.map(p=>p.r)) - minR + 1;
         const width = Math.max(...coords.map(p=>p.c)) - minC + 1;
-        
         let shape = Array(height).fill().map(()=>Array(width).fill(0));
         coords.forEach(p => { shape[p.r - minR][p.c - minC] = 1; });
 
         pieces.push({
-            id: id,
-            color: SHAPES_DEF[id].color,
-            currentShape: shape,
-            x: minC, y: minR,
-            trayX: 0, trayY: 0, // 트레이 좌표 저장용
-            isLocked: true 
+            id: id, color: SHAPES_DEF[id].color, currentShape: shape,
+            x: minC, y: minR, trayX: 0, trayY: 0, isLocked: true 
         });
     }
 }
 
+// 🛠️ 2. 스마트 트레이 배치 (겹침 방지 + 잘림 방지)
 function randomizeTrayPositions() {
-    const trayWidth = trayEl.clientWidth || 300;
-    const trayHeight = trayEl.clientHeight || 300;
+    const trayW = trayEl.clientWidth;
+    const trayH = trayEl.clientHeight;
+    // 트레이에 있는 조각들만 대상
+    const trayPieces = pieces.filter(p => !p.isLocked && p.x === -1);
     
-    pieces.forEach(p => {
-        if (!p.isLocked && p.x === -1) {
-            // 트레이 내 랜덤 위치 (대략적인 범위 내)
-            // 겹침을 허용하되 너무 밖으로 나가지 않게 여백 둠
-            p.trayX = Math.random() * (trayWidth - 100) + 20;
-            p.trayY = Math.random() * (trayHeight - 100) + 20;
+    // 배치된 영역을 저장하는 배열 {x, y, w, h}
+    let placedRects = [];
+
+    trayPieces.forEach(p => {
+        const pWidth = p.currentShape[0].length * cellSize;
+        const pHeight = p.currentShape.length * cellSize;
+        let bestX = 0, bestY = 0;
+        let valid = false;
+        
+        // 최대 50번 시도하여 빈 공간 찾기
+        for(let i=0; i<50; i++) {
+            // 잘림 방지: 좌표 범위를 (0 ~ width - pieceWidth)로 제한
+            const randX = Math.random() * (trayW - pWidth - 10);
+            const randY = Math.random() * (trayH - pHeight - 10);
+            
+            // 겹침 검사
+            let overlap = false;
+            for(let rect of placedRects) {
+                // 사각형 충돌 검사 (약간의 여유 5px)
+                if (randX < rect.x + rect.w + 5 && randX + pWidth + 5 > rect.x &&
+                    randY < rect.y + rect.h + 5 && randY + pHeight + 5 > rect.y) {
+                    overlap = true;
+                    break;
+                }
+            }
+            
+            if(!overlap) {
+                bestX = randX; bestY = randY; valid = true; break;
+            }
         }
+        
+        // 실패 시 그냥 랜덤 (어쩔 수 없음)
+        if(!valid) {
+            bestX = Math.random() * (trayW - pWidth - 10);
+            bestY = Math.random() * (trayH - pHeight - 10);
+        }
+
+        p.trayX = Math.max(0, bestX); // 음수 방지
+        p.trayY = Math.max(0, bestY);
+        placedRects.push({x: bestX, y: bestY, w: pWidth, h: pHeight});
     });
 }
 
@@ -372,7 +417,6 @@ function applyDifficulty() {
     let allIndices = pieces.map((_, i) => i);
     let lockedIndices = [];
     for(let i=0; i<keepCount; i++) {
-        if(allIndices.length === 0) break;
         let r = Math.floor(Math.random() * allIndices.length);
         lockedIndices.push(allIndices[r]);
         allIndices.splice(r, 1);
@@ -416,10 +460,8 @@ function renderPieces() {
             });
         });
 
-        if(!isInTray) {
-            placeOnBoard(el, p.x, p.y);
-        } else {
-            // 🛠️ 트레이 자유 배치 로직 적용
+        if(!isInTray) placeOnBoard(el, p.x, p.y);
+        else {
             el.style.left = `${p.trayX}px`;
             el.style.top = `${p.trayY}px`;
             trayEl.appendChild(el);
@@ -431,10 +473,8 @@ function renderPieces() {
 
 function placeOnBoard(el, x, y) {
     const gap = 2; const padding = 10; 
-    const left = padding + x * (cellSize + gap);
-    const top = padding + y * (cellSize + gap);
-    el.style.left = `${left}px`;
-    el.style.top = `${top}px`;
+    el.style.left = `${padding + x * (cellSize + gap)}px`;
+    el.style.top = `${padding + y * (cellSize + gap)}px`;
     boardEl.appendChild(el);
 }
 
@@ -443,18 +483,21 @@ function setupInteraction(el, idx) {
     el.addEventListener('touchstart', (e) => handleTouchStart(e, idx, el), {passive: false});
 }
 
-// PC Interaction
+// 🖱️ 1. 터치/클릭 간섭 방지 로직
 function handleMouseDown(e, idx, el) {
     e.stopPropagation();
-    if(e.button === 2) { flipPieceData(idx); return; }
+    // 5. PC 우클릭: 들고 있을 때도, 바닥에 있을 때도 작동
+    if(e.button === 2) { 
+        flipPieceData(idx); 
+        return; 
+    }
     if(e.button !== 0) return;
     
+    // 이미 다른 조각을 들고 있으면 무시 (놓기 동작만 허용)
+    if(pickedPieceIdx !== null && pickedPieceIdx !== idx) return;
+
     if(pickedPieceIdx === null) pickUpPiece(idx, el, e.clientX, e.clientY);
-    else if (pickedPieceIdx === idx) dropPiece(idx, el, e.clientX, e.clientY);
-    else {
-        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
-        pickUpPiece(idx, el, e.clientX, e.clientY);
-    }
+    else dropPiece(idx, el, e.clientX, e.clientY);
 }
 
 function pickUpPiece(idx, el, startX, startY) {
@@ -491,23 +534,15 @@ function onGlobalClick(e) {
     }
 }
 
-function releasePiece() {
-    if(pickedPieceIdx !== null) {
-        pickedPieceIdx = null; renderPieces(); cleanupListeners();
-    }
-}
-
 function dropPiece(idx, el, clientX, clientY) {
     const bRect = boardEl.getBoundingClientRect();
-    const tRect = trayEl.getBoundingClientRect();
     const p = pieces[idx];
+    let placed = false;
     
-    // Check Board Drop
     if(clientX > bRect.left && clientX < bRect.right && clientY > bRect.top && clientY < bRect.bottom) {
         const gap = 2;
         const relX = el.getBoundingClientRect().left - bRect.left - 10;
         const relY = el.getBoundingClientRect().top - bRect.top - 10;
-        
         const gx = Math.round(relX / (cellSize + gap));
         const gy = Math.round(relY / (cellSize + gap));
 
@@ -516,43 +551,51 @@ function dropPiece(idx, el, clientX, clientY) {
         if(canPlace(p.currentShape, gy, gx)) {
             placePieceToBoardState(p.currentShape, gy, gx, p.id);
             p.x = gx; p.y = gy;
+            placed = true;
         } else {
-            // Invalid on board -> Return to Tray
             returnToTrayRandomly(p);
         }
     } else {
-        // Not on board -> Return to Tray (New Random Position)
         if(p.x !== -1) removePieceFromBoardState(p.currentShape, p.y, p.x);
         returnToTrayRandomly(p);
     }
 
-    pickedPieceIdx = null;
-    cleanupListeners();
-    renderPieces();
-}
-
-function returnToTrayRandomly(p) {
-    const trayWidth = trayEl.clientWidth || 300;
-    const trayHeight = trayEl.clientHeight || 300;
-    p.x = -1; p.y = -1;
-    // 드롭 시 트레이 내 랜덤 좌표 갱신 (자유 배치 느낌)
-    p.trayX = Math.random() * (trayWidth - 100) + 20;
-    p.trayY = Math.random() * (trayHeight - 100) + 20;
-}
-
-function cleanupListeners() {
+    // 1. 이벤트 리스너 제거 및 초기화 (간섭 방지 핵심)
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('wheel', onWheel);
     document.removeEventListener('mousedown', onGlobalClick);
+    pickedPieceIdx = null;
+    
+    renderPieces();
+    
+    // 3. 놓자마자 자동 승리 체크
+    if(placed) checkWinCondition();
+}
+
+function returnToTrayRandomly(p) {
+    p.x = -1; p.y = -1;
+    // 트레이 복귀 시 겹침 방지 재계산
+    // (간단히 랜덤 위치만 부여, 전체 재배치는 UX상 혼란스러울 수 있으므로 단일 랜덤)
+    const trayW = trayEl.clientWidth || 350;
+    const trayH = trayEl.clientHeight || 400;
+    const pWidth = p.currentShape[0].length * cellSize;
+    const pHeight = p.currentShape.length * cellSize;
+    
+    // 잘림 방지 좌표
+    p.trayX = Math.random() * (trayW - pWidth - 10);
+    p.trayY = Math.random() * (trayH - pHeight - 10);
 }
 
 // Mobile Logic
 function handleTouchStart(e, idx, el) {
     if(e.touches.length > 1) return;
     e.preventDefault();
+    
+    // 다른 조각 들고 있으면 터치 무시
+    if(pickedPieceIdx !== null && pickedPieceIdx !== idx) return;
+
     const touch = e.touches[0];
     const currentTime = new Date().getTime();
-    
     if(currentTime - lastTapTime < 300) { flipPieceData(idx); lastTapTime = 0; return; }
     lastTapTime = currentTime;
 
@@ -637,20 +680,18 @@ function placePieceToBoardState(shape, r, c, id) {
     for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=id;
 }
 
-// 🛠️ 3. 확인 버튼 로직: 남은 조각 수 계산
-function checkSolution() {
+// 🛠️ 3. 자동 승리 체크 및 연출
+function checkWinCondition() {
     const remainingPieces = pieces.filter(p => p.x === -1).length;
-    
     if(remainingPieces === 0) {
-        showMessage("🎉 축하합니다! CATNOODLE 정복!");
-    } else {
-        showMessage(`아직 ${remainingPieces}조각이 남았습니다.`);
+        showMessage("축하합니다!\n당신은 냥누들 마스터입니다!");
+        trayOverlay.style.display = 'flex'; // 새 게임 버튼 표시
     }
 }
 
 function showMessage(t) {
     const m=document.getElementById('message'); m.textContent=t; m.style.display='block';
-    setTimeout(()=>m.style.display='none', 1500);
+    setTimeout(()=>m.style.display='none', 2000);
 }
 
 window.addEventListener('resize', initLayout);
