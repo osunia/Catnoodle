@@ -16,10 +16,9 @@
             --tray-bg: #ffffff;
             --primary-btn: #4834d4;
             --secondary-btn: #eb4d4b;
-            --reset-btn: #f0932b; /* 초기화 버튼 색상 */
+            --reset-btn: #f0932b;
             --text-color: #2d3436;
             --cell-size: 32px;
-            /* 모달 디자인 변수 */
             --modal-bg: #1e1e1e;
             --modal-text: #ffffff;
         }
@@ -27,7 +26,6 @@
         * { box-sizing: border-box; }
 
         body {
-            /* 기본 한글 폰트 적용 */
             font-family: 'Gowun Dodum', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -41,14 +39,13 @@
 
         header { margin: 20px 0 15px; text-align: center; display: flex; align-items: center; gap: 10px; }
         
-        /* 1. 영문 타이틀 폰트 및 3D 이모지 설정 */
         h1 { 
             margin: 0; font-size: 2.2rem; color: #2d3436; 
-            font-family: 'Oswald', sans-serif; /* 영문 전용 폰트 */
+            font-family: 'Oswald', sans-serif; 
             font-weight: 700; letter-spacing: 0px; 
             display: flex; align-items: center; gap: 8px;
         }
-        /* 3D 고양이 이미지 스타일 */
+        
         .cat-3d-icon {
             width: 48px; height: 48px;
             object-fit: contain;
@@ -65,11 +62,11 @@
         select, button.game-btn {
             padding: 10px 18px; border-radius: 8px; border: none; font-size: 1rem;
             cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.1); font-weight: 400; color: white;
-            font-family: 'Gowun Dodum', sans-serif; /* 버튼 폰트 */
+            font-family: 'Gowun Dodum', sans-serif;
         }
         select { background: #636e72; color: white; font-weight: bold;}
         .btn-gen { background: var(--primary-btn); }
-        .btn-reset { background: var(--reset-btn); } /* 초기화 버튼 */
+        .btn-reset { background: var(--reset-btn); }
         .btn-answer { background: var(--secondary-btn); }
 
         #game-container {
@@ -106,9 +103,11 @@
             box-shadow: inset 1px 1px 5px rgba(0,0,0,0.6);
         }
 
+        /* 👻 Ghost Piece: 투명도 수정 (0.5 -> 0.2) */
         .ghost-piece {
             position: absolute; display: grid; gap: 2px;
-            pointer-events: none; z-index: 50; opacity: 0.5;
+            pointer-events: none; z-index: 50; 
+            opacity: 0.2; /* 더 투명하게 */
             transition: left 0.05s, top 0.05s;
         }
         .ghost-block {
@@ -129,22 +128,28 @@
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* 3. 축하 메시지 박스 스타일 수정 (투명 배경) */
         #board-message-box {
-            background: white;
-            padding: 20px 40px;
-            border-radius: 16px;
+            background: transparent; /* 배경 투명 */
+            padding: 20px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            width: 85%; max-width: 450px;
+            box-shadow: none; /* 그림자 제거 */
+            width: 90%; 
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         #board-message-box h2 {
-            margin: 0; color: var(--primary-btn);
-            font-size: 1.4rem; line-height: 1.5;
-            word-break: keep-all; font-family: 'Gowun Dodum', sans-serif;
+            margin: 0; 
+            color: #ffffff; /* 흰색 글씨 */
+            font-size: 1.8rem; line-height: 1.4;
+            word-break: keep-all; 
+            font-family: 'Gowun Dodum', sans-serif;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5); /* 가독성용 그림자 */
         }
         #board-message-box p {
-            margin: 10px 0 0; color: #555; font-size: 1rem;
+            margin: 15px 0 0; 
+            color: #ecf0f1; /* 밝은 회색 */
+            font-size: 1.1rem;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.5);
         }
 
         #tray {
@@ -196,27 +201,26 @@
             border: 0.5px solid rgba(0,0,0,0.1);
         }
 
-        /* 3. 모달 디자인 변경: Dark & Simple */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.6); z-index: 3000;
             display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px);
         }
         .modal {
-            background: var(--modal-bg); /* 짙은 검정 */
-            color: var(--modal-text); /* 흰색 글씨 */
+            background: var(--modal-bg);
+            color: var(--modal-text);
             padding: 30px; 
-            border-radius: 8px; /* 둥글기 최소화 */
+            border-radius: 8px;
             max-width: 320px; width: 90%; text-align: left;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             animation: popIn 0.2s ease-out;
-            border: 1px solid #444; /* 경계선 살짝 */
+            border: 1px solid #444;
         }
         @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
         .modal h3 { 
             margin-top: 0; margin-bottom: 20px; 
-            color: #ffffff; /* 제목 흰색 */
+            color: #ffffff; 
             text-align: center; font-size: 1.3rem; 
             border-bottom: 1px solid #444; padding-bottom: 15px;
         }
@@ -235,9 +239,8 @@
             font-family: 'Gowun Dodum', sans-serif;
         }
         
-        /* 모달 버튼 스타일 (Dark theme) */
         .btn-yes { background: var(--secondary-btn); color: white; }
-        .btn-no { background: #4a4a4a; color: #ecf0f1; } /* 회색 버튼 */
+        .btn-no { background: #4a4a4a; color: #ecf0f1; }
         
         .modal button.close-btn { 
             margin-top: 20px; background: #4a4a4a; width: 100%; 
@@ -260,7 +263,7 @@
 <body>
 
 <header>
-    <h1>CATNOODLE <img src="https://cdn-icons-png.flaticon.com/512/4392/4392468.png" alt="3D Cat" class="cat-3d-icon"></h1>
+    <h1>CATNOODLE <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Cat/3D/cat_3d.png" alt="3D Cat" class="cat-3d-icon"></h1>
     <button class="btn-help" onclick="openHelp()">?</button>
 </header>
 
@@ -388,13 +391,11 @@ function executeShowAnswer() {
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard(); 
     renderPieces();
-    checkWinCondition(); // 정답 시 바로 오버레이 체크
+    // 2. 중요: 정답을 볼 때는 승리 체크를 하지 않음 (축하 메시지 안 뜨게)
 }
 
-// 2. 초기화 실행 로직
 function executeReset() {
     closeReset();
-    // 잠기지 않은(isLocked === false) 조각들 중, 보드에 있는(x !== -1) 조각만 회수
     pieces.forEach(p => {
         if (!p.isLocked && p.x !== -1) {
             removePieceFromBoardState(p.currentShape, p.y, p.x);
@@ -402,10 +403,8 @@ function executeReset() {
             p.y = -1;
         }
     });
-    // 트레이 재정렬
     randomizeTrayPositions();
     renderPieces();
-    // 혹시 오버레이 떠있으면 끄기
     boardOverlay.style.display = 'none';
     trayOverlay.style.display = 'none';
     showMessage("초기화되었습니다!");
