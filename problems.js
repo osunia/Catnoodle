@@ -1452,9 +1452,8 @@ const RAW_PUZZLES_TEXT = [
     ]
 ];
 
-// --- ⚙️ 시스템 엔진 (수정 없음) ---
+// --- ⚙️ 시스템 엔진 (업그레이드 버전) ---
 function parsePuzzles() {
-    // I(Yellow)가 OCR상 O나 0으로 보일 경우를 대비해 매핑 추가
     const charMap = {
         'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 
         'G': 6, 'H': 7, 'I': 8, 'J': 9, 'K': 10, 'L': 11,
@@ -1462,25 +1461,31 @@ function parsePuzzles() {
     };
 
     let parsedDB = [];
+    let errorCount = 0;
+
+    console.group("🧩 Puzzle Data Processing..."); // 로그 그룹 시작
 
     RAW_PUZZLES_TEXT.forEach((puzzleLines, pIdx) => {
         let grid = [];
+        const puzzleId = pIdx + 1; // 1부터 시작하는 번호 (사람이 보기 편하게)
+        
         const lines = Array.isArray(puzzleLines) ? puzzleLines : puzzleLines.split('|');
         
-        // 5줄 체크
+        // 1. 줄 개수 체크 (5줄 필수)
         if (lines.length !== 5) {
-            console.error(`Error: Puzzle #${pIdx+1} has ${lines.length} rows.`);
+            console.error(`🚨 [CRITICAL ERROR] Puzzle #${puzzleId}: 줄 개수가 ${lines.length}개입니다. (5개여야 함)`);
+            errorCount++;
             return;
         }
 
         for (let r = 0; r < 5; r++) {
             let rowData = [];
-            // 공백 제거 및 정리
             let cleanLine = lines[r].replace(/\s/g, '').toUpperCase();
             
-            // 11칸 체크
+            // 2. 칸 개수 체크 (11칸 필수)
             if (cleanLine.length !== 11) {
-                console.warn(`Warning: Puzzle #${pIdx+1} Row ${r+1} length is ${cleanLine.length} (Expected 11). Check: ${cleanLine}`);
+                console.warn(`⚠️ [WARNING] Puzzle #${puzzleId} (Row ${r+1}): 글자 수가 ${cleanLine.length}개입니다. (11개여야 함) \n   👉 확인: "${cleanLine}"`);
+                errorCount++;
             }
 
             for (let c = 0; c < 11; c++) {
@@ -1488,16 +1493,60 @@ function parsePuzzles() {
                 if (charMap.hasOwnProperty(char)) {
                     rowData.push(charMap[char]);
                 } else {
-                    rowData.push(-1); // 에러 문자 처리
+                    console.error(`❌ [INVALID CHAR] Puzzle #${puzzleId}: 알 수 없는 문자 '${char}' 발견.`);
+                    rowData.push(-1); 
                 }
             }
             grid.push(rowData);
         }
+
+        // ✨ 핵심 기능: 그리드 배열에 ID 속성 심기 (기존 로직 안 깨짐)
+        // 사용법: SOLUTION_DB[0].id => 1
+        grid.id = puzzleId; 
         parsedDB.push(grid);
     });
 
-    console.log(`🚀 ${parsedDB.length} Puzzles Loaded Successfully!`);
+    console.groupEnd(); // 로그 그룹 종료
+
+    if (errorCount === 0) {
+        console.log(`✅ ${parsedDB.length} Puzzles Loaded Perfectly! (No Errors)`);
+    } else {
+        console.log(`🔥 Loaded ${parsedDB.length} Puzzles with ${errorCount} warnings/errors. Please check console.`);
+    }
+
     return parsedDB;
 }
 
+// 4. 데이터 로드 실행
 const SOLUTION_DB = parsePuzzles();
+
+
+// --- 🛠️ [보너스] 특정 퍼즐 검사 도구 ---
+// 브라우저 콘솔(F12)에서 checkPuzzle(29) 라고 치면 모양을 보여줍니다.
+function checkPuzzle(number) {
+    const idx = number - 1;
+    const puzzle = SOLUTION_DB[idx];
+
+    if (!puzzle) {
+        console.log(`🚫 Puzzle #${number} not found.`);
+        return;
+    }
+
+    console.log(`🔎 Inspecting Puzzle #${puzzle.id}:`);
+    
+    // 색상 시각화 (콘솔에서도 예쁘게 보이도록)
+    const colorIcons = ['🧡','❤️','💙','🍑','💚','🤍','☁️','🌸','💛','💜','🍈','🐭']; 
+    // A=0, B=1 ... L=11 대응
+
+    let visual = "";
+    for(let r=0; r<5; r++) {
+        let rowStr = "";
+        for(let c=0; c<11; c++) {
+            const val = puzzle[r][c];
+            rowStr += (val >= 0 && val < 12) ? colorIcons[val] : "❓";
+        }
+        visual += rowStr + "\n";
+    }
+    console.log(visual);
+    return puzzle; // 데이터도 반환
+}
