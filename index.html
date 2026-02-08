@@ -11,14 +11,17 @@
     <style>
         :root {
             --bg-color: #f5f6fa;
-            --board-bg: #2d3436;
+            /* 보드와 트레이 색상 통일 */
+            --board-bg: #2d3436; 
+            --tray-bg: #2d3436;
             --hole-color: #151819;
-            --tray-bg: #ffffff;
-            --primary-btn: #4834d4;
-            --secondary-btn: #eb4d4b;
-            --reset-btn: #f0932b;
+            /* 버튼 색상 */
+            --control-color: #636e72; /* 선택박스 & 생성버튼 */
+            --secondary-btn: #eb4d4b; /* 정답 */
+            --reset-btn: #f0932b;     /* 초기화 */
             --text-color: #2d3436;
-            --cell-size: 32px;
+            --cell-size: 32px; /* JS에서 동적 조절됨 */
+            
             --modal-bg: #1e1e1e;
             --modal-text: #ffffff;
         }
@@ -31,143 +34,131 @@
             color: var(--text-color);
             margin: 0;
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; 
-            overflow: hidden; 
+            height: 100vh; /* 화면 꽉 채우기 */
+            overflow: hidden; /* 스크롤 방지 */
             touch-action: none; 
             user-select: none; -webkit-user-select: none;
         }
 
-        header { margin: 20px 0 15px; text-align: center; display: flex; align-items: center; gap: 10px; }
+        /* 헤더 높이 최소화 */
+        header { 
+            flex: 0 0 auto;
+            margin: 10px 0 5px; 
+            text-align: center; display: flex; align-items: center; gap: 10px; 
+        }
         
         h1 { 
-            margin: 0; font-size: 2.2rem; color: #2d3436; 
+            margin: 0; font-size: 1.8rem; color: #2d3436; 
             font-family: 'Oswald', sans-serif; 
             font-weight: 700; letter-spacing: 0px; 
             display: flex; align-items: center; gap: 8px;
         }
         
         .cat-3d-icon {
-            width: 48px; height: 48px;
+            width: 40px; height: 40px;
             object-fit: contain;
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
         }
         
         .btn-help {
-            width: 26px; height: 26px; border-radius: 50%;
-            background: #b2bec3; color: white; border: none; font-weight: bold; font-size: 1rem; cursor: pointer;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: #b2bec3; color: white; border: none; font-weight: bold; font-size: 0.9rem; cursor: pointer;
             font-family: 'Oswald', sans-serif;
         }
 
-        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; z-index: 20; }
+        /* 컨트롤 영역 */
+        .controls { 
+            flex: 0 0 auto;
+            display: flex; gap: 8px; margin-bottom: 10px; 
+            flex-wrap: wrap; justify-content: center; z-index: 20; 
+        }
         select, button.game-btn {
-            padding: 10px 18px; border-radius: 8px; border: none; font-size: 1rem;
+            padding: 8px 14px; border-radius: 6px; border: none; font-size: 0.95rem;
             cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.1); font-weight: 400; color: white;
             font-family: 'Gowun Dodum', sans-serif;
         }
-        select { background: #636e72; color: white; font-weight: bold;}
-        .btn-gen { background: var(--primary-btn); }
+        /* 4. 생성 버튼 색상을 select와 동일하게 */
+        select { background: var(--control-color); color: white; font-weight: bold;}
+        .btn-gen { background: var(--control-color); } 
         .btn-reset { background: var(--reset-btn); }
         .btn-answer { background: var(--secondary-btn); }
 
-        #game-container {
+        /* 게임 전체 컨테이너 (보드+이음매+트레이) */
+        #game-unit {
             display: flex; flex-direction: column; align-items: center;
-            gap: 25px; width: 95%; max-width: 1100px; padding: 10px;
-            height: calc(100vh - 150px);
-            overflow-y: auto; 
-            touch-action: none; 
+            position: relative;
+            padding: 0;
+            /* 화면 남은 공간에 맞춤 */
+            flex: 1 1 auto; 
+            display: flex; 
+            justify-content: center;
+            width: 100%;
+            max-width: 600px; /* 너무 넓어지지 않게 제한 */
         }
 
-        @media (min-width: 850px) {
-            #game-container { flex-direction: row; align-items: flex-start; justify-content: center; overflow: visible; }
-            #board { margin-top: 0; }
-            #tray { width: 420px; height: 520px; }
-        }
-
+        /* 보드 스타일 */
         #board {
             display: grid;
             grid-template-columns: repeat(11, var(--cell-size));
             grid-template-rows: repeat(5, var(--cell-size));
             gap: 2px;
             background-color: var(--board-bg);
-            padding: 10px; border-radius: 16px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            padding: 10px; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             position: relative; flex-shrink: 0;
             border: 4px solid #dfe6e9;
             touch-action: none;
+            z-index: 10;
         }
 
         .cell {
             width: var(--cell-size); height: var(--cell-size);
             background-color: var(--hole-color);
             border-radius: 50%;
-            box-shadow: inset 1px 1px 5px rgba(0,0,0,0.6);
+            box-shadow: inset 1px 1px 4px rgba(0,0,0,0.6);
         }
 
-        /* 👻 Ghost Piece: 투명도 수정 (0.5 -> 0.2) */
-        .ghost-piece {
-            position: absolute; display: grid; gap: 2px;
-            pointer-events: none; z-index: 50; 
-            opacity: 0.2; /* 더 투명하게 */
-            transition: left 0.05s, top 0.05s;
+        /* 1. 이음매 (Joints) 영역 */
+        #joints-container {
+            display: flex; justify-content: space-between;
+            width: 90%; /* 보드보다 약간 안쪽 */
+            height: 20px; /* 연결부 높이 */
+            z-index: 5;
+            margin-top: -5px; /* 살짝 겹치게 */
+            margin-bottom: -5px;
         }
-        .ghost-block {
-            width: var(--cell-size); height: var(--cell-size);
-            border-radius: 50%;
-            background-color: white;
-            border: 2px dashed rgba(255,255,255,0.9);
-        }
-
-        /* 보드 완료 오버레이 */
-        #board-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.65);
-            display: none; justify-content: center; align-items: center;
-            z-index: 5000; border-radius: 12px;
-            backdrop-filter: blur(2px);
-            animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* 3. 축하 메시지 박스 스타일 수정 (투명 배경) */
-        #board-message-box {
-            background: transparent; /* 배경 투명 */
-            padding: 20px;
-            text-align: center;
-            box-shadow: none; /* 그림자 제거 */
-            width: 90%; 
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #board-message-box h2 {
-            margin: 0; 
-            color: #ffffff; /* 흰색 글씨 */
-            font-size: 1.8rem; line-height: 1.4;
-            word-break: keep-all; 
-            font-family: 'Gowun Dodum', sans-serif;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5); /* 가독성용 그림자 */
-        }
-        #board-message-box p {
-            margin: 15px 0 0; 
-            color: #ecf0f1; /* 밝은 회색 */
-            font-size: 1.1rem;
-            text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+        .joint {
+            width: 20px; height: 100%;
+            background: #151819; /* 짙은 검정 플라스틱 */
+            border-radius: 4px;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5), 0 2px 5px rgba(0,0,0,0.3);
         }
 
+        /* 2. 트레이 스타일 (보드와 색상 동일) */
         #tray {
-            width: 100%; min-height: 300px; flex-grow: 1;
+            width: 100%; 
+            /* 트레이는 남은 높이를 다 채우되 최소 높이 보장 */
+            flex-grow: 1; 
+            min-height: 150px; 
             background-color: var(--tray-bg);
-            border-radius: 16px; position: relative; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08); border: 2px solid #dcdde1;
-            overflow: hidden; touch-action: none; transition: all 0.3s ease;
+            border-radius: 12px; position: relative; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
+            border: 4px solid #dfe6e9;
+            /* 상단 테두리는 이음매 느낌 위해 살짝 조정 가능하나 통일성 위해 유지 */
+            overflow: hidden; touch-action: none; 
+            z-index: 9;
+            margin-bottom: 10px; /* 바닥 여백 */
         }
-        
+
+        /* 오버레이들 */
         #tray-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.8);
+            background: rgba(45, 52, 54, 0.4); /* 트레이가 어두우니 반투명도 조절 */
             display: none; flex-direction: column; 
             justify-content: center; align-items: center; z-index: 50; text-align: center;
         }
         #tray-overlay button {
-            padding: 16px 40px; font-size: 1.3rem; background: #6ab04c; color: white;
+            padding: 12px 30px; font-size: 1.2rem; background: #6ab04c; color: white;
             border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
             box-shadow: 0 5px 15px rgba(106, 176, 76, 0.4);
             animation: pulse 1.5s infinite;
@@ -175,6 +166,33 @@
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
+        #board-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.65);
+            display: none; justify-content: center; align-items: center;
+            z-index: 5000; border-radius: 8px;
+            backdrop-filter: blur(2px);
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #board-message-box {
+            background: transparent; padding: 10px;
+            text-align: center; width: 100%;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #board-message-box h2 {
+            margin: 0; color: #ffffff;
+            font-size: 1.6rem; line-height: 1.4;
+            word-break: keep-all; font-family: 'Gowun Dodum', sans-serif;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        #board-message-box p {
+            margin: 10px 0 0; color: #ecf0f1; font-size: 1rem;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+        }
+
+        /* 조각 스타일 */
         .piece {
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
@@ -200,62 +218,50 @@
             box-shadow: inset -4px -4px 8px rgba(0,0,0,0.25), inset 3px 3px 8px rgba(255,255,255,0.4), 1px 1px 2px rgba(0,0,0,0.2);
             border: 0.5px solid rgba(0,0,0,0.1);
         }
+        .ghost-piece {
+            position: absolute; display: grid; gap: 2px;
+            pointer-events: none; z-index: 50; opacity: 0.2;
+            transition: left 0.05s, top 0.05s;
+        }
+        .ghost-block {
+            width: var(--cell-size); height: var(--cell-size);
+            border-radius: 50%;
+            background-color: white;
+            border: 2px dashed rgba(255,255,255,0.9);
+        }
 
+        /* 모달 공통 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 3000;
+            background: rgba(0,0,0,0.6); z-index: 6000;
             display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px);
         }
         .modal {
-            background: var(--modal-bg);
-            color: var(--modal-text);
-            padding: 30px; 
-            border-radius: 8px;
-            max-width: 320px; width: 90%; text-align: left;
+            background: var(--modal-bg); color: var(--modal-text);
+            padding: 25px; border-radius: 8px;
+            max-width: 300px; width: 85%; text-align: left;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            animation: popIn 0.2s ease-out;
-            border: 1px solid #444;
+            animation: popIn 0.2s ease-out; border: 1px solid #444;
         }
-        @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        .modal h3 { 
-            margin-top: 0; margin-bottom: 20px; 
-            color: #ffffff; 
-            text-align: center; font-size: 1.3rem; 
-            border-bottom: 1px solid #444; padding-bottom: 15px;
-        }
-        
-        #helpModal ul { padding-left: 0; list-style: none; font-size: 0.95rem; color: #ccc; line-height: 2.2; margin: 0; }
-        #helpModal li { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; }
-        #helpModal span.key { font-weight: bold; color: #1e1e1e; background: #dcdde1; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem;}
-        
-        #answerModal, #resetModal { text-align: center; }
-        #answerModal p, #resetModal p { font-size: 1.1rem; color: #ddd; margin-bottom: 25px; line-height: 1.5; }
-        
+        .modal h3 { margin: 0 0 15px; color: #fff; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px;}
         .modal-btn-group { display: flex; gap: 10px; justify-content: center; }
         .modal-btn-group button { 
-            flex: 1; padding: 12px; border-radius: 6px; border: none; 
+            flex: 1; padding: 10px; border-radius: 6px; border: none; 
             font-weight: bold; cursor: pointer; font-size: 1rem; 
             font-family: 'Gowun Dodum', sans-serif;
         }
-        
         .btn-yes { background: var(--secondary-btn); color: white; }
         .btn-no { background: #4a4a4a; color: #ecf0f1; }
+        .modal button.close-btn { margin-top: 15px; background: #4a4a4a; width: 100%; border-radius: 6px; padding: 10px; color: white; border: none; font-weight: bold; cursor: pointer; font-family: 'Gowun Dodum', sans-serif;}
+        #helpModal ul { padding-left: 0; list-style: none; color: #ccc; margin: 0; font-size: 0.9rem;}
+        #helpModal li { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 5px 0;}
         
-        .modal button.close-btn { 
-            margin-top: 20px; background: #4a4a4a; width: 100%; 
-            border-radius: 6px; padding: 12px; color: white; 
-            border: none; font-weight: bold; cursor: pointer;
-            font-family: 'Gowun Dodum', sans-serif;
-        }
-
         #message {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(45, 52, 54, 0.95); color: white;
-            padding: 20px 40px; border-radius: 50px;
-            display: none; z-index: 2000; text-align: center;
-            font-weight: 800; box-shadow: 0 10px 30px rgba(0,0,0,0.3); font-size: 1.2rem;
-            white-space: pre-line;
+            padding: 15px 30px; border-radius: 50px;
+            display: none; z-index: 7000; text-align: center;
+            font-weight: 800; font-size: 1.1rem;
             pointer-events: none;
         }
     </style>
@@ -269,16 +275,16 @@
 
 <div class="controls">
     <select id="difficulty">
-        <option value="2">쉬움 (2개 고정)</option>
-        <option value="4" selected>보통 (4개 고정)</option>
-        <option value="6">어려움 (6개 고정)</option>
+        <option value="2">2개</option>
+        <option value="4" selected>4개</option>
+        <option value="6">6개</option>
     </select>
     <button class="game-btn btn-gen" onclick="loadNewGame()">생성</button>
     <button class="game-btn btn-reset" onclick="confirmReset()">초기화</button>
     <button class="game-btn btn-answer" onclick="confirmShowAnswer()">정답</button>
 </div>
 
-<div id="game-container">
+<div id="game-unit">
     <div id="board">
         <div id="ghost" class="ghost-piece" style="display:none;"></div>
         <div id="board-overlay">
@@ -288,6 +294,12 @@
             </div>
         </div>
     </div>
+    
+    <div id="joints-container">
+        <div class="joint"></div>
+        <div class="joint"></div>
+    </div>
+
     <div id="tray">
         <div id="tray-overlay">
             <button onclick="loadNewGame()">새 게임 시작 🐱</button>
@@ -300,8 +312,8 @@
         <h3>조작 방법</h3>
         <ul>
             <li><span>조각 들기</span> <span class="key">클릭 / 드래그</span></li>
-            <li><span>뒤집기</span> <span class="key">우클릭 / 탭(터치)</span></li>
-            <li><span>회전 (90도)</span> <span class="key">휠 / 드래그 중 다른손 터치</span></li>
+            <li><span>뒤집기</span> <span class="key">우클릭 / 탭</span></li>
+            <li><span>회전</span> <span class="key">휠 / 다른손 터치</span></li>
         </ul>
         <button class="close-btn" onclick="closeHelp()">닫기</button>
     </div>
@@ -310,7 +322,7 @@
 <div class="modal-overlay" id="answerModal" onclick="closeAnswer()">
     <div class="modal" onclick="event.stopPropagation()">
         <h3>정답 확인</h3>
-        <p>현재 진행 상황이 사라집니다.<br>정답을 보시겠습니까?</p>
+        <p style="text-align:center; color:#ddd; margin: 20px 0;">현재 진행 상황이 사라집니다.<br>정답을 보시겠습니까?</p>
         <div class="modal-btn-group">
             <button class="btn-no" onclick="closeAnswer()">아니오</button>
             <button class="btn-yes" onclick="executeShowAnswer()">예</button>
@@ -321,7 +333,7 @@
 <div class="modal-overlay" id="resetModal" onclick="closeReset()">
     <div class="modal" onclick="event.stopPropagation()">
         <h3>초기화</h3>
-        <p>진행 중인 퍼즐 조각을<br>모두 모음판으로 되돌릴까요?</p>
+        <p style="text-align:center; color:#ddd; margin: 20px 0;">모든 조각을<br>모음판으로 되돌릴까요?</p>
         <div class="modal-btn-group">
             <button class="btn-no" onclick="closeReset()">아니오</button>
             <button class="btn-yes" onclick="executeReset()">예</button>
@@ -377,12 +389,11 @@ const trayOverlay = document.getElementById('tray-overlay');
 const boardOverlay = document.getElementById('board-overlay'); 
 const ghostEl = document.getElementById('ghost');
 
-// Modal Control Functions
+// Functions
 function openHelp() { document.getElementById('helpModal').style.display = 'flex'; }
 function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
 function confirmShowAnswer() { document.getElementById('answerModal').style.display = 'flex'; }
 function closeAnswer() { document.getElementById('answerModal').style.display = 'none'; }
-// Reset Modal Control
 function confirmReset() { document.getElementById('resetModal').style.display = 'flex'; }
 function closeReset() { document.getElementById('resetModal').style.display = 'none'; }
 
@@ -391,7 +402,6 @@ function executeShowAnswer() {
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard(); 
     renderPieces();
-    // 2. 중요: 정답을 볼 때는 승리 체크를 하지 않음 (축하 메시지 안 뜨게)
 }
 
 function executeReset() {
@@ -399,8 +409,7 @@ function executeReset() {
     pieces.forEach(p => {
         if (!p.isLocked && p.x !== -1) {
             removePieceFromBoardState(p.currentShape, p.y, p.x);
-            p.x = -1; 
-            p.y = -1;
+            p.x = -1; p.y = -1;
         }
     });
     randomizeTrayPositions();
@@ -410,12 +419,30 @@ function executeReset() {
     showMessage("초기화되었습니다!");
 }
 
+// 5. 화면 맞춤 자동 리사이징 (스크롤 방지)
 function initLayout() {
-    const isDesktop = window.innerWidth >= 850;
-    const containerWidth = document.getElementById('game-container').offsetWidth;
-    const targetWidth = isDesktop ? 650 : containerWidth;
-    cellSize = Math.floor((targetWidth - 25) / 11);
-    if(cellSize > 50) cellSize = 50; 
+    const container = document.getElementById('game-unit');
+    const headerH = document.querySelector('header').offsetHeight;
+    const controlsH = document.querySelector('.controls').offsetHeight;
+    
+    // 사용 가능한 높이: 전체 높이 - (헤더+컨트롤+여백)
+    const availableH = window.innerHeight - headerH - controlsH - 40; 
+    const availableW = window.innerWidth - 20;
+
+    // 보드는 11칸 x 5칸. 트레이는 대략 6칸 정도 높이 확보 목표.
+    // 전체 게임판의 논리적 높이 = 보드(5) + 이음매(약 0.6) + 트레이(최소 5) = 약 11 그리드
+    const logicalRows = 11;
+    const logicalCols = 11;
+
+    // 가로 기준 크기와 세로 기준 크기 중 작은 것 선택
+    const sizeByWidth = Math.floor((availableW - 30) / logicalCols);
+    const sizeByHeight = Math.floor(availableH / logicalRows);
+
+    cellSize = Math.min(sizeByWidth, sizeByHeight);
+    // 최소/최대 크기 제한
+    if(cellSize < 22) cellSize = 22; 
+    if(cellSize > 50) cellSize = 50;
+
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     createGrid();
     if(pieces.length > 0) renderPieces();
@@ -477,8 +504,8 @@ function extractPiecesFromBoard() {
 }
 
 function randomizeTrayPositions() {
-    const trayW = trayEl.clientWidth || 350;
-    const trayH = trayEl.clientHeight || 400;
+    const trayW = trayEl.clientWidth || 300;
+    const trayH = trayEl.clientHeight || 300;
     const trayPieces = pieces.filter(p => !p.isLocked && p.x === -1);
     
     let placedRects = [];
@@ -502,12 +529,9 @@ function randomizeTrayPositions() {
                     break;
                 }
             }
-            
             if(!overlap) {
-                bestX = Math.max(10, rx);
-                bestY = Math.max(10, ry);
-                found = true;
-                break;
+                bestX = Math.max(10, rx); bestY = Math.max(10, ry);
+                found = true; break;
             }
         }
         
@@ -516,8 +540,7 @@ function randomizeTrayPositions() {
              bestY = Math.max(10, Math.random() * (trayH - pHeight - 20));
         }
 
-        p.trayX = bestX;
-        p.trayY = bestY;
+        p.trayX = bestX; p.trayY = bestY;
         placedRects.push({x: bestX, y: bestY, w: pWidth, h: pHeight});
     });
 }
@@ -734,28 +757,34 @@ function dropPiece(idx, el) {
         p.x = targetC; p.y = targetR;
         checkWinCondition();
     } else {
+        // 3. 트레이 벽면 충돌 (Soft Clamp)
         const trayRect = trayEl.getBoundingClientRect();
         const pieceRect = el.getBoundingClientRect();
         
         const pieceCX = pieceRect.left + pieceRect.width / 2;
         const pieceCY = pieceRect.top + pieceRect.height / 2;
 
-        const insideTray = (
-            pieceCX >= trayRect.left &&
-            pieceCX <= trayRect.right &&
-            pieceCY >= trayRect.top &&
-            pieceCY <= trayRect.bottom
+        // 트레이 확장 영역 (여유 범위 50px)
+        const buffer = 50; 
+        const insideTrayArea = (
+            pieceCX >= trayRect.left - buffer &&
+            pieceCX <= trayRect.right + buffer &&
+            pieceCY >= trayRect.top - buffer &&
+            pieceCY <= trayRect.bottom + buffer
         );
 
-        if (insideTray) {
+        if (insideTrayArea) {
              let newTrayX = pieceRect.left - trayRect.left;
              let newTrayY = pieceRect.top - trayRect.top;
 
-             const trayW = trayEl.clientWidth || 350;
-             const trayH = trayEl.clientHeight || 400;
+             const trayW = trayEl.clientWidth;
+             const trayH = trayEl.clientHeight;
+             const pieceW = pieceRect.width;
+             const pieceH = pieceRect.height;
              
-             newTrayX = Math.max(-20, Math.min(newTrayX, trayW - 10));
-             newTrayY = Math.max(-20, Math.min(newTrayY, trayH - 10));
+             // 안쪽으로 미끄러져 들어오게 Clamp
+             newTrayX = Math.max(0, Math.min(newTrayX, trayW - pieceW));
+             newTrayY = Math.max(0, Math.min(newTrayY, trayH - pieceH));
 
              p.trayX = newTrayX;
              p.trayY = newTrayY;
@@ -775,11 +804,11 @@ function dropPiece(idx, el) {
 function returnToTrayRandomly(p) {
     p.x = -1; p.y = -1;
     const trayW = trayEl.clientWidth || 350;
-    const trayH = trayEl.clientHeight || 400;
+    const trayH = trayEl.clientHeight || 300;
     const pWidth = p.currentShape[0].length * cellSize;
     const pHeight = p.currentShape.length * cellSize;
-    p.trayX = Math.random() * (trayW - pWidth - 20) + 10;
-    p.trayY = Math.random() * (trayH - pHeight - 20) + 10;
+    p.trayX = Math.random() * (trayW - pWidth - 10);
+    p.trayY = Math.random() * (trayH - pHeight - 10);
 }
 
 function cleanupListeners() {
