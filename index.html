@@ -32,11 +32,7 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            display: flex; 
-            flex-direction: column; 
-            /* 4. 모바일/전체 화면에서 수직 중앙 정렬의 핵심 */
-            justify-content: center; 
-            align-items: center;
+            display: flex; flex-direction: column; align-items: center;
             height: 100vh;
             overflow: hidden;
             touch-action: none; 
@@ -47,7 +43,7 @@
         header { 
             flex: 0 0 auto;
             margin: 10px 0 5px; 
-            text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; 
+            text-align: center; display: flex; align-items: center; gap: 10px; 
         }
         
         h1 { 
@@ -55,6 +51,13 @@
             font-family: 'Oswald', sans-serif; 
             font-weight: 700; letter-spacing: 0px; 
             display: flex; align-items: center; gap: 8px;
+        }
+        
+        /* 2. 제목 이모지 아이콘 스타일 */
+        .title-icon {
+            width: 40px; height: 40px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
         }
         
         .btn-help {
@@ -78,18 +81,28 @@
         .btn-reset { background: var(--reset-btn); }
         .btn-answer { background: var(--secondary-btn); }
 
-        /* 게임 유닛 컨테이너 (위치 조정) */
+        /* 게임 유닛 컨테이너 */
         #game-unit {
             display: flex; flex-direction: column; align-items: center;
-            /* 4. 기존 상단 패딩 제거하고 중앙 정렬 */
-            justify-content: center; 
-            padding-top: 0; 
-            
             position: relative;
-            flex: 0 1 auto; /* 화면 크기에 따라 유연하게 줄어들도록 수정 */
+            flex: 1 1 auto; 
             width: fit-content;
             min-width: 300px;
-            margin: 0 auto; /* 수평 중앙 */
+            margin: 0;
+            
+            /* PC Default: 기존 패딩 유지 */
+            justify-content: flex-start; 
+            padding-top: 3vh; 
+            padding-bottom: 20px; 
+        }
+
+        /* 4. 모바일: 절대적 중앙 정렬 */
+        @media (max-width: 700px) {
+            #game-unit {
+                justify-content: center; /* 수직 중앙 정렬 */
+                padding-top: 0; /* 상단 패딩 제거 */
+                padding-bottom: 0; /* 하단 패딩 제거 (body padding으로 충분) */
+            }
         }
 
         .game-panel {
@@ -206,36 +219,32 @@
         }
         .piece.locked { cursor: not-allowed; pointer-events: none; }
         
-        /* 1. 3D 구슬 디자인 리마스터 (완벽한 구형) */
+        /* 1. 3D 구슬 디자인 리마스터 (매트한 구체) */
         .block {
             width: var(--cell-size); height: var(--cell-size);
             border-radius: 50%;
-            /* 테두리 제거 (부드러운 전환을 위해) */
-            border: none; 
-
-            /* [레이어 설명]
-               1. 하이라이트: 왼쪽 상단(30%)에서 흰색 빛이 비치는 효과
-               2. 음영: 오른쪽 하단으로 갈수록 어두워짐
-               3. 배경색: JS에서 지정하는 색상이 기본 베이스
+            /* 매트한 질감을 위해:
+               - 하이라이트(첫번째 줄): 투명도를 낮추고(0.3) 범위를 넓혀서 부드럽게 퍼지도록
+               - 외곽 음영(두번째 줄): 테두리로 갈수록 어두워지게 하여 구의 굴곡 표현
             */
             background-image: 
-                radial-gradient(circle at 35% 35%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.1) 30%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(255,255,255,0) 60%, rgba(0,0,0,0.2) 100%);
+                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%),
+                radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.2) 100%);
             
-            /* [그림자 설명]
-               inset: 테두리가 날카롭지 않게 안쪽으로 부드럽게 그림자를 줌 (구의 곡면 표현)
-            */
             box-shadow: 
-                inset -2px -2px 6px rgba(0,0,0,0.3), /* 안쪽 깊은 그림자 */
-                inset 1px 1px 2px rgba(255,255,255,0.4), /* 테두리 반사광 */
-                1px 1px 3px rgba(0,0,0,0.2); /* 바깥쪽 그림자 */
+                inset -2px -2px 6px rgba(0,0,0,0.15), /* 내부 음영을 부드럽게 */
+                inset 1px 1px 2px rgba(255,255,255,0.15), /* 상단 림 라이트도 은은하게 */
+                1px 1px 3px rgba(0,0,0,0.2); /* 외부 그림자 */
+            border: none;
         }
         
-        /* 3. 잠금 조각: 사선 제거, 단순화 */
+        /* 3. 비활성화(Locked) 조각 스타일 개선 */
         .piece.locked .block {
-            filter: brightness(0.6) grayscale(0.4); /* 어둡고 채도 낮게 */
-            background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent 60%);
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+            /* 사선 패턴 제거 및 밝기 조절 (너무 어둡지 않게) */
+            filter: brightness(0.85) grayscale(0.5);
+            /* 배경 이미지 패턴 제거, 기본 음영만 유지 */
+            background-image: 
+                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
         }
 
         .ghost-piece {
@@ -290,7 +299,11 @@
 <body>
 
 <header>
-    <h1>😺CATNOODLE🧩</h1>
+    <h1>
+        <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Cat/3D/cat_3d.png" alt="Cat" class="title-icon">
+        CATNOODLE
+        <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Puzzle%20piece/3D/puzzle_piece_3d.png" alt="Puzzle" class="title-icon">
+    </h1>
     <button class="btn-help" onclick="openHelp()">?</button>
 </header>
 
@@ -311,9 +324,9 @@
         
         <div id="board-overlay">
             <div id="board-message-box">
-                <h2>축하합니다! 🎉<br>당신은 냥누들 마스터!</h2>
+                <h2>축하합니다!<br>냥누들 마스터!</h2>
                 <p>모든 퍼즐을 완성하셨습니다.</p>
-                <button class="btn-restart" onclick="executeNewGame()">새 게임 시작 🐱</button>
+                <button class="btn-restart" onclick="executeNewGame()">새 게임 시작</button>
             </div>
         </div>
     </div>
@@ -471,14 +484,13 @@ function initLayout() {
     const controlsH = document.querySelector('.controls').offsetHeight;
     const jointsH = 24; 
     
-    // 1. 패딩 계산 로직 (모바일/PC 중앙 정렬을 위해 여백 계산)
+    // 모바일/PC 분기 처리 없이 레이아웃 계산 로직은 동일하되, CSS Flexbox가 정렬을 담당
     const margin = 50; 
     
     const availableH = window.innerHeight - headerH - controlsH - jointsH - margin;
     
-    // 2. PC 좌우 여백 확보 (700px 이상일 때 넉넉하게)
     const isDesktop = window.innerWidth > 700;
-    const sideMargin = isDesktop ? 160 : 40; // PC 160, 모바일 40
+    const sideMargin = isDesktop ? 160 : 40; 
     const availableW = window.innerWidth - sideMargin;
 
     const logicalRows = 10.5; 
@@ -536,11 +548,12 @@ function createGrid() {
     
     const overlayDiv = document.createElement('div');
     overlayDiv.id = 'board-overlay';
+    // 2. 메시지 박스 이모지 조정
     overlayDiv.innerHTML = `
         <div id="board-message-box">
-            <h2>축하합니다! 🎉<br>당신은 냥누들 마스터!</h2>
+            <h2>축하합니다!<br>냥누들 마스터!</h2>
             <p>모든 퍼즐을 완성하셨습니다.</p>
-            <button class="btn-restart" onclick="executeNewGame()">새 게임 시작 🐱</button>
+            <button class="btn-restart" onclick="executeNewGame()">새 게임 시작</button>
         </div>
     `;
     boardEl.appendChild(overlayDiv);
@@ -569,7 +582,8 @@ function loadNewGameLogic() {
         randomizeTrayPositions();
         renderPieces();
     }, 50);
-    showMessage("새로운 게임 시작! 😺");
+    // 2. 메시지 이모지 정리
+    showMessage("새로운 게임 시작!");
 }
 
 function extractPiecesFromBoard() {
