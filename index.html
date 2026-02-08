@@ -3,146 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kanoodle Master Gen</title>
+    <title>CATNOODLE 🐱</title>
     <style>
         :root {
-            --bg-color: #222;
-            --board-bg: #000;
-            --hole-color: #333;
-            --tray-bg: #1a1a1a;
-            --primary-btn: #3498db;
-            --secondary-btn: #e74c3c;
-            --text-color: #eee;
+            /* 3. 배경 및 보드 색상 변경 */
+            --bg-color: #e9ecef;       /* 눈이 편한 옅은 회색  */
+            --board-bg: #2d3436;       /* 짙은 회색 보드  */
+            --hole-color: #1a1d1e;     /* 더 짙은 구멍 색 */
+            --tray-bg: #ffffff;        /* 트레이는 깔끔한 흰색 */
+            --primary-btn: #6c5ce7;    /* CATNOODLE 테마 컬러 */
+            --secondary-btn: #ff7675;
+            --text-color: #2d3436;
             --cell-size: 32px;
         }
 
+        * { box-sizing: border-box; } /* 4. 좌표 불일치 방지용 박스 사이징  */
+
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; overflow-x: hidden; touch-action: none;
             user-select: none;
+            -webkit-user-select: none;
         }
 
-        header { margin: 15px 0; text-align: center; }
-        h1 { margin: 0; font-size: 1.5rem; color: #fff; }
-        p { margin: 5px 0 0; font-size: 0.85rem; color: #aaa; }
-        
-        .guide {
-            background: rgba(255,255,255,0.1);
-            padding: 8px 15px; border-radius: 8px;
-            margin: 10px 0; font-size: 0.8rem; line-height: 1.4;
-            max-width: 90%; text-align: center;
-        }
-        .guide span { color: #ffd700; font-weight: bold; }
-
-        .controls {
-            display: flex; gap: 8px; margin-bottom: 10px;
-            flex-wrap: wrap; justify-content: center;
-        }
-
-        select, button {
-            padding: 8px 14px; border-radius: 20px; border: none; font-size: 0.9rem;
-            cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            font-weight: 600; color: white;
-        }
-        select { background: #444; color: white; }
-        .btn-gen { background: var(--primary-btn); }
-        .btn-check { background: #27ae60; }
-        .btn-answer { background: var(--secondary-btn); }
-
-        #game-container {
-            display: flex; flex-direction: column; align-items: center;
-            gap: 15px; width: 100%; max-width: 600px;
+        /* 헤더 및 컨트롤 */
+        header { 
+            margin: 15px 0 10px; 
+            text-align: center; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px;
             position: relative;
         }
+        
+        /* 5. 타이틀 변경  */
+        h1 { margin: 0; font-size: 1.8rem; color: #2d3436; font-weight: 800; letter-spacing: -1px; }
+        
+        /* 4. 도움말 버튼 스타일  */
+        .btn-help {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: #b2bec3;
+            color: white;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
 
+        .controls {
+            display: flex; gap: 10px; margin-bottom: 15px;
+            flex-wrap: wrap; justify-content: center; z-index: 20;
+        }
+
+        select, button.game-btn {
+            padding: 10px 16px; border-radius: 25px; border: none; font-size: 0.95rem;
+            cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-weight: 700; color: white; transition: transform 0.1s, box-shadow 0.1s;
+        }
+        select { background: #636e72; color: white; appearance: none; padding-right: 30px; text-align: center; }
+        .btn-gen { background: var(--primary-btn); }
+        .btn-check { background: #00b894; }
+        .btn-answer { background: var(--secondary-btn); }
+        button:active { transform: scale(0.95); }
+
+        /* 2. 화면 레이아웃 (반응형)  */
+        #game-container {
+            display: flex;
+            flex-direction: column; /* 기본: 위아래 배치 (모바일) */
+            align-items: center;
+            gap: 20px;
+            width: 95%;
+            max-width: 1000px;
+            padding: 10px;
+        }
+
+        /* 화면이 넓어지면 좌우 배치로 변경 */
+        @media (min-width: 800px) {
+            #game-container {
+                flex-direction: row; /* 좌우 배치 */
+                align-items: flex-start;
+                justify-content: center;
+            }
+            #board { margin-top: 0; }
+            #tray { 
+                width: 300px; /* 사이드 패널 크기 고정 */
+                min-height: 400px;
+                align-content: flex-start;
+            }
+        }
+
+        /* 보드 스타일 */
         #board {
             display: grid;
             grid-template-columns: repeat(11, var(--cell-size));
             grid-template-rows: repeat(5, var(--cell-size));
             gap: 2px;
             background-color: var(--board-bg);
-            padding: 10px; border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            border: 2px solid #444;
+            /* 4. 정확한 패딩: 좌표 계산 로직(10px)과 일치시킴  */
+            padding: 10px; 
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            position: relative;
+            flex-shrink: 0; /* 레이아웃 찌그러짐 방지 */
         }
 
         .cell {
             width: var(--cell-size); height: var(--cell-size);
             background-color: var(--hole-color);
             border-radius: 50%;
-            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8);
+            box-shadow: inset 1px 1px 4px rgba(0,0,0,0.5);
         }
 
+        /* 트레이 스타일 */
         #tray {
-            width: 95%; min-height: 160px;
+            width: 100%;
+            min-height: 140px;
             background-color: var(--tray-bg);
-            border-radius: 15px; padding: 15px;
+            border-radius: 20px;
+            padding: 20px;
             display: flex; flex-wrap: wrap;
             justify-content: center; align-items: center; gap: 15px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-            margin-bottom: 30px; border: 1px solid #444;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 2px dashed #dfe6e9;
         }
 
+        /* 조각 스타일 */
         .piece {
             position: absolute; display: grid; gap: 2px;
             cursor: grab; touch-action: none; z-index: 100;
             transition: transform 0.1s;
             pointer-events: auto;
         }
-        /* PC: 들고 있을 때 */
+        
         .piece.picked-up {
             cursor: grabbing;
             opacity: 0.9;
-            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+            filter: drop-shadow(0 15px 15px rgba(0,0,0,0.3));
             transform: scale(1.05);
-            pointer-events: none; /* 마우스 통과하여 아래 cell 감지 */
+            pointer-events: none; 
             z-index: 9999;
         }
         
         .piece.in-tray { position: relative; transform: scale(0.85); left: auto !important; top: auto !important; }
-        .piece.locked { cursor: not-allowed; filter: brightness(0.6); pointer-events: none; }
+        .piece.locked { cursor: not-allowed; filter: grayscale(0.3) brightness(0.9); pointer-events: none; }
         
         .block {
             width: var(--cell-size); height: var(--cell-size);
             border-radius: 50%;
-            /* 입체감 있는 구슬 효과 */
-            box-shadow: inset -3px -3px 6px rgba(0,0,0,0.4), inset 3px 3px 6px rgba(255,255,255,0.4), 1px 1px 2px rgba(0,0,0,0.3);
-            border: 1px solid rgba(0,0,0,0.2);
+            /* 고급스러운 구슬 질감 */
+            box-shadow: inset -3px -3px 5px rgba(0,0,0,0.2), inset 3px 3px 5px rgba(255,255,255,0.4), 1px 1px 2px rgba(0,0,0,0.2);
+            border: 1px solid rgba(0,0,0,0.1);
         }
 
+        /* 모달 (도움말)  */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 3000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .modal {
+            background: white; padding: 25px; border-radius: 20px;
+            max-width: 320px; width: 90%; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+        
+        .modal h3 { margin-top: 0; color: var(--primary-btn); }
+        .modal ul { text-align: left; padding-left: 20px; font-size: 0.9rem; color: #555; line-height: 1.6; }
+        .modal span.key { font-weight: bold; color: #2d3436; background: #eee; padding: 2px 6px; border-radius: 4px; }
+        .modal button { margin-top: 15px; background: #2d3436; width: 100%; }
+
+        /* 메시지 토스트 */
         #message {
             position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9); color: white;
-            padding: 20px 30px; border-radius: 30px;
+            background: rgba(45, 52, 54, 0.95); color: white;
+            padding: 15px 30px; border-radius: 50px;
             display: none; z-index: 2000; text-align: center;
-            font-size: 1.1rem; border: 1px solid #555;
+            font-weight: 600; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>🧩 Kanoodle Master</h1>
-    <div class="guide">
-        💻 <b>PC:</b> 클릭(들기/놓기) • 휠(회전) • 우클릭(뒤집기)<br>
-        📱 <b>Mobile:</b> 드래그 • 터치(회전) • 두번 터치(뒤집기)
-    </div>
+    <h1>CATNOODLE 🐱</h1>
+    <button class="btn-help" onclick="toggleModal()">?</button>
 </header>
 
 <div class="controls">
     <select id="difficulty">
-        <option value="2">Easy (2개 고정)</option>
-        <option value="4" selected>Normal (4개 고정)</option>
-        <option value="6">Hard (6개 고정)</option>
+        <option value="2">쉬움 (2개 고정)</option>
+        <option value="4" selected>보통 (4개 고정)</option>
+        <option value="6">어려움 (6개 고정)</option>
     </select>
-    <button class="btn-gen" onclick="loadNewGame()">🔄 생성</button>
-    <button class="btn-check" onclick="checkSolution()">✨ 확인</button>
-    <button class="btn-answer" onclick="showAnswer()">👀 정답</button>
+    <button class="game-btn btn-gen" onclick="loadNewGame()">🔄 생성</button>
+    <button class="game-btn btn-check" onclick="checkSolution()">✨ 확인</button>
+    <button class="game-btn btn-answer" onclick="showAnswer()">👀 정답</button>
 </div>
 
 <div id="game-container">
@@ -150,70 +215,56 @@
     <div id="tray"></div>
 </div>
 
+<div class="modal-overlay" id="helpModal" onclick="toggleModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3>🎮 조작 방법</h3>
+        <ul>
+            <li><b>PC:</b><br>
+                <span class="key">클릭</span> 조각 들기 / 놓기<br>
+                <span class="key">휠</span> 회전 (90도)<br>
+                <span class="key">우클릭</span> 조각 뒤집기
+            </li>
+            <li style="margin-top:10px;"><b>Mobile:</b><br>
+                <span class="key">드래그</span> 이동<br>
+                <span class="key">터치</span> 회전<br>
+                <span class="key">두번 터치</span> 뒤집기
+            </li>
+        </ul>
+        <button class="game-btn" onclick="toggleModal()">닫기</button>
+    </div>
+</div>
+
 <div id="message"></div>
 
 <script>
 /**
- * 🛠️ SHAPE DEFINITIONS (55 Holes Perfect Fit)
- * 이미지 기반 색상 + 5칸 7개 + 4칸 5개 구성
+ * 🛠️ 1. 우클릭 방지 시스템 
+ * 전체 화면에서 우클릭 메뉴를 차단하되, 조각 위에서는 함수가 실행되도록 함.
  */
-const SHAPES_DEF = [
-    // [4칸] Line (Dark Purple)
-    { id: 0, color: '#6A0DAD', shape: [[1,1,1,1]] },
-    // [4칸] Square (White)
-    { id: 1, color: '#F0F0F0', shape: [[1,1],[1,1]] },
-    // [4칸] L-Short (Orange)
-    { id: 2, color: '#FF8C00', shape: [[1,1,1],[1,0,0]] },
-    // [4칸] Z-Short (Yellow) - Replaces Light Blue to match standard sets better
-    { id: 3, color: '#FFD700', shape: [[1,1,0],[0,1,1]] }, 
-    // [4칸] T-Short (Light Purple/Pinkish)
-    { id: 4, color: '#DA70D6', shape: [[1,1,1],[0,1,0]] },
-    
-    // [5칸] L-Long (Blue)
-    { id: 5, color: '#0000FF', shape: [[1,0],[1,0],[1,0],[1,1]] },
-    // [5칸] Cross (Grey)
-    { id: 6, color: '#808080', shape: [[0,1,0],[1,1,1],[0,1,0]] },
-    // [5칸] Snake (Cyan)
-    { id: 7, color: '#00FFFF', shape: [[1,1,0],[0,1,1],[0,0,1]] },
-    // [5칸] W (Magenta)
-    { id: 8, color: '#FF00FF', shape: [[1,0,0],[1,1,0],[0,1,1]] },
-    // [5칸] U (Red)
-    { id: 9, color: '#FF0000', shape: [[1,0,1],[1,1,1]] },
-    // [5칸] Y (Salmon)
-    { id: 10, color: '#FA8072', shape: [[0,1],[1,1],[0,1],[0,1]] },
-    // [5칸] V (Green)
-    { id: 11, color: '#008000', shape: [[1,0,0],[1,0,0],[1,1,1]] }
-];
+document.addEventListener('contextmenu', event => event.preventDefault());
 
 /**
- * 💾 SOLUTION DATABASE (11x5 Valid Solutions)
- * 검증된 정답 데이터셋
+ * 🛠️ SHAPE DEFINITIONS
  */
+const SHAPES_DEF = [
+    { id: 0, color: '#8e44ad', shape: [[1,1,1,1]] }, // Line
+    { id: 1, color: '#dfe6e9', shape: [[1,1],[1,1]] }, // Square (White-ish)
+    { id: 2, color: '#e67e22', shape: [[1,1,1],[1,0,0]] }, // L-Short
+    { id: 3, color: '#f1c40f', shape: [[1,1,0],[0,1,1]] }, // Z-Short
+    { id: 4, color: '#fd79a8', shape: [[1,1,1],[0,1,0]] }, // T-Short
+    { id: 5, color: '#0984e3', shape: [[1,0],[1,0],[1,0],[1,1]] }, // L-Long
+    { id: 6, color: '#636e72', shape: [[0,1,0],[1,1,1],[0,1,0]] }, // Cross
+    { id: 7, color: '#00cec9', shape: [[1,1,0],[0,1,1],[0,0,1]] }, // Snake
+    { id: 8, color: '#d63031', shape: [[1,0,0],[1,1,0],[0,1,1]] }, // W (Fixed color to red-ish)
+    { id: 9, color: '#ff7675', shape: [[1,0,1],[1,1,1]] }, // U
+    { id: 10, color: '#fab1a0', shape: [[0,1],[1,1],[0,1],[0,1]] }, // Y
+    { id: 11, color: '#00b894', shape: [[1,0,0],[1,0,0],[1,1,1]] } // V
+];
+
 const SOLUTION_DB = [
-    // Set 1: Standard layout
-    [
-        [5,5,6,6,6,0,0,0,0,9,9],
-        [11,5,5,5,6,3,3,2,2,2,9],
-        [11,11,11,7,6,3,3,10,10,2,9],
-        [4,4,4,7,7,8,8,10,10,10,9],
-        [4,1,1,7,7,8,8,8,1,1,10] // Note: fixed minor ID gap
-    ],
-    // Set 2: Variation
-    [
-        [2,2,2,7,7,10,10,10,9,9,9],
-        [2,6,6,6,7,7,11,10,10,4,9],
-        [5,6,3,3,7,11,11,11,4,4,9],
-        [5,6,3,3,8,8,11,1,1,4,0],
-        [5,5,5,8,8,8,1,1,0,0,0]
-    ],
-    // Set 3: Another Variation
-    [
-        [0,0,0,0,6,6,6,9,9,9,9],
-        [1,1,5,5,6,10,10,2,2,2,9],
-        [1,1,5,6,10,10,10,8,8,2,7],
-        [11,5,5,4,4,4,3,3,8,7,7],
-        [11,11,11,11,4,3,3,8,8,7,7]
-    ]
+    [[5,5,6,6,6,0,0,0,0,9,9],[11,5,5,5,6,3,3,2,2,2,9],[11,11,11,7,6,3,3,10,10,2,9],[4,4,4,7,7,8,8,10,10,10,9],[4,1,1,7,7,8,8,8,1,1,10]],
+    [[2,2,2,7,7,10,10,10,9,9,9],[2,6,6,6,7,7,11,10,10,4,9],[5,6,3,3,7,11,11,11,4,4,9],[5,6,3,3,8,8,11,1,1,4,0],[5,5,5,8,8,8,1,1,0,0,0]],
+    [[0,0,0,0,6,6,6,9,9,9,9],[1,1,5,5,6,10,10,2,2,2,9],[1,1,5,6,10,10,10,8,8,2,7],[11,5,5,4,4,4,3,3,8,7,7],[11,11,11,11,4,3,3,8,8,7,7]]
 ];
 
 const COLS = 11;
@@ -222,18 +273,28 @@ let cellSize = 32;
 let boardState = [];
 let answerKey = [];
 let pieces = [];
-let pickedPieceIdx = null; // PC: Index of piece currently holding
-let lastTapTime = 0; // Mobile: for double tap
+let pickedPieceIdx = null;
+let lastTapTime = 0;
 
 const boardEl = document.getElementById('board');
 const trayEl = document.getElementById('tray');
+const modalEl = document.getElementById('helpModal');
 
-// 1. 초기화
+function toggleModal() {
+    modalEl.style.display = modalEl.style.display === 'flex' ? 'none' : 'flex';
+}
+
 function initLayout() {
+    // 2. 반응형 대응을 위한 셀 사이즈 계산
+    const isDesktop = window.innerWidth >= 800;
     const containerWidth = document.getElementById('game-container').offsetWidth;
-    // 11칸 + 여백
-    cellSize = Math.floor((containerWidth - 25) / 11);
-    if(cellSize > 45) cellSize = 45; // 최대 크기 제한
+    
+    // 데스크톱이면 보드 영역을 600px 정도로 가정, 모바일이면 꽉 차게
+    const targetWidth = isDesktop ? 600 : containerWidth;
+    
+    // 11칸 + 좌우패딩(20px)
+    cellSize = Math.floor((targetWidth - 25) / 11);
+    if(cellSize > 48) cellSize = 48; // 최대 크기 제한
     
     document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
     createGrid();
@@ -249,19 +310,17 @@ function createGrid() {
     }
 }
 
-// 2. 게임 로드
 function loadNewGame() {
-    if(pickedPieceIdx !== null) releasePiece(); // 들고 있는게 있으면 놓기
+    if(pickedPieceIdx !== null) releasePiece();
 
     const randIdx = Math.floor(Math.random() * SOLUTION_DB.length);
-    // Deep Copy
     answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[randIdx]));
     boardState = JSON.parse(JSON.stringify(answerKey));
     
     extractPiecesFromBoard();
     applyDifficulty();
     renderPieces();
-    showMessage("새로운 게임 시작! 🚀");
+    showMessage("새로운 게임 시작! 😺");
 }
 
 function extractPiecesFromBoard() {
@@ -273,7 +332,6 @@ function extractPiecesFromBoard() {
                 if(boardState[r][c] === id) coords.push({r, c});
             }
         }
-        
         if(coords.length === 0) continue;
 
         const minR = Math.min(...coords.map(p=>p.r));
@@ -285,9 +343,7 @@ function extractPiecesFromBoard() {
         const width = maxC - minC + 1;
         
         let shape = Array(height).fill().map(()=>Array(width).fill(0));
-        coords.forEach(p => {
-            shape[p.r - minR][p.c - minC] = 1;
-        });
+        coords.forEach(p => { shape[p.r - minR][p.c - minC] = 1; });
 
         pieces.push({
             id: id,
@@ -303,14 +359,12 @@ function applyDifficulty() {
     const keepCount = parseInt(document.getElementById('difficulty').value);
     let allIndices = pieces.map((_, i) => i);
     let lockedIndices = [];
-    
     for(let i=0; i<keepCount; i++) {
         if(allIndices.length === 0) break;
         let r = Math.floor(Math.random() * allIndices.length);
         lockedIndices.push(allIndices[r]);
         allIndices.splice(r, 1);
     }
-
     pieces.forEach((p, idx) => {
         if(lockedIndices.includes(idx)) {
             p.isLocked = true;
@@ -323,22 +377,15 @@ function applyDifficulty() {
 }
 
 function removePieceFromBoardState(shape, r, c) {
-    for(let i=0; i<shape.length; i++) {
-        for(let j=0; j<shape[0].length; j++) {
-            if(shape[i][j] === 1) boardState[r+i][c+j] = -1;
-        }
-    }
+    for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=-1;
 }
 
-// 3. 렌더링
 function renderPieces() {
-    // 기존 조각 제거 (pickedPiece 제외)
     document.querySelectorAll('.piece').forEach(e => {
         if(pickedPieceIdx === null || e.id !== `p-${pickedPieceIdx}`) e.remove();
     });
 
     pieces.forEach((p, idx) => {
-        // 이미 DOM에 있고 들고 있는 조각은 건너뜀
         if(pickedPieceIdx === idx && document.getElementById(`p-${idx}`)) return;
 
         const el = document.createElement('div');
@@ -358,48 +405,34 @@ function renderPieces() {
         if(p.x !== -1) placeOnBoard(el, p.x, p.y);
         else trayEl.appendChild(el);
 
-        if(!p.isLocked) {
-            setupInteraction(el, idx);
-        }
+        if(!p.isLocked) setupInteraction(el, idx);
     });
 }
 
+// 4. 좌표 불일치 해결: CSS padding(10px)과 정확히 일치시키는 로직 
 function placeOnBoard(el, x, y) {
-    const gap = 2;
-    const left = 10 + x * (cellSize + gap);
-    const top = 10 + y * (cellSize + gap);
+    const gap = 2; // CSS gap
+    const padding = 10; // CSS padding
+    const left = padding + x * (cellSize + gap);
+    const top = padding + y * (cellSize + gap);
     el.style.left = `${left}px`;
     el.style.top = `${top}px`;
     el.style.position = 'absolute';
     boardEl.appendChild(el);
 }
 
-// 4. 통합 인터랙션 핸들러 (PC & Mobile)
 function setupInteraction(el, idx) {
-    // PC Events
     el.addEventListener('mousedown', (e) => handleMouseDown(e, idx, el));
-    // Mobile Events
     el.addEventListener('touchstart', (e) => handleTouchStart(e, idx, el), {passive: false});
 }
 
-// --- PC Logic (Click to Pick/Drop, Wheel, RightClick) ---
 function handleMouseDown(e, idx, el) {
-    if(e.button !== 0) return; // Only Left Click for pickup
+    if(e.button !== 0) return; 
     e.stopPropagation();
-
-    if(pickedPieceIdx === null) {
-        // Pick up
-        pickUpPiece(idx, el, e.clientX, e.clientY);
-    } else if (pickedPieceIdx === idx) {
-        // Drop (Click again on same piece)
-        dropPiece(idx, el, e.clientX, e.clientY);
-    } else {
-        // Switch piece
-        // 1. Drop current
-        const oldIdx = pickedPieceIdx;
-        const oldEl = document.getElementById(`p-${oldIdx}`);
-        dropPiece(oldIdx, oldEl, e.clientX, e.clientY);
-        // 2. Pick new
+    if(pickedPieceIdx === null) pickUpPiece(idx, el, e.clientX, e.clientY);
+    else if (pickedPieceIdx === idx) dropPiece(idx, el, e.clientX, e.clientY);
+    else {
+        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
         pickUpPiece(idx, el, e.clientX, e.clientY);
     }
 }
@@ -408,65 +441,44 @@ function pickUpPiece(idx, el, startX, startY) {
     pickedPieceIdx = idx;
     el.classList.add('picked-up');
     el.classList.remove('in-tray');
-    document.body.appendChild(el); // Move to body for free movement
-    
-    // Initial pos
+    document.body.appendChild(el);
     moveAt(el, startX, startY);
 
-    // Global Listeners
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('wheel', onWheel, {passive: false});
-    document.addEventListener('contextmenu', onRightClick);
-    document.addEventListener('mousedown', onGlobalClick); // To detect click on empty space to drop
+    document.addEventListener('contextmenu', onRightClick); // PC Right Click
+    document.addEventListener('mousedown', onGlobalClick);
 }
 
 function moveAt(el, pageX, pageY) {
-    // Center the piece under cursor
     const rect = el.getBoundingClientRect();
     el.style.left = `${pageX - rect.width/2}px`;
     el.style.top = `${pageY - rect.height/2}px`;
 }
 
 function onMouseMove(e) {
-    if(pickedPieceIdx !== null) {
-        const el = document.getElementById(`p-${pickedPieceIdx}`);
-        moveAt(el, e.clientX, e.clientY);
-    }
+    if(pickedPieceIdx !== null) moveAt(document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
 }
 
 function onWheel(e) {
-    if(pickedPieceIdx !== null) {
-        e.preventDefault();
-        rotatePieceData(pickedPieceIdx);
-    }
+    if(pickedPieceIdx !== null) { e.preventDefault(); rotatePieceData(pickedPieceIdx); }
 }
 
+// 1. 우클릭 시 뒤집기 기능 연결 
 function onRightClick(e) {
-    if(pickedPieceIdx !== null) {
-        e.preventDefault();
-        flipPieceData(pickedPieceIdx);
-    }
+    if(pickedPieceIdx !== null) { e.preventDefault(); flipPieceData(pickedPieceIdx); }
 }
 
 function onGlobalClick(e) {
-    // If clicking outside the piece, try to drop
     if(pickedPieceIdx !== null) {
-        // Ignore if clicked on the piece itself (handled by its mousedown)
         if(e.target.closest(`#p-${pickedPieceIdx}`)) return;
-        
-        const el = document.getElementById(`p-${pickedPieceIdx}`);
-        dropPiece(pickedPieceIdx, el, e.clientX, e.clientY);
+        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
     }
 }
 
 function releasePiece() {
     if(pickedPieceIdx !== null) {
-        const el = document.getElementById(`p-${pickedPieceIdx}`);
-        // Force return to tray or current valid pos
-        // Simple re-render handles logic
-        pickedPieceIdx = null;
-        renderPieces();
-        cleanupListeners();
+        pickedPieceIdx = null; renderPieces(); cleanupListeners();
     }
 }
 
@@ -474,16 +486,12 @@ function dropPiece(idx, el, clientX, clientY) {
     const bRect = boardEl.getBoundingClientRect();
     const p = pieces[idx];
     
-    // Check if over board
-    if(clientX > bRect.left && clientX < bRect.right && 
-       clientY > bRect.top && clientY < bRect.bottom) {
-        
+    // 보드 위인지 확인
+    if(clientX > bRect.left && clientX < bRect.right && clientY > bRect.top && clientY < bRect.bottom) {
         const gap = 2;
-        // Calculate grid pos
-        const elRect = el.getBoundingClientRect();
-        // Offset to match cell center
-        const relX = elRect.left - bRect.left - 10;
-        const relY = elRect.top - bRect.top - 10;
+        // 4. 좌표 계산: padding 10px 고려하여 정확한 그리드 위치 산출 
+        const relX = el.getBoundingClientRect().left - bRect.left - 10;
+        const relY = el.getBoundingClientRect().top - bRect.top - 10;
         
         const gx = Math.round(relX / (cellSize + gap));
         const gy = Math.round(relY / (cellSize + gap));
@@ -494,18 +502,16 @@ function dropPiece(idx, el, clientX, clientY) {
             placePieceToBoardState(p.currentShape, gy, gx, p.id);
             p.x = gx; p.y = gy;
         } else {
-            // Invalid placement -> Back to tray
             p.x = -1; p.y = -1;
         }
     } else {
-        // Dropped outside board -> Back to tray
         if(p.x !== -1) removePieceFromBoardState(p.currentShape, p.y, p.x);
         p.x = -1; p.y = -1;
     }
 
     pickedPieceIdx = null;
     cleanupListeners();
-    renderPieces(); // Re-render to snap to grid/tray
+    renderPieces();
 }
 
 function cleanupListeners() {
@@ -515,113 +521,58 @@ function cleanupListeners() {
     document.removeEventListener('mousedown', onGlobalClick);
 }
 
-
-// --- Mobile Logic (Drag, Tap to Rotate, Double Tap to Flip) ---
-let isDragging = false;
-let dragStartX = 0, dragStartY = 0;
-let initialElX = 0, initialElY = 0;
-
+// Mobile Logic
 function handleTouchStart(e, idx, el) {
-    if(e.touches.length > 1) return; // Ignore multitouch
+    if(e.touches.length > 1) return;
     e.preventDefault();
-    
     const touch = e.touches[0];
     const currentTime = new Date().getTime();
-    const tapLength = currentTime - lastTapTime;
     
-    // Double Tap Detection (Flip)
-    if(tapLength < 300 && tapLength > 0) {
-        flipPieceData(idx);
-        lastTapTime = 0;
-        return;
-    }
+    if(currentTime - lastTapTime < 300) { flipPieceData(idx); lastTapTime = 0; return; }
     lastTapTime = currentTime;
 
-    // Start Drag
     isDragging = false;
-    dragStartX = touch.clientX;
-    dragStartY = touch.clientY;
-    
-    pickedPieceIdx = idx; // Mobile track
+    pickedPieceIdx = idx;
     el.classList.add('picked-up');
     el.classList.remove('in-tray');
     document.body.appendChild(el);
-    
-    // Initial absolute position
     moveAt(el, touch.clientX, touch.clientY);
 
-    // Add Move/End listeners
     const onTouchMove = (ev) => {
-        ev.preventDefault();
-        isDragging = true;
+        ev.preventDefault(); isDragging = true;
         moveAt(el, ev.touches[0].clientX, ev.touches[0].clientY);
     };
-
     const onTouchEnd = (ev) => {
         document.removeEventListener('touchmove', onTouchMove);
         document.removeEventListener('touchend', onTouchEnd);
         el.classList.remove('picked-up');
 
-        if(!isDragging) {
-            // It was a single tap -> Rotate
-            rotatePieceData(idx);
-            // Return visual state
-            pickedPieceIdx = null;
-            renderPieces();
-        } else {
-            // It was a drag -> Drop
+        if(!isDragging) { rotatePieceData(idx); pickedPieceIdx = null; renderPieces(); }
+        else {
             const lastTouch = ev.changedTouches[0];
             dropPiece(idx, el, lastTouch.clientX, lastTouch.clientY);
         }
     };
-
     document.addEventListener('touchmove', onTouchMove, {passive: false});
     document.addEventListener('touchend', onTouchEnd);
 }
 
-
-// --- Logic Utils ---
+// Core Logic
 function rotatePieceData(idx) {
     const p = pieces[idx];
     const oldShape = p.currentShape;
     const newShape = rotateMatrix(oldShape);
-    
-    // If in tray, just rotate
-    if(p.x === -1) {
-        p.currentShape = newShape;
-    } else {
-        // Check valid on board
-        removePieceFromBoardState(oldShape, p.y, p.x);
-        if(canPlace(newShape, p.y, p.x)) {
-            placePieceToBoardState(newShape, p.y, p.x, p.id);
-            p.currentShape = newShape;
-        } else {
-            placePieceToBoardState(oldShape, p.y, p.x, p.id); // Revert
-        }
-    }
-    // Update visual only (no full re-render needed usually, but safe)
-    if(pickedPieceIdx === idx) {
-        // If holding, update DOM manually to keep holding
-        const el = document.getElementById(`p-${idx}`);
-        el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
-        el.innerHTML = '';
-        p.currentShape.forEach(row => row.forEach(v => {
-            const b = document.createElement('div');
-            if(v) { b.className = 'block'; b.style.backgroundColor = p.color; }
-            else b.style.visibility = 'hidden';
-            el.appendChild(b);
-        }));
-    } else {
-        renderPieces();
-    }
+    updatePieceShape(idx, p, oldShape, newShape);
 }
 
 function flipPieceData(idx) {
     const p = pieces[idx];
     const oldShape = p.currentShape;
-    // Flip horizontal
     const newShape = oldShape.map(row => [...row].reverse());
-    
+    updatePieceShape(idx, p, oldShape, newShape);
+}
+
+function updatePieceShape(idx, p, oldShape, newShape) {
     if(p.x === -1) {
         p.currentShape = newShape;
     } else {
@@ -635,17 +586,15 @@ function flipPieceData(idx) {
     }
     if(pickedPieceIdx === idx) {
         const el = document.getElementById(`p-${idx}`);
-        el.innerHTML = ''; // Redraw blocks
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
+        el.innerHTML = '';
         p.currentShape.forEach(row => row.forEach(v => {
             const b = document.createElement('div');
             if(v) { b.className = 'block'; b.style.backgroundColor = p.color; }
             else b.style.visibility = 'hidden';
             el.appendChild(b);
         }));
-    } else {
-        renderPieces();
-    }
+    } else renderPieces();
 }
 
 function rotateMatrix(m) {
@@ -656,37 +605,24 @@ function rotateMatrix(m) {
 }
 
 function canPlace(shape, r, c) {
-    for(let i=0; i<shape.length; i++) {
-        for(let j=0; j<shape[0].length; j++) {
-            if(shape[i][j]) {
-                if(r+i>=ROWS || c+j>=COLS || boardState[r+i][c+j]!==-1) return false;
-            }
-        }
-    }
+    for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) 
+        if(shape[i][j] && (r+i>=ROWS || c+j>=COLS || boardState[r+i][c+j]!==-1)) return false;
     return true;
 }
-
 function placePieceToBoardState(shape, r, c, id) {
     for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=id;
 }
-
 function checkSolution() {
-    let filled=0;
-    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(boardState[r][c]!==-1) filled++;
-    if(filled===ROWS*COLS) showMessage("🎉 축하합니다! 퍼즐 완성!");
-    else showMessage(`아직 ${ROWS*COLS - filled}칸이 비었습니다.`);
+    let filled=0; for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(boardState[r][c]!==-1) filled++;
+    filled===ROWS*COLS ? showMessage("🎉 축하합니다! CATNOODLE 정복!") : showMessage(`아직 ${ROWS*COLS - filled}칸이 비었습니다.`);
 }
-
 function showAnswer() {
-    if(!confirm("정답을 확인하면 현재 진행 상황이 사라집니다.")) return;
+    if(!confirm("정답을 확인하시겠습니까?")) return;
     boardState = JSON.parse(JSON.stringify(answerKey));
-    extractPiecesFromBoard();
-    renderPieces();
+    extractPiecesFromBoard(); renderPieces();
 }
-
 function showMessage(t) {
-    const m=document.getElementById('message');
-    m.textContent=t; m.style.display='block';
+    const m=document.getElementById('message'); m.textContent=t; m.style.display='block';
     setTimeout(()=>m.style.display='none', 1500);
 }
 
