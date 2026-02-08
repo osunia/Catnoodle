@@ -270,6 +270,9 @@ let dragStartGridX = -1;
 let dragStartGridY = -1;
 let lastValidGhostPos = null; 
 
+// 💡 NEW: Z-Index 전역 변수
+let globalZIndex = 100;
+
 const boardEl = document.getElementById('board');
 const trayEl = document.getElementById('tray');
 const trayOverlay = document.getElementById('tray-overlay');
@@ -315,6 +318,11 @@ function loadNewGame() {
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard();
     applyDifficulty();
+    
+    // Z-Index 초기화
+    globalZIndex = 100;
+    pieces.forEach(p => p.zIndex = globalZIndex++);
+
     setTimeout(() => {
         randomizeTrayPositions();
         renderPieces();
@@ -339,12 +347,12 @@ function extractPiecesFromBoard() {
 
         pieces.push({
             id: id, color: SHAPES_DEF[id].color, currentShape: shape,
-            x: minC, y: minR, trayX: 0, trayY: 0, isLocked: true 
+            x: minC, y: minR, trayX: 0, trayY: 0, isLocked: true,
+            zIndex: 100 // 기본값
         });
     }
 }
 
-// 💡 초기 배치 시 겹침 최소화 알고리즘
 function randomizeTrayPositions() {
     const trayW = trayEl.clientWidth || 350;
     const trayH = trayEl.clientHeight || 400;
@@ -428,6 +436,8 @@ function renderPieces() {
         el.className = `piece ${isInTray ? 'in-tray' : 'on-board'} ${p.isLocked?'locked':''}`;
         el.id = `p-${idx}`;
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
+        // 💡 Z-Index 적용
+        el.style.zIndex = p.zIndex || 100;
         
         p.currentShape.forEach(row => {
             row.forEach(v => {
@@ -503,6 +513,7 @@ function updateGhost(idx) {
         
         ghostEl.style.left = `${result.pxX}px`;
         ghostEl.style.top = `${result.pxY}px`;
+        ghostEl.style.zIndex = globalZIndex + 1; // 고스트는 항상 가장 위에
     } else {
         lastValidGhostPos = null; 
         ghostEl.style.display = 'none';
@@ -521,6 +532,10 @@ function handleMouseDown(e, idx, el) {
     }
 
     if(pickedPieceIdx === null) {
+        // 💡 Z-Index 상승
+        pieces[idx].zIndex = ++globalZIndex;
+        el.style.zIndex = pieces[idx].zIndex;
+
         const rect = el.getBoundingClientRect();
         dragOffsetX = e.clientX - rect.left;
         dragOffsetY = e.clientY - rect.top;
@@ -597,12 +612,10 @@ function dropPiece(idx, el) {
     }
     
     if (isValid) {
-        // 보드판 배치 성공
         placePieceToBoardState(p.currentShape, targetR, targetC, p.id);
         p.x = targetC; p.y = targetR;
         checkWinCondition();
     } else {
-        // 트레이 자석 로직
         const trayRect = trayEl.getBoundingClientRect();
         const pieceRect = el.getBoundingClientRect();
         
@@ -658,14 +671,20 @@ function cleanupListeners() {
     document.removeEventListener('touchstart', onGlobalTouchStart); 
 }
 
-// 📱 Mobile Logic (FIXED: 순서 변경)
+// 📱 Mobile Logic (Tracking ID Applied)
 function handleTouchStart(e, idx, el) {
     e.preventDefault(); e.stopPropagation();
 
     if (e.touches.length > 1 && pickedPieceIdx === idx) return;
     if(pickedPieceIdx !== null && pickedPieceIdx !== idx) return;
 
+    // 💡 Z-Index 상승
+    pieces[idx].zIndex = ++globalZIndex;
+    el.style.zIndex = pieces[idx].zIndex;
+
     const touch = e.touches[0];
+    const touchId = touch.identifier; // 💡 손가락 ID 기억
+
     isDragging = false;
     startX = touch.clientX;
     startY = touch.clientY;
@@ -678,26 +697,40 @@ function handleTouchStart(e, idx, el) {
 
     const onTouchMove = (ev) => {
         ev.preventDefault();
-        const t = ev.touches[0];
-        if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) {
+        
+        // 💡 내 ID를 가진 손가락 찾기
+        let myTouch = null;
+        for(let i=0; i<ev.touches.length; i++) {
+            if(ev.touches[i].identifier === touchId) {
+                myTouch = ev.touches[i];
+                break;
+            }
+        }
+        if(!myTouch) return; // 내 손가락 없으면 무시
+
+        if (Math.abs(myTouch.clientX - startX) > 10 || Math.abs(myTouch.clientY - startY) > 10) {
             isDragging = true;
         }
         
-        el.style.left = `${t.clientX - dragOffsetX}px`;
-        el.style.top = `${t.clientY - dragOffsetY}px`;
+        el.style.left = `${myTouch.clientX - dragOffsetX}px`;
+        el.style.top = `${myTouch.clientY - dragOffsetY}px`;
         updateGhost(idx);
     };
     
     const onTouchEnd = (ev) => {
-        if (ev.touches.length > 0) return;
+        // 내 손가락이 떨어졌는지 확인
+        let myTouchStillActive = false;
+        for(let i=0; i<ev.touches.length; i++) {
+            if(ev.touches[i].identifier === touchId) {
+                myTouchStillActive = true;
+                break;
+            }
+        }
+        if(myTouchStillActive) return; // 아직 내 손가락이 붙어있음
 
         document.removeEventListener('touchmove', onTouchMove);
         document.removeEventListener('touchend', onTouchEnd);
         
-        // 🚨 중요 FIX: el.classList.remove('picked-up')을 여기서 하지 않음!
-        // dropPiece() 내부에서 좌표 계산을 마친 후 renderPieces()가 호출되며 DOM이 초기화되므로
-        // 수동으로 클래스를 지우는 과정이 오히려 좌표 계산에 방해가 됨.
-
         if(!isDragging) { 
             flipPieceData(idx);
             
