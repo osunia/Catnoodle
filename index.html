@@ -81,39 +81,36 @@
     .btn-reset { background: var(--reset-btn); }
     .btn-answer { background: var(--secondary-btn); }
 
-    /* --- 💡 수정된 부분 --- */
-        #game-unit {
-            display: flex; flex-direction: column; align-items: center;
-            position: relative;
-            flex: 1 1 auto; 
-            width: fit-content;
-            min-width: 300px;
-            margin: 0;
-            justify-content: flex-start; 
-            padding-top: 3vh; 
-            
-            /* 👇 여기를 20px -> 60px로 넉넉하게 늘렸습니다! */
-            padding-bottom: 60px; 
-            
-            padding-left: 60px;
-            padding-right: 60px;
-            
-            min-height: 0; /* 창이 줄어들 때 내용물도 같이 줄어들게 허용 */
-            overflow: hidden; /* 내용이 넘치면 잘라내서 레이아웃 깨짐 방지 */
-        }
+    /* --- 💡 핵심 수정 영역 --- */
+    #game-unit {
+        display: flex; flex-direction: column; align-items: center;
+        position: relative;
+        flex: 1 1 auto;  /* 남은 공간을 모두 차지하되 */
+        min-height: 0;   /* 💡 높이가 줄어들 때 자식 요소도 같이 줄어들게 허용 */
+        width: fit-content;
+        min-width: 300px;
+        margin: 0;
+        justify-content: flex-start; /* 위쪽 정렬 */
+        
+        /* 패딩 조정 */
+        padding-top: 10px; /* 상단 여백 축소 */
+        padding-bottom: 10px; /* 하단 여백 축소 */
+        padding-left: 60px;
+        padding-right: 60px;
+        
+        overflow: hidden; /* 내부 요소가 넘치면 숨김 (잘림 방지용 안전장치) */
+    }
 
-        @media (max-width: 700px) {
-            #game-unit {
-                justify-content: center; 
-                padding-top: 0;
-                
-                /* 모바일은 기존 30px 유지 (모바일은 괜찮다고 하셨으므로) */
-                padding-bottom: 30px; 
-                
-                padding-left: 0;
-                padding-right: 0;
-            }
+    /* 모바일 대응 */
+    @media (max-width: 700px) {
+        #game-unit {
+            justify-content: center; 
+            padding-top: 0;
+            padding-bottom: 10px; 
+            padding-left: 0;
+            padding-right: 0;
         }
+    }
 
     .game-panel {
         width: 100%;
