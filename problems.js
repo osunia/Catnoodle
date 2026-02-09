@@ -585,17 +585,17 @@ const RAW_PUZZLES_TEXT = [
     ],
     // #73
     [
-        "BBBIIIOCCCC",
+        "BBBHIIICCCC",
         "BBHHIAICLFF",
         "GHHAAADLLLF",
-        "GEEEDDDLLKK",
+        "GEEEDDDDLKK",
         "GGGEEJJJJKK"
     ],
     // #74
     [
         "CCCCDAAAEKK",
         "CHHDDBBAEKK",
-        "FFHHDDBLEEG",
+        "FFHHDBBLEEG",
         "IFIHDBLLLEG",
         "IIIJJJJLGGG"
     ],
@@ -604,7 +604,7 @@ const RAW_PUZZLES_TEXT = [
         "DDDDFCCCCKK",
         "IDIFFCLHHKK",
         "IIIBBLLLHHG",
-        "AAABBBLEHHG",
+        "AAABBBLEEHG",
         "AJJJJEEEGGG"
     ],
     // #76
@@ -612,22 +612,22 @@ const RAW_PUZZLES_TEXT = [
         "EHFFAALCCKK", // F corrected
         "EHHFALLLCKK",
         "EEHHADLGCBB",
-        "IEIDDDDGGBB",
+        "IEIDDDDGCBB",
         "IIIJJJJGGGB"
     ],
     // #77
     [
         "FFBBCCCCAAE",
         "JFBBBKKCAEE", // Length fixed
-        "JIIIKKLAEGG",
-        "IDIHHHLAEGG",
-        "DDDHHLJJJGG"
+        "JIIIHKKLAEG",
+        "JIDIHHLLLEG",
+        "JDDDDHHLGGG"
     ],
     // #78
     [
         "GGGBBEECCCC",
         "AAGBBBEEELC", // Length fixed
-        "AIGIKKHHLLF",
+        "AIGIKKHHLLL",
         "AIIIKKDHHLF",
         "JJJJDDDDHFF"
     ],
@@ -635,7 +635,7 @@ const RAW_PUZZLES_TEXT = [
     [
         "HHCCCCFFEKK",
         "JHHDICIFEKK",
-        "JAHDDIILEEG",
+        "JAHDIIILEEG",
         "JADDBBLLLEG",
         "JAADBBBLGGG"
     ],
@@ -649,10 +649,10 @@ const RAW_PUZZLES_TEXT = [
     ],
     // #81
     [
-        "JJJJEEELLAC",
-        "IIIEDDDLLAC",
+        "JJJJEEELAAC",
+        "IIIEEDLLLAC",
         "IBIHHDDLGAC", // Length fixed
-        "BBHHFFDKKGC",
+        "BBHHFDKKGCC",
         "BBHFFDKKGGG"
     ],
     // #82
