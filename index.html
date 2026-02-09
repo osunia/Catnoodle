@@ -8,333 +8,349 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
 
-    <style>
-        :root {
-            --bg-color: #f5f6fa;
-            --board-bg: #2d3436;
-            --hole-color: #151819;
-            --tray-bg: #2d3436;
-            --primary-btn: #4834d4;
-            --secondary-btn: #eb4d4b;
-            --reset-btn: #f0932b;
-            --control-color: #636e72;
-            --text-color: #2d3436;
-            --cell-size: 32px; 
-            --modal-bg: #1e1e1e;
-            --modal-text: #ffffff;
-            --border-color: #3d4648; 
-        }
+<style>
+    :root {
+        --bg-color: #f5f6fa;
+        --board-bg: #2d3436;
+        --hole-color: #151819;
+        --tray-bg: #2d3436;
+        --primary-btn: #4834d4;
+        --secondary-btn: #eb4d4b;
+        --reset-btn: #f0932b;
+        --control-color: #636e72;
+        --text-color: #2d3436;
+        --cell-size: 32px; 
+        --modal-bg: #1e1e1e;
+        --modal-text: #ffffff;
+        --border-color: #3d4648; 
+    }
 
-        * { box-sizing: border-box; }
+    * { box-sizing: border-box; }
 
-        body {
-            font-family: 'Gowun Dodum', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            display: flex; flex-direction: column; align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            touch-action: none; 
-            user-select: none; -webkit-user-select: none;
-            padding-bottom: 20px; 
-        }
+    body {
+        font-family: 'Gowun Dodum', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        margin: 0;
+        display: flex; flex-direction: column; align-items: center;
+        height: 100vh;
+        overflow: hidden; /* 스크롤 방지 */
+        touch-action: none; 
+        user-select: none; -webkit-user-select: none;
+        /* body padding 제거 (flex item들이 공간을 다 쓰도록) */
+    }
 
-        header { 
-            flex: 0 0 auto;
-            padding-top: 15px; 
-            margin: 5px 0 5px; 
-            text-align: center; display: flex; align-items: center; gap: 10px; 
-        }
+    header { 
+        flex: 0 0 auto;
+        padding-top: 15px; 
+        margin: 5px 0 5px; 
+        text-align: center; display: flex; align-items: center; gap: 10px; 
+    }
+    
+    h1 { 
+        margin: 0; font-size: 1.8rem; color: #2d3436; 
+        font-family: 'Oswald', sans-serif; 
+        font-weight: 700; letter-spacing: 0px; 
+        display: flex; align-items: center; gap: 8px;
+    }
+    
+    .title-icon {
+        width: 40px; height: 40px;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+    }
+    
+    .btn-help {
+        width: 24px; height: 24px; border-radius: 50%;
+        background: #b2bec3; color: white; border: none; font-weight: bold; font-size: 0.9rem; cursor: pointer;
+        font-family: 'Oswald', sans-serif;
+    }
+
+    .controls { 
+        flex: 0 0 auto;
+        display: flex; gap: 8px; margin-bottom: 5px; 
+        flex-wrap: wrap; justify-content: center; z-index: 20; 
+    }
+    select, button.game-btn {
+        padding: 8px 14px; border-radius: 6px; border: none; font-size: 0.95rem;
+        cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.1); font-weight: 400; color: white;
+        font-family: 'Gowun Dodum', sans-serif;
+    }
+    select { background: var(--control-color); color: white; font-weight: bold;}
+    .btn-gen { background: var(--control-color); } 
+    .btn-reset { background: var(--reset-btn); }
+    .btn-answer { background: var(--secondary-btn); }
+
+    /* --- 💡 핵심 수정 영역 --- */
+    #game-unit {
+        display: flex; flex-direction: column; align-items: center;
+        position: relative;
+        flex: 1 1 auto;  /* 남은 공간을 모두 차지하되 */
+        min-height: 0;   /* 💡 높이가 줄어들 때 자식 요소도 같이 줄어들게 허용 */
+        width: fit-content;
+        min-width: 300px;
+        margin: 0;
+        justify-content: flex-start; /* 위쪽 정렬 */
         
-        h1 { 
-            margin: 0; font-size: 1.8rem; color: #2d3436; 
-            font-family: 'Oswald', sans-serif; 
-            font-weight: 700; letter-spacing: 0px; 
-            display: flex; align-items: center; gap: 8px;
-        }
+        /* 패딩 조정 */
+        padding-top: 10px; /* 상단 여백 축소 */
+        padding-bottom: 10px; /* 하단 여백 축소 */
+        padding-left: 60px;
+        padding-right: 60px;
         
-        .title-icon {
-            width: 40px; height: 40px;
-            object-fit: contain;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
-        }
-        
-        .btn-help {
-            width: 24px; height: 24px; border-radius: 50%;
-            background: #b2bec3; color: white; border: none; font-weight: bold; font-size: 0.9rem; cursor: pointer;
-            font-family: 'Oswald', sans-serif;
-        }
+        overflow: hidden; /* 내부 요소가 넘치면 숨김 (잘림 방지용 안전장치) */
+    }
 
-        .controls { 
-            flex: 0 0 auto;
-            display: flex; gap: 8px; margin-bottom: 5px; 
-            flex-wrap: wrap; justify-content: center; z-index: 20; 
-        }
-        select, button.game-btn {
-            padding: 8px 14px; border-radius: 6px; border: none; font-size: 0.95rem;
-            cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.1); font-weight: 400; color: white;
-            font-family: 'Gowun Dodum', sans-serif;
-        }
-        select { background: var(--control-color); color: white; font-weight: bold;}
-        .btn-gen { background: var(--control-color); } 
-        .btn-reset { background: var(--reset-btn); }
-        .btn-answer { background: var(--secondary-btn); }
-
+    /* 모바일 대응 */
+    @media (max-width: 700px) {
         #game-unit {
-            display: flex; flex-direction: column; align-items: center;
-            position: relative;
-            flex: 1 1 auto; 
-            width: fit-content;
-            min-width: 300px;
-            margin: 0;
-            justify-content: flex-start; 
-            padding-top: 3vh; 
-            padding-bottom: 60px; 
-            padding-left: 40px
-            padding-right: 40px
+            justify-content: center; 
+            padding-top: 0;
+            padding-bottom: 10px; 
+            padding-left: 0;
+            padding-right: 0;
         }
+    }
 
-        @media (max-width: 700px) {
-            #game-unit {
-                justify-content: center; 
-                padding-top: 0;
-                padding-bottom: 30px; 
-            }
-        }
+    .game-panel {
+        width: 100%;
+        background-color: var(--board-bg);
+        padding: 10px; border-radius: 12px;
+        border: 4px solid var(--border-color);
+        box-shadow: 
+            0 20px 40px rgba(0,0,0,0.3), 
+            0 10px 10px rgba(0,0,0,0.2);
+        position: relative; flex-shrink: 0;
+        touch-action: none;
+    }
 
-        .game-panel {
-            width: 100%;
-            background-color: var(--board-bg);
-            padding: 10px; border-radius: 12px;
-            border: 4px solid var(--border-color);
-            box-shadow: 
-                0 20px 40px rgba(0,0,0,0.3), 
-                0 10px 10px rgba(0,0,0,0.2);
-            position: relative; flex-shrink: 0;
-            touch-action: none;
-        }
+    #board {
+        display: grid;
+        grid-template-columns: repeat(11, var(--cell-size));
+        grid-template-rows: repeat(5, var(--cell-size));
+        gap: 2px;
+        z-index: 10;
+        /* 보드는 크기 유지 */
+    }
 
-        #board {
-            display: grid;
-            grid-template-columns: repeat(11, var(--cell-size));
-            grid-template-rows: repeat(5, var(--cell-size));
-            gap: 2px;
-            z-index: 10;
-        }
+    #joints-container {
+        display: flex; justify-content: space-between;
+        width: 90%; 
+        height: 24px; 
+        z-index: 5;
+        margin-top: -6px; 
+        margin-bottom: -6px;
+        flex: 0 0 auto;
+    }
+    
+    /* 💡 트레이 부분 수정 */
+    #tray { 
+        display: block;
+        z-index: 9;
+        flex: 1 1 auto; /* 남은 높이를 유동적으로 차지 */
+        min-height: 150px; /* 최소 높이 보장 */
+        /* overflow: hidden;  트레이 내부 조각은 넘치지 않게 */
+    }
+    /* ----------------------- */
 
-        #tray { 
-            display: block;
-            z-index: 9; 
-        }
+    .cell {
+        width: var(--cell-size); height: var(--cell-size);
+        background-color: var(--hole-color);
+        border-radius: 50%;
+        box-shadow: inset 1px 1px 4px rgba(0,0,0,0.6);
+    }
 
-        .cell {
-            width: var(--cell-size); height: var(--cell-size);
-            background-color: var(--hole-color);
-            border-radius: 50%;
-            box-shadow: inset 1px 1px 4px rgba(0,0,0,0.6);
-        }
+    .joint {
+        width: 24px; height: 100%;
+        background: #151819; 
+        border: 2px solid var(--border-color);
+        border-radius: 4px;
+        box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
+    }
 
-        #joints-container {
-            display: flex; justify-content: space-between;
-            width: 90%; 
-            height: 24px; 
-            z-index: 5;
-            margin-top: -6px; 
-            margin-bottom: -6px;
-            flex: 0 0 auto;
-        }
-        .joint {
-            width: 24px; height: 100%;
-            background: #151819; 
-            border: 2px solid var(--border-color);
-            border-radius: 4px;
-            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
-        }
+    #board-overlay {
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.65);
+        display: none; 
+        flex-direction: column;
+        justify-content: center; align-items: center;
+        z-index: 5000; border-radius: 8px;
+        backdrop-filter: blur(2px);
+        animation: fadeIn 0.3s ease-out;
+    }
+    #tray-overlay {
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.65);
+        display: none;
+        z-index: 50; border-radius: 8px;
+    }
 
-        #board-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.65);
-            display: none; 
-            flex-direction: column;
-            justify-content: center; align-items: center;
-            z-index: 5000; border-radius: 8px;
-            backdrop-filter: blur(2px);
-            animation: fadeIn 0.3s ease-out;
-        }
-        #tray-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.65);
-            display: none;
-            z-index: 50; border-radius: 8px;
-        }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    #board-message-box {
+        background: transparent; 
+        padding: 10px;
+        text-align: center; 
+        width: 100%;
+        display: flex; flex-direction: column; align-items: center; gap: 15px;
+        animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #board-message-box h2 {
+        margin: 0; color: #ffffff;
+        font-size: 1.6rem; line-height: 1.4;
+        word-break: keep-all; font-family: 'Gowun Dodum', sans-serif;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    #board-message-box p {
+        margin: 0; color: #ecf0f1; font-size: 1rem;
+        text-shadow: 0 1px 5px rgba(0,0,0,0.5);
+    }
+    
+    .btn-restart {
+        padding: 12px 30px; font-size: 1.2rem; background: #6ab04c; color: white;
+        border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
+        box-shadow: 0 5px 15px rgba(106, 176, 76, 0.4);
+        animation: pulse 1.5s infinite;
+        font-family: 'Gowun Dodum', sans-serif;
+        margin-top: 5px;
+    }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        #board-message-box {
-            background: transparent; 
-            padding: 10px;
-            text-align: center; 
-            width: 100%;
-            display: flex; flex-direction: column; align-items: center; gap: 15px;
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #board-message-box h2 {
-            margin: 0; color: #ffffff;
-            font-size: 1.6rem; line-height: 1.4;
-            word-break: keep-all; font-family: 'Gowun Dodum', sans-serif;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-        }
-        #board-message-box p {
-            margin: 0; color: #ecf0f1; font-size: 1rem;
-            text-shadow: 0 1px 5px rgba(0,0,0,0.5);
-        }
-        
-        .btn-restart {
-            padding: 12px 30px; font-size: 1.2rem; background: #6ab04c; color: white;
-            border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
-            box-shadow: 0 5px 15px rgba(106, 176, 76, 0.4);
-            animation: pulse 1.5s infinite;
-            font-family: 'Gowun Dodum', sans-serif;
-            margin-top: 5px;
-        }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    .piece {
+        display: grid; gap: 1px;
+        cursor: grab; touch-action: none; z-index: 100;
+        transition: transform 0.1s; 
+        pointer-events: none; 
+        isolation: isolate; 
+    }
+    .piece.on-board { position: absolute; gap: 2px; }
+    .piece.in-tray { position: absolute; transform: scale(0.9); }
+    .piece.picked-up {
+        position: fixed; cursor: grabbing;
+        opacity: 0.95; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4)); 
+        transform: scale(1.05); pointer-events: none; z-index: 9999;
+        gap: 2px; transition: none; 
+    }
+    .piece.locked { cursor: not-allowed; pointer-events: none; }
+    
+    .block {
+        width: var(--cell-size); height: var(--cell-size);
+        position: relative; 
+        border-radius: 50%;
+        pointer-events: auto; 
+    }
+    
+    .visual-atom {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        border-radius: 50%;
+        z-index: 2; 
+        background-image: 
+            radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%),
+            radial-gradient(circle at 65% 65%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 100%);
+        box-shadow: 
+            inset -3px -3px 6px rgba(0,0,0,0.25),
+            inset 2px 2px 4px rgba(255,255,255,0.2),
+            1px 2px 4px rgba(0,0,0,0.25); 
+    }
 
-        .piece {
-            display: grid; gap: 1px;
-            cursor: grab; touch-action: none; z-index: 100;
-            transition: transform 0.1s; 
-            pointer-events: none; 
-            isolation: isolate; 
-        }
-        .piece.on-board { position: absolute; gap: 2px; }
-        .piece.in-tray { position: absolute; transform: scale(0.9); }
-        .piece.picked-up {
-            position: fixed; cursor: grabbing;
-            opacity: 0.95; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4)); 
-            transform: scale(1.05); pointer-events: none; z-index: 9999;
-            gap: 2px; transition: none; 
-        }
-        .piece.locked { cursor: not-allowed; pointer-events: none; }
-        
-        .block {
-            width: var(--cell-size); height: var(--cell-size);
-            position: relative; 
-            border-radius: 50%;
-            pointer-events: auto; 
-        }
-        
-        .visual-atom {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            border-radius: 50%;
-            z-index: 2; 
-            background-image: 
-                radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%),
-                radial-gradient(circle at 65% 65%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 100%);
-            box-shadow: 
-                inset -3px -3px 6px rgba(0,0,0,0.25),
-                inset 2px 2px 4px rgba(255,255,255,0.2),
-                1px 2px 4px rgba(0,0,0,0.25); 
-        }
+    .connector-h, .connector-v {
+        position: absolute;
+        background-color: inherit; 
+        z-index: 1; 
+        box-shadow: inset 0 0 4px rgba(0,0,0,0.3); 
+        filter: brightness(0.85); 
+    }
+    .connector-h {
+        top: 50%; left: 50%;
+        width: calc(100% + 4px); 
+        height: 40%; 
+        transform: translateY(-50%);
+    }
+    .connector-v {
+        top: 50%; left: 50%;
+        height: calc(100% + 4px); 
+        width: 40%; 
+        transform: translateX(-50%);
+    }
+    
+    .piece.locked .visual-atom {
+        filter: brightness(0.8) grayscale(0.2);
+        background-image: 
+            repeating-linear-gradient(
+                45deg,
+                rgba(255,255,255,0.15),
+                rgba(255,255,255,0.15) 8px, 
+                transparent 8px,
+                transparent 16px
+            ),
+            radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
+    }
 
-        .connector-h, .connector-v {
-            position: absolute;
-            background-color: inherit; 
-            z-index: 1; 
-            box-shadow: inset 0 0 4px rgba(0,0,0,0.3); 
-            filter: brightness(0.85); 
-        }
-        .connector-h {
-            top: 50%; left: 50%;
-            width: calc(100% + 4px); 
-            height: 40%; 
-            transform: translateY(-50%);
-        }
-        .connector-v {
-            top: 50%; left: 50%;
-            height: calc(100% + 4px); 
-            width: 40%; 
-            transform: translateX(-50%);
-        }
-        
-        .piece.locked .visual-atom {
-            filter: brightness(0.8) grayscale(0.2);
-            background-image: 
-                repeating-linear-gradient(
-                    45deg,
-                    rgba(255,255,255,0.15),
-                    rgba(255,255,255,0.15) 8px, 
-                    transparent 8px,
-                    transparent 16px
-                ),
-                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
-        }
+    #p-5.locked .visual-atom {
+        filter: brightness(0.8);
+        background-image: 
+            repeating-linear-gradient(
+                45deg,
+                rgba(0,0,0,0.1),
+                rgba(0,0,0,0.1) 8px,
+                transparent 8px,
+                transparent 16px
+            ),
+            radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
+    }
 
-        #p-5.locked .visual-atom {
-            filter: brightness(0.8);
-            background-image: 
-                repeating-linear-gradient(
-                    45deg,
-                    rgba(0,0,0,0.1),
-                    rgba(0,0,0,0.1) 8px,
-                    transparent 8px,
-                    transparent 16px
-                ),
-                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
-        }
+    .piece.locked .connector-h, .piece.locked .connector-v {
+        filter: brightness(0.8) grayscale(0.4);
+    }
 
-        .piece.locked .connector-h, .piece.locked .connector-v {
-            filter: brightness(0.8) grayscale(0.4);
-        }
+    .ghost-piece {
+        position: absolute; display: grid; gap: 2px;
+        pointer-events: none; z-index: 50; opacity: 0.3;
+        transition: left 0.05s, top 0.05s;
+    }
+    .ghost-block {
+        width: var(--cell-size); height: var(--cell-size);
+        border-radius: 50%;
+        background-color: white;
+        border: 2px dashed rgba(255,255,255,0.9);
+        box-shadow: 0 0 5px rgba(255,255,255,0.5);
+    }
 
-        .ghost-piece {
-            position: absolute; display: grid; gap: 2px;
-            pointer-events: none; z-index: 50; opacity: 0.3;
-            transition: left 0.05s, top 0.05s;
-        }
-        .ghost-block {
-            width: var(--cell-size); height: var(--cell-size);
-            border-radius: 50%;
-            background-color: white;
-            border: 2px dashed rgba(255,255,255,0.9);
-            box-shadow: 0 0 5px rgba(255,255,255,0.5);
-        }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 6000;
-            display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px);
-        }
-        .modal {
-            background: var(--modal-bg); color: var(--modal-text);
-            padding: 25px; border-radius: 8px;
-            max-width: 300px; width: 85%; text-align: left;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            animation: popIn 0.2s ease-out; border: 1px solid #444;
-        }
-        .modal h3 { margin: 0 0 15px; color: #fff; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px;}
-        .modal-btn-group { display: flex; gap: 10px; justify-content: center; }
-        .modal-btn-group button { 
-            flex: 1; padding: 10px; border-radius: 6px; border: none; 
-            font-weight: bold; cursor: pointer; font-size: 1rem; 
-            font-family: 'Gowun Dodum', sans-serif;
-        }
-        .btn-yes { background: var(--secondary-btn); color: white; }
-        .btn-no { background: #4a4a4a; color: #ecf0f1; }
-        .modal button.close-btn { margin-top: 15px; background: #4a4a4a; width: 100%; border-radius: 6px; padding: 10px; color: white; border: none; font-weight: bold; cursor: pointer; font-family: 'Gowun Dodum', sans-serif;}
-        #helpModal ul { padding-left: 0; list-style: none; color: #ccc; margin: 0; font-size: 0.9rem;}
-        #helpModal li { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 5px 0;}
-        
-        #message {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(45, 52, 54, 0.95); color: white;
-            padding: 15px 30px; border-radius: 50px;
-            display: none; z-index: 7000; text-align: center;
-            font-weight: 800; font-size: 1.1rem;
-            pointer-events: none;
-        }
-    </style>
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.6); z-index: 6000;
+        display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px);
+    }
+    .modal {
+        background: var(--modal-bg); color: var(--modal-text);
+        padding: 25px; border-radius: 8px;
+        max-width: 300px; width: 85%; text-align: left;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        animation: popIn 0.2s ease-out; border: 1px solid #444;
+    }
+    .modal h3 { margin: 0 0 15px; color: #fff; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px;}
+    .modal-btn-group { display: flex; gap: 10px; justify-content: center; }
+    .modal-btn-group button { 
+        flex: 1; padding: 10px; border-radius: 6px; border: none; 
+        font-weight: bold; cursor: pointer; font-size: 1rem; 
+        font-family: 'Gowun Dodum', sans-serif;
+    }
+    .btn-yes { background: var(--secondary-btn); color: white; }
+    .btn-no { background: #4a4a4a; color: #ecf0f1; }
+    .modal button.close-btn { margin-top: 15px; background: #4a4a4a; width: 100%; border-radius: 6px; padding: 10px; color: white; border: none; font-weight: bold; cursor: pointer; font-family: 'Gowun Dodum', sans-serif;}
+    #helpModal ul { padding-left: 0; list-style: none; color: #ccc; margin: 0; font-size: 0.9rem;}
+    #helpModal li { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 5px 0;}
+    
+    #message {
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: rgba(45, 52, 54, 0.95); color: white;
+        padding: 15px 30px; border-radius: 50px;
+        display: none; z-index: 7000; text-align: center;
+        font-weight: 800; font-size: 1.1rem;
+        pointer-events: none;
+    }
+</style>
 </head>
 <body>
 <header>
