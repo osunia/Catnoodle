@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CATNOODLE v3.3</title>
+    <title>CATNOODLE v3.4</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
@@ -459,7 +459,7 @@ let pickedPieceIdx = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 let isDragging = false;
-let isRotating = false; // 🔄 회전 중인지 확인하는 플래그 추가
+let isRotating = false; 
 let startX = 0;
 let startY = 0;
 let lastTouchX = 0;
@@ -724,8 +724,17 @@ function applyDifficulty() {
     });
 }
 
+// ⚠️ 수정됨: 범위 체크 추가로 Crash 방지
 function removePieceFromBoardState(shape, r, c) {
-    for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=-1;
+    for(let i=0; i<shape.length; i++) {
+        for(let j=0; j<shape[0].length; j++) {
+            if(shape[i][j]) {
+                if(r + i >= 0 && r + i < ROWS && c + j >= 0 && c + j < COLS) {
+                    boardState[r+i][c+j] = -1;
+                }
+            }
+        }
+    }
 }
 
 function updateVisualsInDrag(idx) {
@@ -733,7 +742,7 @@ function updateVisualsInDrag(idx) {
     if(pickedPieceIdx === idx) {
         const el = document.getElementById(`p-${idx}`);
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
-        el.style.width = 'auto'; // 크기 자동 조절 허용
+        el.style.width = 'auto'; 
         el.style.height = 'auto';
         el.innerHTML = ''; 
 
@@ -761,7 +770,6 @@ function updateVisualsInDrag(idx) {
                 el.appendChild(b);
             });
         });
-        // 여기서는 updateGhost 호출하지 않음 (recenterPieceOnFinger에서 처리)
     } else {
         renderPieces();
     }
@@ -829,26 +837,21 @@ function setupInteraction(el, idx) {
     el.addEventListener('touchstart', (e) => handleTouchStart(e, idx, el), {passive: false});
 }
 
-// 🐛 고스트/놓기 오류 수정: 좌표 계산을 마우스/터치 위치 기반으로 명확화
 function getHoveredGridPosition(pieceIdx, clientX, clientY) {
     const p = pieces[pieceIdx];
     const bRect = boardEl.getBoundingClientRect();
     
-    // "지금 내 손가락(clientX)이 조각을 잡은 지점(dragOffsetX)에서 얼마나 떨어져 있는가?"
     const visualLeft = clientX - dragOffsetX;
     const visualTop = clientY - dragOffsetY;
     
     const gap = 2; const padding = 10;
     
-    // 보드 내부에서의 상대 좌표
     const relX = visualLeft - bRect.left - padding;
     const relY = visualTop - bRect.top - padding;
     
-    // 그리드 좌표 (반올림으로 자석 효과)
     const gx = Math.round(relX / (cellSize + gap));
     const gy = Math.round(relY / (cellSize + gap));
     
-    // 유효성 검사 (범위 체크 포함)
     const valid = canPlace(p.currentShape, gy, gx);
     
     return { 
@@ -864,10 +867,8 @@ function updateGhost(idx) {
     const el = document.getElementById(`p-${idx}`);
     if(!el) return;
     
-    // 마우스/터치 좌표가 없으면(초기 로드 등) 실행 안 함
     if (lastTouchX === 0 && lastTouchY === 0) return;
     
-    // 현재 포인터 좌표를 직접 전달
     const result = getHoveredGridPosition(idx, lastTouchX, lastTouchY);
 
     const p = pieces[idx];
@@ -901,7 +902,6 @@ function handleMouseDown(e, idx, el) {
     if(e.button !== 0) return;
     
     if(pickedPieceIdx !== null) {
-        // 이미 들고 있으면 드롭
         dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
         return;
     }
@@ -925,10 +925,9 @@ function pickUpPiece(idx, el, startX, startY) {
     dragStartGridY = p.y;
     lastValidGhostPos = null; 
     
-    // 마우스 좌표 추적 변수 초기화
     lastTouchX = startX;
     lastTouchY = startY;
-    isRotating = false; // 회전 상태 초기화
+    isRotating = false;
 
     if(p.x !== -1) {
         removePieceFromBoardState(p.currentShape, p.y, p.x);
@@ -944,18 +943,16 @@ function pickUpPiece(idx, el, startX, startY) {
     document.addEventListener('wheel', onWheel, {passive: false});
     document.addEventListener('mousedown', onGlobalClick);
     
-    // 모바일 회전 감지 (Capture 모드 사용)
     document.addEventListener('touchstart', onGlobalTouchStart, {capture: true, passive: false});
     
     updateGhost(idx);
 }
 
-// 🚀 멀티터치 감지 로직 (수정됨: 회전 플래그 설정)
 function onGlobalTouchStart(e) {
     if(pickedPieceIdx !== null && e.touches.length > 1) {
         e.preventDefault(); 
         e.stopPropagation(); 
-        isRotating = true; // ⚠️ 회전 상태로 진입 (이게 중요!)
+        isRotating = true;
         rotatePieceData(pickedPieceIdx);
     }
 }
@@ -1064,7 +1061,7 @@ function dropPiece(idx, el, forcedX, forcedY) {
     ghostEl.style.display = 'none';
     lastValidGhostPos = null;
     isDragging = false;
-    isRotating = false; // 회전 상태 초기화
+    isRotating = false; 
     renderPieces();
 }
 
@@ -1085,14 +1082,13 @@ function cleanupListeners() {
     
     document.removeEventListener('touchstart', onGlobalTouchStart, {capture: true}); 
     isDragging = false;
-    isRotating = false; // 초기화
+    isRotating = false;
 }
 
 // 📱 Mobile Logic Refined
 function handleTouchStart(e, idx, el) {
     e.preventDefault(); e.stopPropagation();
 
-    // 멀티터치는 onGlobalTouchStart에서 처리하므로 여기선 1개일 때만 시작
     if (e.touches.length > 1) return;
     
     if(pickedPieceIdx !== null && pickedPieceIdx !== idx) return;
@@ -1104,7 +1100,7 @@ function handleTouchStart(e, idx, el) {
     const touchId = touch.identifier;
 
     isDragging = false;
-    isRotating = false; // 새로운 터치 시작 시 회전 상태 초기화
+    isRotating = false; 
     startX = touch.clientX;
     startY = touch.clientY;
     lastTouchX = startX;
@@ -1134,7 +1130,6 @@ function handleTouchStart(e, idx, el) {
             isDragging = true;
         }
         
-        // 🚀 회전 후 조각 위치 동기화 (recenterPieceOnFinger와 호환성 유지)
         const el = document.getElementById(`p-${idx}`);
         if(el) {
             el.style.left = `${myTouch.clientX - dragOffsetX}px`;
@@ -1156,17 +1151,11 @@ function handleTouchStart(e, idx, el) {
         document.removeEventListener('touchmove', onTouchMove);
         document.removeEventListener('touchend', onTouchEnd);
         
-        // ✋ 핵심 수정: 회전(멀티터치) 중이었다면 아무것도 하지 않고 함수 종료!
-        // 이렇게 해야 회전된 채로 손가락에 붙어있게 됨.
-        if (isRotating) {
-            isRotating = false; // 상태만 리셋하고 리턴
-            return; 
-        }
-
-        if(!isDragging) { 
+        // ⚠️ 수정됨: 회전했더라도 손을 떼면 무조건 Drop 시도
+        // 탭(클릭)으로 판정될 때만 뒤집기 수행
+        if(!isDragging && !isRotating) { 
             flipPieceData(idx);
             
-            // 탭(뒤집기) 후 제자리에 놓을 수 있다면 놓기
             const p = pieces[idx];
             if (dragStartGridX !== -1 && canPlace(p.currentShape, dragStartGridY, dragStartGridX)) {
                 dropPiece(idx, el, lastTouchX, lastTouchY); 
@@ -1174,6 +1163,7 @@ function handleTouchStart(e, idx, el) {
                 dropPiece(idx, el, lastTouchX, lastTouchY);
             }
         } else {
+            // 드래그했거나 회전했다면 그냥 드롭
             dropPiece(idx, el, lastTouchX, lastTouchY);
         }
     };
@@ -1189,7 +1179,10 @@ function rotatePieceData(idx) {
     p.currentShape = newShape;
     
     updateVisualsInDrag(idx); 
-    recenterPieceOnFinger(idx); 
+    // ⚠️ PC 튕김 방지: 잡고 있을 때만 중심 재조정
+    if (pickedPieceIdx === idx) {
+        recenterPieceOnFinger(idx); 
+    }
 }
 
 function flipPieceData(idx) {
@@ -1199,10 +1192,12 @@ function flipPieceData(idx) {
     p.currentShape = newShape;
     
     updateVisualsInDrag(idx); 
-    recenterPieceOnFinger(idx); 
+    // ⚠️ PC 튕김 방지: 잡고 있을 때만 중심 재조정
+    if (pickedPieceIdx === idx) {
+        recenterPieceOnFinger(idx); 
+    }
 }
 
-// 🧲 조각을 손가락 중심으로 '착' 붙이는 함수
 function recenterPieceOnFinger(idx) {
     if (lastTouchX === 0 && lastTouchY === 0) return;
 
@@ -1227,7 +1222,7 @@ function rotateMatrix(m) {
     return n;
 }
 
-// 🐛 고스트 사라짐(Script Crash) 방지 및 관대한 판정 적용
+// ⚠️ 수정됨: 관대한 판정 유지 (빈 공간은 밖으로 나가도 됨)
 function canPlace(shape, r, c) {
     for(let i=0; i<shape.length; i++) {
         for(let j=0; j<shape[0].length; j++) {
