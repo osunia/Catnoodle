@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CATNOODLE v3.1</title>
+    <title>CATNOODLE v3.2</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
@@ -198,10 +198,11 @@
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-.piece {
+        .piece {
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
             transition: transform 0.1s; 
+            /* 🔧 수정: 조각 틀 자체는 이벤트를 통과시켜야 아래 조각을 선택 가능함 */
             pointer-events: none; 
             isolation: isolate; 
         }
@@ -219,9 +220,9 @@
             width: var(--cell-size); height: var(--cell-size);
             position: relative; 
             border-radius: 50%;
+            /* 🔧 수정: 실제 블록 부분만 이벤트를 받도록 설정 */
             pointer-events: auto; 
         }
-
         
         .visual-atom {
             position: absolute;
@@ -363,8 +364,8 @@
         
         <div id="board-overlay">
             <div id="board-message-box">
-                <h2>축하합니다!<br>냥누들 마스터!</h2>
-                <p>모든 퍼즐을 완성하셨습니다.</p>
+                <h2>축하합니다🎉<br>냥누들 마스터!</h2>
+                <p>퍼즐을 완성했어요</p>
                 <button class="btn-restart" onclick="executeNewGame()">새 게임 시작</button>
             </div>
         </div>
@@ -587,8 +588,8 @@ function createGrid() {
     overlayDiv.id = 'board-overlay';
     overlayDiv.innerHTML = `
         <div id="board-message-box">
-            <h2>축하합니다!<br>냥누들 마스터!</h2>
-            <p>모든 퍼즐을 완성하셨습니다.</p>
+            <h2>축하합니다🎉<br>냥누들 마스터!</h2>
+            <p>퍼즐을 완성했어요</p>
             <button class="btn-restart" onclick="executeNewGame()">새 게임 시작</button>
         </div>
     `;
@@ -833,7 +834,6 @@ function getHoveredGridPosition(pieceIdx, clientX, clientY) {
     const p = pieces[pieceIdx];
     const bRect = boardEl.getBoundingClientRect();
     
-    // 💡 핵심 수정: getBoundingClientRect 대신 순수 포인터 좌표로 계산 (흔들림 방지)
     // "지금 내 손가락(clientX)이 조각을 잡은 지점(dragOffsetX)에서 얼마나 떨어져 있는가?"
     const visualLeft = clientX - dragOffsetX;
     const visualTop = clientY - dragOffsetY;
@@ -867,7 +867,7 @@ function updateGhost(idx) {
     // 마우스/터치 좌표가 없으면(초기 로드 등) 실행 안 함
     if (lastTouchX === 0 && lastTouchY === 0) return;
     
-    // 💡 수정: 현재 포인터 좌표를 직접 전달
+    // 현재 포인터 좌표를 직접 전달
     const result = getHoveredGridPosition(idx, lastTouchX, lastTouchY);
 
     const p = pieces[idx];
@@ -943,16 +943,19 @@ function pickUpPiece(idx, el, startX, startY) {
     document.addEventListener('wheel', onWheel, {passive: false});
     document.addEventListener('mousedown', onGlobalClick);
     
-    // 🚀 모바일 멀티터치(회전) 감지를 위한 전역 터치 리스너 추가 (수정됨)
-    document.addEventListener('touchstart', onGlobalTouchStart, {passive: false});
+    // 🔧 핵심 수정 1: 모바일 회전 감지 (Capture 모드 사용)
+    // 게임판 등 다른 요소가 터치를 삼키기 전에 먼저 감지합니다.
+    document.addEventListener('touchstart', onGlobalTouchStart, {capture: true, passive: false});
     
     updateGhost(idx);
 }
 
-// 🚀 핵심 수정: 멀티터치 감지 로직 강화
+// 🚀 멀티터치 감지 로직
 function onGlobalTouchStart(e) {
+    // 조각을 들고 있고, 손가락이 2개 이상이 되면 -> 회전!
     if(pickedPieceIdx !== null && e.touches.length > 1) {
-        e.preventDefault(); // 핀치 줌 방지
+        e.preventDefault(); 
+        e.stopPropagation(); // 다른 동작 방지
         rotatePieceData(pickedPieceIdx);
     }
 }
@@ -1002,7 +1005,6 @@ function dropPiece(idx, el, forcedX, forcedY) {
     const p = pieces[idx];
     let targetR, targetC, isValid;
 
-    // 💡 수정: dropPiece 호출 시 좌표를 명시적으로 받도록 함
     // forcedX/Y가 없으면 lastTouchX/Y 사용 (안전장치)
     const dropX = (forcedX !== undefined) ? forcedX : lastTouchX;
     const dropY = (forcedY !== undefined) ? forcedY : lastTouchY;
@@ -1080,7 +1082,9 @@ function cleanupListeners() {
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('wheel', onWheel);
     document.removeEventListener('mousedown', onGlobalClick);
-    document.removeEventListener('touchstart', onGlobalTouchStart); // Clean up multi-touch listener
+    
+    // 🔧 수정: capture 리스너도 제거
+    document.removeEventListener('touchstart', onGlobalTouchStart, {capture: true}); 
     isDragging = false;
 }
 
@@ -1193,7 +1197,7 @@ function rotateMatrix(m) {
 function canPlace(shape, r, c) {
     for(let i=0; i<shape.length; i++) {
         for(let j=0; j<shape[0].length; j++) {
-            // 💡 핵심 수정: 모양이 있는(1) 부분만 검사. 
+            // 모양이 있는(1) 부분만 검사. 
             // 0인 부분은 보드 밖(Index Out)이어도 상관없음 -> Error 방지
             if(shape[i][j] === 1) {
                 // 1. 블록이 보드 밖으로 나가는지 체크
