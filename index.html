@@ -1085,15 +1085,6 @@ function dropPiece(idx, el, forcedX, forcedY) {
 }
 
 
-    cleanupListeners();
-    pickedPieceIdx = null; 
-    ghostEl.style.display = 'none';
-    lastValidGhostPos = null;
-    isDragging = false;
-    isRotating = false; 
-    renderPieces();
-}
-
 function returnToTrayRandomly(p) {
     p.x = -1; p.y = -1;
     const trayW = trayEl.clientWidth || 350;
