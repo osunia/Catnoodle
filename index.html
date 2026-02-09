@@ -265,12 +265,12 @@
 
         /* 2. 비활성 조각: 사선을 더 두껍고 명확하게 */
         .piece.locked .visual-atom {
-            filter: brightness(0.95) grayscale(0.2);
+            filter: brightness(0.8) grayscale(0.2);
             background-image: 
                 repeating-linear-gradient(
                     45deg,
-                    rgba(255,255,255,0.35),
-                    rgba(255,255,255,0.35) 8px,   /* 사선 두께 증가 (5px -> 8px) */
+                    rgba(255,255,255,0.15),
+                    rgba(255,255,255,0.15) 8px,   /* 사선 두께 증가 (5px -> 8px) */
                     transparent 8px,
                     transparent 16px              /* 간격도 비례해서 증가 */
                 ),
@@ -278,11 +278,12 @@
         }
                 /* 3. [예외 처리] 흰색 조각(ID: 5)은 흰색 사선이 안 보이므로 회색 사선 적용 */
         #p-5.locked .visual-atom {
+            filter: brightness(0.8);
             background-image: 
                 repeating-linear-gradient(
                     45deg,
-                    rgba(0,0,0,0.15),             /* 흰색 대신 연한 검정(회색) 사용 */
-                    rgba(0,0,0,0.15) 8px,
+                    rgba(0,0,0,0.1),             /* 흰색 대신 연한 검정(회색) 사용 */
+                    rgba(0,0,0,0.1) 8px,
                     transparent 8px,
                     transparent 16px
                 ),
