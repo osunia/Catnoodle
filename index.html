@@ -449,6 +449,8 @@ const SHAPES_DEF = [
     { id: 11, color: '#bfbfbf', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
 ];
 
+/* * SOLUTION_DB is loaded from problems.js */
+
 const COLS = 11;
 const ROWS = 5;
 let cellSize = 32;
@@ -459,16 +461,15 @@ let pickedPieceIdx = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 let isDragging = false;
-let isRotating = false; 
 let startX = 0;
 let startY = 0;
-let lastTouchX = 0;
-let lastTouchY = 0;
 
 let dragStartGridX = -1;
 let dragStartGridY = -1;
 let lastValidGhostPos = null; 
 let globalZIndex = 100;
+
+// 중복 방지를 위한 이전 문제 인덱스
 let currentProblemIdx = -1;
 
 const boardEl = document.getElementById('board');
@@ -586,8 +587,8 @@ function createGrid() {
     overlayDiv.id = 'board-overlay';
     overlayDiv.innerHTML = `
         <div id="board-message-box">
-            <h2>축하합니다🎉<br>냥누들 마스터!</h2>
-            <p>퍼즐을 완성했어요</p>
+            <h2>축하합니다!<br>냥누들 마스터!</h2>
+            <p>모든 퍼즐을 완성하셨습니다.</p>
             <button class="btn-restart" onclick="executeNewGame()">새 게임 시작</button>
         </div>
     `;
@@ -599,28 +600,37 @@ function loadNewGame() {
 }
 
 function loadNewGameLogic() {
-    if(pickedPieceIdx !== null) releasePiece(); 
-    
+    if(pickedPieceIdx !== null) releasePiece();
     trayOverlay.style.display = 'none';
     const bOverlay = document.getElementById('board-overlay');
     if(bOverlay) bOverlay.style.display = 'none';
     
     let newIdx;
     if (typeof SOLUTION_DB !== 'undefined' && SOLUTION_DB.length > 0) {
+        // ✨ [수정됨] 무작위 대신 순차적으로 증가 (검증용)
         newIdx = currentProblemIdx + 1;
-        if (newIdx >= SOLUTION_DB.length) newIdx = 0;
+        
+        // 180번(마지막)을 넘어가면 다시 처음(0번)으로 돌아감
+        if (newIdx >= SOLUTION_DB.length) {
+            newIdx = 0;
+        }
     } else {
         newIdx = 0;
     }
     currentProblemIdx = newIdx;
 
     if(typeof SOLUTION_DB !== 'undefined') {
+        // ✨ 현재 풀고 있는 문제 번호를 콘솔에 큼지막하게 출력
         const currentPuzzle = SOLUTION_DB[newIdx];
         if (currentPuzzle.id) {
             console.log(`%c🧩 현재 플레이 중인 퍼즐: #${currentPuzzle.id}`, "background: #2d3436; color: #badc58; font-size: 16px; font-weight: bold; padding: 6px; border-radius: 4px;");
+        } else {
+            console.log(`🧩 현재 퍼즐 Index: ${newIdx} (ID 정보 없음)`);
         }
+
         answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[newIdx]));
     } else {
+        // Fallback
         answerKey = [[7,7,4,4,4,1,1,1,6,6,6],[3,7,7,0,4,4,1,1,5,5,6],[3,3,7,0,0,0,11,8,8,5,6],[3,2,2,2,2,11,11,11,8,10,10],[3,2,9,9,9,9,11,8,8,10,10]];
         console.log("⚠️ 데이터베이스가 로드되지 않아 기본 문제를 사용합니다.");
     }
@@ -724,17 +734,8 @@ function applyDifficulty() {
     });
 }
 
-// ⚠️ 수정됨: 범위 체크 추가로 Crash 방지
 function removePieceFromBoardState(shape, r, c) {
-    for(let i=0; i<shape.length; i++) {
-        for(let j=0; j<shape[0].length; j++) {
-            if(shape[i][j]) {
-                if(r + i >= 0 && r + i < ROWS && c + j >= 0 && c + j < COLS) {
-                    boardState[r+i][c+j] = -1;
-                }
-            }
-        }
-    }
+    for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=-1;
 }
 
 // ⚠️ 버그 수정: 회전 시 전체가 아닌 해당 조각만 업데이트
@@ -777,7 +778,6 @@ function updateVisualsInDrag(idx) {
         renderPieces();
     }
 }
-
 
 function renderPieces() {
     document.querySelectorAll('.piece').forEach(e => {
@@ -841,40 +841,28 @@ function setupInteraction(el, idx) {
     el.addEventListener('touchstart', (e) => handleTouchStart(e, idx, el), {passive: false});
 }
 
-function getHoveredGridPosition(pieceIdx, clientX, clientY) {
+function getHoveredGridPosition(pieceIdx, el) {
     const p = pieces[pieceIdx];
     const bRect = boardEl.getBoundingClientRect();
-    
-    const visualLeft = clientX - dragOffsetX;
-    const visualTop = clientY - dragOffsetY;
+    const elRect = el.getBoundingClientRect();
     
     const gap = 2; const padding = 10;
-    
-    const relX = visualLeft - bRect.left - padding;
-    const relY = visualTop - bRect.top - padding;
+    const relX = elRect.left - bRect.left - padding;
+    const relY = elRect.top - bRect.top - padding;
     
     const gx = Math.round(relX / (cellSize + gap));
     const gy = Math.round(relY / (cellSize + gap));
     
     const valid = canPlace(p.currentShape, gy, gx);
     
-    return { 
-        r: gy, 
-        c: gx, 
-        valid: valid, 
-        pxX: padding + gx*(cellSize+gap), 
-        pxY: padding + gy*(cellSize+gap) 
-    };
+    return { r: gy, c: gx, valid: valid, pxX: padding + gx*(cellSize+gap), pxY: padding + gy*(cellSize+gap) };
 }
 
 function updateGhost(idx) {
     const el = document.getElementById(`p-${idx}`);
     if(!el) return;
     
-    if (lastTouchX === 0 && lastTouchY === 0) return;
-    
-    const result = getHoveredGridPosition(idx, lastTouchX, lastTouchY);
-
+    const result = getHoveredGridPosition(idx, el);
     const p = pieces[idx];
 
     if(result.valid) {
@@ -906,7 +894,7 @@ function handleMouseDown(e, idx, el) {
     if(e.button !== 0) return;
     
     if(pickedPieceIdx !== null) {
-        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
+        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`));
         return;
     }
 
@@ -921,9 +909,6 @@ function handleMouseDown(e, idx, el) {
     }
 }
 
-// ==========================================
-// 3. 조각 집기 (안정 버전)
-// ==========================================
 function pickUpPiece(idx, el, startX, startY) {
     pickedPieceIdx = idx;
     const p = pieces[idx];
@@ -945,27 +930,14 @@ function pickUpPiece(idx, el, startX, startY) {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('wheel', onWheel, {passive: false});
     document.addEventListener('mousedown', onGlobalClick);
-    // 모바일 터치 이벤트 리스너는 handleTouchStart 내부에서 관리하므로 여기서는 중복 방지
+    document.addEventListener('touchstart', onGlobalTouchStart, {passive: false}); 
     
     updateGhost(idx);
-}
-
-
-function onGlobalTouchStart(e) {
-    if(pickedPieceIdx !== null && e.touches.length > 1) {
-        e.preventDefault(); 
-        e.stopPropagation(); 
-        isRotating = true;
-        rotatePieceData(pickedPieceIdx);
-    }
 }
 
 function onMouseMove(e) {
     if(pickedPieceIdx !== null) {
         const el = document.getElementById(`p-${pickedPieceIdx}`);
-        lastTouchX = e.clientX;
-        lastTouchY = e.clientY;
-        
         el.style.left = `${e.clientX - dragOffsetX}px`;
         el.style.top = `${e.clientY - dragOffsetY}px`;
         updateGhost(pickedPieceIdx);
@@ -979,44 +951,27 @@ function onWheel(e) {
 function onGlobalClick(e) {
     if(pickedPieceIdx !== null) {
         if(e.button === 2) return; 
-        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
+        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`));
     }
 }
 
-function releasePiece() {
-    if (pickedPieceIdx === null) return;
-    const p = pieces[pickedPieceIdx];
-    const el = document.getElementById(`p-${pickedPieceIdx}`);
-    if (el) {
-        if (dragStartGridX !== -1) {
-            placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
-            p.x = dragStartGridX; p.y = dragStartGridY;
-        } else {
-            returnToTrayRandomly(p);
-        }
+function onGlobalTouchStart(e) {
+    if(pickedPieceIdx !== null && e.touches.length > 1) {
+        e.preventDefault(); 
+        rotatePieceData(pickedPieceIdx);
     }
-    cleanupListeners();
-    pickedPieceIdx = null;
-    ghostEl.style.display = 'none';
-    renderPieces();
 }
 
-// ==========================================
-// 2. 드롭 로직 (보내주신 안정 버전)
-// ==========================================
 function dropPiece(idx, el) {
     const p = pieces[idx];
     let targetR, targetC, isValid;
 
-    // 고스트가 유효하다면 그 위치 신뢰, 아니면 계산
     if (lastValidGhostPos) {
         targetR = lastValidGhostPos.r;
         targetC = lastValidGhostPos.c;
         isValid = true;
     } else {
-        // el 파라미터가 없으면 DOM에서 찾음
-        const targetEl = el || document.getElementById(`p-${idx}`);
-        const result = getHoveredGridPosition(idx, targetEl);
+        const result = getHoveredGridPosition(idx, el);
         targetR = result.r;
         targetC = result.c;
         isValid = result.valid;
@@ -1027,10 +982,8 @@ function dropPiece(idx, el) {
         p.x = targetC; p.y = targetR;
         checkWinCondition();
     } else {
-        // 트레이 영역 판정
         const trayRect = trayEl.getBoundingClientRect();
-        const targetEl = el || document.getElementById(`p-${idx}`);
-        const pieceRect = targetEl.getBoundingClientRect();
+        const pieceRect = el.getBoundingClientRect();
         
         const pieceCX = pieceRect.left + pieceRect.width / 2;
         const pieceCY = pieceRect.top + pieceRect.height / 2;
@@ -1059,7 +1012,6 @@ function dropPiece(idx, el) {
              p.trayY = newTrayY;
              p.x = -1; p.y = -1;
         } else {
-            // 보드 밖, 트레이 밖이면 무작위 트레이 복귀
             returnToTrayRandomly(p);
         }
     }
@@ -1085,21 +1037,15 @@ function cleanupListeners() {
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('wheel', onWheel);
     document.removeEventListener('mousedown', onGlobalClick);
-    
-    document.removeEventListener('touchstart', onGlobalTouchStart, {capture: true}); 
-    isDragging = false;
-    isRotating = false;
+    document.removeEventListener('touchstart', onGlobalTouchStart); 
 }
 
-// ==========================================
-// 1. 모바일 터치 핸들링 (안전한 롤백 버전)
-// ==========================================
+// 📱 Mobile Logic
 function handleTouchStart(e, idx, el) {
     e.preventDefault(); e.stopPropagation();
 
-    // 멀티터치 중이거나 다른 조각을 잡고 있으면 무시
     if (e.touches.length > 1 && pickedPieceIdx === idx) return;
-    if (pickedPieceIdx !== null && pickedPieceIdx !== idx) return;
+    if(pickedPieceIdx !== null && pickedPieceIdx !== idx) return;
 
     pieces[idx].zIndex = ++globalZIndex;
     el.style.zIndex = pieces[idx].zIndex;
@@ -1111,7 +1057,6 @@ function handleTouchStart(e, idx, el) {
     startX = touch.clientX;
     startY = touch.clientY;
     
-    // 오프셋 계산 (단순화)
     const rect = el.getBoundingClientRect();
     dragOffsetX = touch.clientX - rect.left;
     dragOffsetY = touch.clientY - rect.top;
@@ -1130,17 +1075,12 @@ function handleTouchStart(e, idx, el) {
         }
         if(!myTouch) return;
 
-        // 약간의 움직임은 탭으로 간주하기 위한 임계값
         if (Math.abs(myTouch.clientX - startX) > 10 || Math.abs(myTouch.clientY - startY) > 10) {
             isDragging = true;
         }
         
-        // 단순 이동 처리
-        const currentEl = document.getElementById(`p-${idx}`);
-        if(currentEl) {
-            currentEl.style.left = `${myTouch.clientX - dragOffsetX}px`;
-            currentEl.style.top = `${myTouch.clientY - dragOffsetY}px`;
-        }
+        el.style.left = `${myTouch.clientX - dragOffsetX}px`;
+        el.style.top = `${myTouch.clientY - dragOffsetY}px`;
         updateGhost(idx);
     };
     
@@ -1157,15 +1097,11 @@ function handleTouchStart(e, idx, el) {
         document.removeEventListener('touchmove', onTouchMove);
         document.removeEventListener('touchend', onTouchEnd);
         
-        const p = pieces[idx];
-
-        // 💡 탭(클릭)으로 판정될 때: 뒤집기 시도
         if(!isDragging) { 
-            flipPieceData(idx); // 일단 뒤집음
+            flipPieceData(idx);
             
-            // 💡 핵심: 뒤집은 상태로 제자리에 들어가는지 확인
+            const p = pieces[idx];
             if (dragStartGridX !== -1 && canPlace(p.currentShape, dragStartGridY, dragStartGridX)) {
-                // 성공: 그대로 안착
                 placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
                 p.x = dragStartGridX; 
                 p.y = dragStartGridY;
@@ -1174,11 +1110,8 @@ function handleTouchStart(e, idx, el) {
                 ghostEl.style.display = 'none';
                 renderPieces();
             } else {
-                // 실패: 원래 자리로 돌아가야 함
                 if(dragStartGridX !== -1) {
-                    // 🛡️ 안전 장치: 뒤집기를 취소(다시 뒤집음)하여 원래 모양 복구
                     flipPieceData(idx); 
-                    // 원래 모양으로 안전하게 착륙
                     placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
                     p.x = dragStartGridX; 
                     p.y = dragStartGridY;
@@ -1187,16 +1120,13 @@ function handleTouchStart(e, idx, el) {
                     ghostEl.style.display = 'none';
                     renderPieces();
                 } else {
-                    // 트레이에 있던 거면 그냥 다시 계산해서 드롭
                     dropPiece(idx, el);
                 }
             }
         } else {
-            // 드래그 후 놓았을 때
             dropPiece(idx, el);
         }
     };
-
     document.addEventListener('touchmove', onTouchMove, {passive: false});
     document.addEventListener('touchend', onTouchEnd);
 }
@@ -1218,28 +1148,6 @@ function flipPieceData(idx) {
     updateVisualsInDrag(idx); // 즉시 렌더링 호출
 }
 
-// 3. [수정됨] 회전 시 좌표가 튀는 현상을 막기 위해 고스트를 즉시 업데이트합니다.
-function recenterPieceOnFinger(idx) {
-    if (lastTouchX === 0 && lastTouchY === 0) return;
-
-    const el = document.getElementById(`p-${idx}`);
-    if (!el) return;
-
-    // 회전 후 새로운 크기 측정
-    const rect = el.getBoundingClientRect();
-    
-    // 💡 손가락 위치를 조각의 중심으로 재조정
-    dragOffsetX = rect.width / 2;
-    dragOffsetY = rect.height / 2;
-
-    el.style.left = `${lastTouchX - dragOffsetX}px`;
-    el.style.top = `${lastTouchY - dragOffsetY}px`;
-
-    // 💡 중요: 오프셋이 바뀌었으므로 고스트 위치도 즉시 다시 계산해야 함!
-    // 이 부분이 없으면 회전 직후 드래그하기 전까지 고스트가 사라짐
-    updateGhost(idx); 
-}
-
 function rotateMatrix(m) {
     const R=m.length, C=m[0].length;
     let n=Array(C).fill().map(()=>Array(R).fill(0));
@@ -1247,20 +1155,11 @@ function rotateMatrix(m) {
     return n;
 }
 
-// ⚠️ 수정됨: 관대한 판정 유지 (빈 공간은 밖으로 나가도 됨)
 function canPlace(shape, r, c) {
-    for(let i=0; i<shape.length; i++) {
-        for(let j=0; j<shape[0].length; j++) {
-            if(shape[i][j] === 1) {
-                if (r + i < 0 || r + i >= ROWS) return false;
-                if (c + j < 0 || c + j >= COLS) return false;
-                if (boardState[r+i][c+j] !== -1) return false;
-            }
-        }
-    }
+    for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) 
+        if(shape[i][j] && (r+i>=ROWS || c+j>=COLS || r+i<0 || c+j<0 || boardState[r+i][c+j]!==-1)) return false;
     return true;
 }
-
 function placePieceToBoardState(shape, r, c, id) {
     for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=id;
 }
@@ -1285,3 +1184,4 @@ loadNewGame();
 </script>
 </body>
 </html>
+
