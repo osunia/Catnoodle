@@ -197,6 +197,31 @@
             margin-top: 5px;
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+.piece {
+            display: grid; gap: 1px;
+            cursor: grab; touch-action: none; z-index: 100;
+            transition: transform 0.1s; 
+            pointer-events: none; 
+            isolation: isolate; 
+        }
+        .piece.on-board { position: absolute; gap: 2px; }
+        .piece.in-tray { position: absolute; transform: scale(0.9); }
+        .piece.picked-up {
+            position: fixed; cursor: grabbing;
+            opacity: 0.95; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4)); 
+            transform: scale(1.05); pointer-events: none; z-index: 9999;
+            gap: 2px; transition: none; 
+        }
+        .piece.locked { cursor: not-allowed; pointer-events: none; }
+        
+        .block {
+            width: var(--cell-size); height: var(--cell-size);
+            position: relative; 
+            border-radius: 50%;
+            pointer-events: auto; 
+        }
+
         
         .visual-atom {
             position: absolute;
@@ -231,48 +256,6 @@
             width: 40%; 
             transform: translateX(-50%);
         }
-
-/* 1. .piece 클래스에 width/height 제거 및 격자 설정 강화 */
-.piece {
-    display: grid;
-    /* gap을 0으로 하고 블록 내부에서 padding으로 조절하는 게 더 안정적일 수 있으나,
-       기존 디자인 유지를 위해 gap 유지하되, 전체 크기가 늘어나지 않도록 주의 */
-    gap: 0; /* 💡 수정: gap을 없애고 블록 크기를 정확히 맞춤 (깔끔한 원형 유지를 위해) */
-    
-    cursor: grab; 
-    touch-action: none; 
-    z-index: 100;
-    transition: transform 0.1s; 
-    pointer-events: none; 
-    isolation: isolate; 
-    
-    /* 💡 중요: 조각 자체의 크기가 내용물에 딱 맞게 */
-    width: fit-content; 
-    height: fit-content;
-}
-
-/* 2. .block 클래스에 절대적인 크기(var(--cell-size)) 강제 적용 */
-.block {
-    width: var(--cell-size); 
-    height: var(--cell-size);
-    position: relative; 
-    border-radius: 50%;
-    pointer-events: auto; /* 중요: 클릭 가능하게 */
-    
-    /* 💡 추가: 블록이 찌그러지지 않도록 flex로 중앙 정렬 및 여백 확보 */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    
-    /* 💡 시각적 보정: 셀 사이즈보다 살짝 작게 그려서 여백(gap) 효과 내기 */
-    transform: scale(0.92); 
-}
-
-/* 3. .on-board 상태일 때 위치 보정 */
-.piece.on-board { 
-    position: absolute; 
-    gap: 0; /* 보드 위에서도 gap 0 */
-}
         
         .piece.locked .visual-atom {
             filter: brightness(0.8) grayscale(0.2);
