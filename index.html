@@ -917,6 +917,7 @@ function handleMouseDown(e, idx, el) {
     }
 }
 
+// 1. [수정됨] 조각을 집을 때 '원래 모양'을 기억해둡니다.
 function pickUpPiece(idx, el, startX, startY) {
     pickedPieceIdx = idx;
     const p = pieces[idx];
@@ -925,6 +926,10 @@ function pickUpPiece(idx, el, startX, startY) {
     dragStartGridY = p.y;
     lastValidGhostPos = null; 
     
+    // 💡 중요: 원래 모양을 깊은 복사로 저장해 둡니다.
+    // 만약 놓을 수 없는 곳에 놓아서 원래 자리로 돌아가야 할 때, 이 모양으로 복구합니다.
+    p.originalShape = JSON.parse(JSON.stringify(p.currentShape));
+
     lastTouchX = startX;
     lastTouchY = startY;
     isRotating = false;
@@ -947,6 +952,7 @@ function pickUpPiece(idx, el, startX, startY) {
     
     updateGhost(idx);
 }
+
 
 function onGlobalTouchStart(e) {
     if(pickedPieceIdx !== null && e.touches.length > 1) {
@@ -998,6 +1004,7 @@ function releasePiece() {
     renderPieces();
 }
 
+// 2. [수정됨] 드롭 실패 시, 안전하게 복구하는 로직을 추가했습니다.
 function dropPiece(idx, el, forcedX, forcedY) {
     const p = pieces[idx];
     let targetR, targetC, isValid;
@@ -1011,17 +1018,18 @@ function dropPiece(idx, el, forcedX, forcedY) {
     isValid = result.valid;
     
     if (isValid) {
+        // 유효한 위치면 배치
         placePieceToBoardState(p.currentShape, targetR, targetC, p.id);
         p.x = targetC; p.y = targetR;
         checkWinCondition();
     } else {
+        // 💡 배치 실패 시 처리 로직 개선
         const trayRect = trayEl.getBoundingClientRect();
         let pieceRect = el.getBoundingClientRect();
         
-        let pieceCX, pieceCY;
-        pieceCX = dropX;
-        pieceCY = dropY;
-
+        // 트레이(모음판) 위인지 확인
+        let pieceCX = dropX;
+        let pieceCY = dropY;
         const buffer = 50; 
         const insideTrayArea = (
             pieceCX >= trayRect.left - buffer &&
@@ -1031,9 +1039,9 @@ function dropPiece(idx, el, forcedX, forcedY) {
         );
 
         if (insideTrayArea) {
-             let newTrayX, newTrayY;
-             newTrayX = dropX - (pieceRect.width/2) - trayRect.left;
-             newTrayY = dropY - (pieceRect.height/2) - trayRect.top;
+             // 트레이로 돌아감 (회전된 상태 유지)
+             let newTrayX = dropX - (pieceRect.width/2) - trayRect.left;
+             let newTrayY = dropY - (pieceRect.height/2) - trayRect.top;
 
              const trayW = trayEl.clientWidth;
              const trayH = trayEl.clientHeight;
@@ -1047,14 +1055,35 @@ function dropPiece(idx, el, forcedX, forcedY) {
              p.trayY = newTrayY;
              p.x = -1; p.y = -1;
         } else {
+            // 💡 원래 있던 보드 자리로 돌아가야 함
             if (dragStartGridX !== -1) {
-                placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
-                p.x = dragStartGridX; p.y = dragStartGridY;
+                // 현재(회전된) 모양으로 원래 자리에 들어갈 수 있는지 확인
+                if (canPlace(p.currentShape, dragStartGridY, dragStartGridX)) {
+                    placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
+                    p.x = dragStartGridX; p.y = dragStartGridY;
+                } else {
+                    // 🐛 전염 방지: 회전된 모양이 원래 자리에 안 맞으면, 모양을 원래대로 되돌림
+                    p.currentShape = p.originalShape; 
+                    // 시각적 업데이트 (모양 되돌리기)
+                    updateVisualsInDrag(idx); 
+                    placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
+                    p.x = dragStartGridX; p.y = dragStartGridY;
+                }
             } else {
                 returnToTrayRandomly(p);
             }
         }
     }
+
+    cleanupListeners();
+    pickedPieceIdx = null; 
+    ghostEl.style.display = 'none';
+    lastValidGhostPos = null;
+    isDragging = false;
+    isRotating = false; 
+    renderPieces();
+}
+
 
     cleanupListeners();
     pickedPieceIdx = null; 
@@ -1198,21 +1227,26 @@ function flipPieceData(idx) {
     }
 }
 
+// 3. [수정됨] 회전 시 좌표가 튀는 현상을 막기 위해 고스트를 즉시 업데이트합니다.
 function recenterPieceOnFinger(idx) {
     if (lastTouchX === 0 && lastTouchY === 0) return;
 
     const el = document.getElementById(`p-${idx}`);
     if (!el) return;
 
+    // 회전 후 새로운 크기 측정
     const rect = el.getBoundingClientRect();
     
+    // 💡 손가락 위치를 조각의 중심으로 재조정
     dragOffsetX = rect.width / 2;
     dragOffsetY = rect.height / 2;
 
     el.style.left = `${lastTouchX - dragOffsetX}px`;
     el.style.top = `${lastTouchY - dragOffsetY}px`;
 
-    updateGhost(idx);
+    // 💡 중요: 오프셋이 바뀌었으므로 고스트 위치도 즉시 다시 계산해야 함!
+    // 이 부분이 없으면 회전 직후 드래그하기 전까지 고스트가 사라짐
+    updateGhost(idx); 
 }
 
 function rotateMatrix(m) {
