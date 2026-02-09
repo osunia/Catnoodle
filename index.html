@@ -468,6 +468,9 @@ let dragStartGridY = -1;
 let lastValidGhostPos = null; 
 let globalZIndex = 100;
 
+// 💡 [추가] 회전 여부를 감지하는 플래그 변수
+let hasRotated = false; 
+
 // 중복 방지를 위한 이전 문제 인덱스
 let currentProblemIdx = -1;
 
@@ -956,7 +959,8 @@ function onGlobalClick(e) {
 
 function onGlobalTouchStart(e) {
     if(pickedPieceIdx !== null && e.touches.length > 1) {
-        e.preventDefault(); 
+        e.preventDefault();
+        hasRotated = true; // 💡 멀티 터치 발생 시 '회전했음'으로 표시
         rotatePieceData(pickedPieceIdx);
     }
 }
@@ -1053,6 +1057,7 @@ function handleTouchStart(e, idx, el) {
     const touchId = touch.identifier;
 
     isDragging = false;
+    hasRotated = false; // 💡 터치 시작 시 회전 플래그 초기화
     startX = touch.clientX;
     startY = touch.clientY;
     
@@ -1096,7 +1101,8 @@ function handleTouchStart(e, idx, el) {
         document.removeEventListener('touchmove', onTouchMove);
         document.removeEventListener('touchend', onTouchEnd);
         
-        if(!isDragging) { 
+        // 💡 수정됨: 드래그하지 않았더라도, '회전'을 했다면 뒤집지 않고 바로 내려놓습니다.
+        if(!isDragging && !hasRotated) { 
             flipPieceData(idx);
             
             const p = pieces[idx];
