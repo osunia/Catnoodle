@@ -490,66 +490,66 @@ const RAW_PUZZLES_TEXT = [
     // #61
     [
         "AJJJJLEEEII", // O -> I 보정 (모양 고려)
-        "AAALLHEEIII",
-        "GGGBHHFFHHI",
-        "KKGBDFFHHCC",
+        "AAABLLLHEEI",
+        "GGGBBLFHHII",
+        "KKGBBDFFHHC",
         "KKGDDDDCCCC"
     ],
     // #62
     [
         "BBBLHHJJJJG",
-        "BBLLHHAAAGG",
-        "IIILEEHAAGG",
+        "BBLLLHHAAAG",
+        "IIILEEHAGGG",
         "IDIFFEEECKK",
         "DDDDFCCCCKK"
     ],
     // #63
     [
-        "CCCCEELLJJJ",
+        "CCCCEELJJJJ",
         "CAEEELLLHHF",
         "GADDDDLHHFF",
-        "GAADBBOHIKK",
-        "GGGBBBOOIKK"
+        "GAADBBIHIKK",
+        "GGGBBBIIIKK"
     ],
     // #64
     [
-        "DDDDEELLJJJ",
-        "CDEEELLHHJJ",
+        "DDDDEELJJJJ",
+        "CDEEELLLHBB",
         "CFFAAGLHHBB",
-        "CFKKAGHHIBB",
-        "CCKKAGGGOOO"
+        "CFKKAGHHIBI",
+        "CCKKAGGGIII"
     ],
     // #65
     [
         "EJJJJDDDDAA",
-        "EFFBBDDHHAC",
+        "EFFBBBDHHAC",
         "EEFBBGHHLAC",
         "IEIKKGHLLLC",
         "IIIKKGGGLCC"
     ],
     // #66
     [
-        "FFCCCCIIIEE",
-        "JFBBCCIIEAA",
+        "FFCCCCIIEEE",
+        "JFBBBCIEEAA",
         "JKKBBLIIHAG",
         "JKKDLLLHHAG",
-        "JDDDLHHGGGG"
+        "JDDDDLHHGGG"
     ],
     // #67
     [
         "GGGAAAHHFFD",
-        "GIIIAHHHFFD",
+        "GIIIJALHHFD",
         "GIBIJLLLHDD",
         "KKBBJCLEEED",
-        "KKBBJCCCEEE"
+        "KKBBJCCCCEE"
     ],
     // #68
     [
         "HHDDDDLCCCC",
         "FHHADLLLIIC",
         "FFHAAALEEIG",
-        "KKBBBEEOOIG",
-        "KKBBJJJGGGG"
+        "KKBBBEEEIIG",
+        "KKBBJJJJGGG"
     ],
     // #69
     [
@@ -563,8 +563,8 @@ const RAW_PUZZLES_TEXT = [
     [
         "JJJJFFAAAKK",
         "IIEEEFAHHKK",
-        "IEGCCCCLHHG",
-        "IDGCBBLLLHG",
+        "IEECCCCLHHG",
+        "IIDCBBLLLHG",
         "DDDDBBBLGGG"
     ],
     // #71
