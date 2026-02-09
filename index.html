@@ -198,40 +198,18 @@
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         
-        .piece {
-            display: grid; gap: 1px;
-            cursor: grab; touch-action: none; z-index: 100;
-            transition: transform 0.1s; pointer-events: auto; 
-            isolation: isolate; 
-        }
-        .piece.on-board { position: absolute; gap: 2px; }
-        .piece.in-tray { position: absolute; transform: scale(0.9); }
-        .piece.picked-up {
-            position: fixed; cursor: grabbing;
-            opacity: 0.95; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4)); 
-            transform: scale(1.05); pointer-events: none; z-index: 9999;
-            gap: 2px; transition: none; 
-        }
-        .piece.locked { cursor: not-allowed; pointer-events: none; }
-        
-        .block {
-            width: var(--cell-size); height: var(--cell-size);
-            position: relative; 
-            border-radius: 50%;
-        }
-
         .visual-atom {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             border-radius: 50%;
             z-index: 2; 
             background-image: 
-                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%),
-                radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.2) 100%);
+                radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%),
+                radial-gradient(circle at 65% 65%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 100%);
             box-shadow: 
-                inset -2px -2px 6px rgba(0,0,0,0.15), 
-                inset 1px 1px 2px rgba(255,255,255,0.15), 
-                1px 1px 3px rgba(0,0,0,0.2); 
+                inset -3px -3px 6px rgba(0,0,0,0.25),
+                inset 2px 2px 4px rgba(255,255,255,0.2),
+                1px 2px 4px rgba(0,0,0,0.25); 
         }
 
         .connector-h, .connector-v {
@@ -255,17 +233,31 @@
         }
 
         .piece.locked .visual-atom {
-            filter: brightness(0.9) grayscale(0.4);
+            filter: brightness(0.8) grayscale(0.2);
             background-image: 
                 repeating-linear-gradient(
                     45deg,
-                    rgba(255,255,255,0.2),
-                    rgba(255,255,255,0.2) 5px, 
-                    transparent 5px,
-                    transparent 10px
+                    rgba(255,255,255,0.15),
+                    rgba(255,255,255,0.15) 8px, 
+                    transparent 8px,
+                    transparent 16px
                 ),
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
         }
+
+        #p-5.locked .visual-atom {
+            filter: brightness(0.8);
+            background-image: 
+                repeating-linear-gradient(
+                    45deg,
+                    rgba(0,0,0,0.1),
+                    rgba(0,0,0,0.1) 8px,
+                    transparent 8px,
+                    transparent 16px
+                ),
+                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
+        }
+
         .piece.locked .connector-h, .piece.locked .connector-v {
             filter: brightness(0.8) grayscale(0.4);
         }
@@ -419,18 +411,18 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 const SHAPES_DEF = [
-    { id: 0, color: '#f39c12', shape: [[1,0],[1,0],[1,1]] }, 
-    { id: 1, color: '#c0392b', shape: [[1,1],[1,1],[0,1]] }, 
-    { id: 2, color: '#2980b9', shape: [[1,1,1,1],[1,0,0,0]] }, 
+    { id: 0, color: '#ff8a00', shape: [[1,0],[1,0],[1,1]] }, 
+    { id: 1, color: '#f44336', shape: [[1,1],[1,1],[0,1]] }, 
+    { id: 2, color: '#005db0', shape: [[1,1,1,1],[1,0,0,0]] }, 
     { id: 3, color: '#ffcccc', shape: [[0,1],[0,1],[1,1],[0,1]] }, 
-    { id: 4, color: '#27ae60', shape: [[1,1],[1,1],[0,1]] }, 
-    { id: 5, color: '#ffffff', shape: [[1,1],[0,1]] }, 
-    { id: 6, color: '#82ccdd', shape: [[1,0,0],[1,0,0],[1,1,1]] }, 
-    { id: 7, color: '#fd79a8', shape: [[1,0,0],[1,1,0],[0,1,1]] }, 
-    { id: 8, color: '#f1c40f', shape: [[1,0,1],[1,1,1]] }, 
+    { id: 4, color: '#009f07', shape: [[1,1],[1,1],[0,1]] }, 
+    { id: 5, color: '#f3f6f4', shape: [[1,1],[0,1]] }, 
+    { id: 6, color: '#88ddf0', shape: [[1,0,0],[1,0,0],[1,1,1]] }, 
+    { id: 7, color: '#ff76a7', shape: [[1,0,0],[1,1,0],[0,1,1]] }, 
+    { id: 8, color: '#ffdd57', shape: [[1,0,1],[1,1,1]] }, 
     { id: 9, color: '#8e44ad', shape: [[1],[1],[1],[1]] }, 
-    { id: 10, color: '#b8e994', shape: [[1,1],[1,1]] }, 
-    { id: 11, color: '#95a5a6', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
+    { id: 10, color: '#baf776', shape: [[1,1],[1,1]] }, 
+    { id: 11, color: '#bfbfbf', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
 ];
 
 const COLS = 11;
