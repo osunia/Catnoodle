@@ -202,7 +202,6 @@
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
             transition: transform 0.1s; 
-            /* ⚠️ 수정됨: 컨테이너 자체는 이벤트를 통과시킴 */
             pointer-events: none; 
             isolation: isolate; 
         }
@@ -214,34 +213,28 @@
             transform: scale(1.05); pointer-events: none; z-index: 9999;
             gap: 2px; transition: none; 
         }
-        /* locked는 이미 pointer-events: none이므로 유지 */
         .piece.locked { cursor: not-allowed; pointer-events: none; }
         
         .block {
             width: var(--cell-size); height: var(--cell-size);
             position: relative; 
             border-radius: 50%;
-            /* ⚠️ 추가됨: 실제 보이는 블럭만 이벤트를 받음 */
             pointer-events: auto; 
         }
 
-/* 1. 구슬 디자인 개선: 과한 광택은 줄이고 그림자로 입체감 형성 */
         .visual-atom {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             border-radius: 50%;
             z-index: 2; 
-            /* 하이라이트는 부드럽게, 그림자는 깊게 */
             background-image: 
                 radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%),
                 radial-gradient(circle at 65% 65%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 100%);
-            /* 안쪽 그림자(inset)를 활용해 둥근 느낌 강조 */
             box-shadow: 
                 inset -3px -3px 6px rgba(0,0,0,0.25),
                 inset 2px 2px 4px rgba(255,255,255,0.2),
                 1px 2px 4px rgba(0,0,0,0.25); 
         }
-
 
         .connector-h, .connector-v {
             position: absolute;
@@ -263,32 +256,32 @@
             transform: translateX(-50%);
         }
 
-        /* 2. 비활성 조각: 사선을 더 두껍고 명확하게 */
         .piece.locked .visual-atom {
             filter: brightness(0.8) grayscale(0.2);
             background-image: 
                 repeating-linear-gradient(
                     45deg,
                     rgba(255,255,255,0.15),
-                    rgba(255,255,255,0.15) 8px,   /* 사선 두께 증가 (5px -> 8px) */
+                    rgba(255,255,255,0.15) 8px, 
                     transparent 8px,
-                    transparent 16px              /* 간격도 비례해서 증가 */
+                    transparent 16px
                 ),
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
         }
-                /* 3. [예외 처리] 흰색 조각(ID: 5)은 흰색 사선이 안 보이므로 회색 사선 적용 */
+
         #p-5.locked .visual-atom {
             filter: brightness(0.8);
             background-image: 
                 repeating-linear-gradient(
                     45deg,
-                    rgba(0,0,0,0.1),             /* 흰색 대신 연한 검정(회색) 사용 */
+                    rgba(0,0,0,0.1),
                     rgba(0,0,0,0.1) 8px,
                     transparent 8px,
                     transparent 16px
                 ),
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
         }
+
         .piece.locked .connector-h, .piece.locked .connector-v {
             filter: brightness(0.8) grayscale(0.4);
         }
@@ -442,7 +435,7 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 const SHAPES_DEF = [
-    { id: 0, color: '#ff8a00', shape: [[1,0],[1,0],[1,1]] }, 
+    { id: 0, color: '#f39c12', shape: [[1,0],[1,0],[1,1]] }, 
     { id: 1, color: '#c0392b', shape: [[1,1],[1,1],[0,1]] }, 
     { id: 2, color: '#2980b9', shape: [[1,1,1,1],[1,0,0,0]] }, 
     { id: 3, color: '#ffcccc', shape: [[0,1],[0,1],[1,1],[0,1]] }, 
@@ -456,8 +449,6 @@ const SHAPES_DEF = [
     { id: 11, color: '#95a5a6', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
 ];
 
-/* * SOLUTION_DB is loaded from problems.js */
-
 const COLS = 11;
 const ROWS = 5;
 let cellSize = 32;
@@ -470,6 +461,9 @@ let dragOffsetY = 0;
 let isDragging = false;
 let startX = 0;
 let startY = 0;
+// 추가: 모바일 터치 좌표 추적용
+let lastTouchX = 0;
+let lastTouchY = 0;
 
 let dragStartGridX = -1;
 let dragStartGridY = -1;
@@ -607,37 +601,30 @@ function loadNewGame() {
 }
 
 function loadNewGameLogic() {
-    if(pickedPieceIdx !== null) releasePiece();
+    if(pickedPieceIdx !== null) releasePiece(); // 강제 릴리즈 함수 사용
+    
     trayOverlay.style.display = 'none';
     const bOverlay = document.getElementById('board-overlay');
     if(bOverlay) bOverlay.style.display = 'none';
     
     let newIdx;
     if (typeof SOLUTION_DB !== 'undefined' && SOLUTION_DB.length > 0) {
-        // ✨ [수정됨] 무작위 대신 순차적으로 증가 (검증용)
         newIdx = currentProblemIdx + 1;
-        
-        // 180번(마지막)을 넘어가면 다시 처음(0번)으로 돌아감
-        if (newIdx >= SOLUTION_DB.length) {
-            newIdx = 0;
-        }
+        if (newIdx >= SOLUTION_DB.length) newIdx = 0;
     } else {
         newIdx = 0;
     }
     currentProblemIdx = newIdx;
 
     if(typeof SOLUTION_DB !== 'undefined') {
-        // ✨ 현재 풀고 있는 문제 번호를 콘솔에 큼지막하게 출력
         const currentPuzzle = SOLUTION_DB[newIdx];
         if (currentPuzzle.id) {
             console.log(`%c🧩 현재 플레이 중인 퍼즐: #${currentPuzzle.id}`, "background: #2d3436; color: #badc58; font-size: 16px; font-weight: bold; padding: 6px; border-radius: 4px;");
         } else {
             console.log(`🧩 현재 퍼즐 Index: ${newIdx} (ID 정보 없음)`);
         }
-
         answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[newIdx]));
     } else {
-        // Fallback
         answerKey = [[7,7,4,4,4,1,1,1,6,6,6],[3,7,7,0,4,4,1,1,5,5,6],[3,3,7,0,0,0,11,8,8,5,6],[3,2,2,2,2,11,11,11,8,10,10],[3,2,9,9,9,9,11,8,8,10,10]];
         console.log("⚠️ 데이터베이스가 로드되지 않아 기본 문제를 사용합니다.");
     }
@@ -745,16 +732,13 @@ function removePieceFromBoardState(shape, r, c) {
     for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=-1;
 }
 
-// ⚠️ 버그 수정: 회전 시 전체가 아닌 해당 조각만 업데이트
 function updateVisualsInDrag(idx) {
     const p = pieces[idx];
     if(pickedPieceIdx === idx) {
         const el = document.getElementById(`p-${idx}`);
-        // 요소 초기화
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
         el.innerHTML = ''; 
 
-        // 새 모양으로 DOM 재생성
         p.currentShape.forEach((row, r) => {
             row.forEach((v, c) => {
                 const b = document.createElement('div');
@@ -767,7 +751,6 @@ function updateVisualsInDrag(idx) {
                     atom.style.backgroundColor = p.color;
                     b.appendChild(atom);
 
-                    // 연결부 재생성
                     if(c + 1 < row.length && row[c+1]) {
                         const h = document.createElement('div'); h.className = 'connector-h'; b.appendChild(h);
                     }
@@ -787,6 +770,7 @@ function updateVisualsInDrag(idx) {
 }
 
 function renderPieces() {
+    // 중요: 렌더링 시 기존 피스 모두 삭제 후 재생성 (상태 꼬임 방지)
     document.querySelectorAll('.piece').forEach(e => {
         if(pickedPieceIdx === null || e.id !== `p-${pickedPieceIdx}`) e.remove();
     });
@@ -848,15 +832,27 @@ function setupInteraction(el, idx) {
     el.addEventListener('touchstart', (e) => handleTouchStart(e, idx, el), {passive: false});
 }
 
-function getHoveredGridPosition(pieceIdx, el) {
+function getHoveredGridPosition(pieceIdx, el, forcedX, forcedY) {
     const p = pieces[pieceIdx];
     const bRect = boardEl.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
+    let elRect = el.getBoundingClientRect();
+    
+    // 만약 강제 좌표(터치 엔드 등)가 있다면 해당 좌표 기준으로 사각형 계산
+    let checkX, checkY;
+    
+    if (forcedX !== undefined && forcedY !== undefined) {
+        checkX = forcedX - (elRect.width / 2); // 중심점 기준 보정
+        checkY = forcedY - (elRect.height / 2);
+    } else {
+        checkX = elRect.left;
+        checkY = elRect.top;
+    }
     
     const gap = 2; const padding = 10;
-    const relX = elRect.left - bRect.left - padding;
-    const relY = elRect.top - bRect.top - padding;
+    const relX = checkX - bRect.left - padding;
+    const relY = checkY - bRect.top - padding;
     
+    // 그리드 좌표 계산 (반올림으로 가장 가까운 칸 자석 효과)
     const gx = Math.round(relX / (cellSize + gap));
     const gy = Math.round(relY / (cellSize + gap));
     
@@ -869,7 +865,14 @@ function updateGhost(idx) {
     const el = document.getElementById(`p-${idx}`);
     if(!el) return;
     
-    const result = getHoveredGridPosition(idx, el);
+    // 현재 드래그 위치(lastTouchX/Y)가 있다면 그것을 사용
+    let result;
+    if (isDragging && lastTouchX !== 0) {
+         result = getHoveredGridPosition(idx, el, lastTouchX, lastTouchY);
+    } else {
+         result = getHoveredGridPosition(idx, el);
+    }
+
     const p = pieces[idx];
 
     if(result.valid) {
@@ -937,7 +940,10 @@ function pickUpPiece(idx, el, startX, startY) {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('wheel', onWheel, {passive: false});
     document.addEventListener('mousedown', onGlobalClick);
-    document.addEventListener('touchstart', onGlobalTouchStart, {passive: false}); 
+    
+    // 모바일 리스너도 여기서 등록 (중복 방지 체크는 cleanup에서 함)
+    // document.addEventListener('touchmove', onTouchMove, {passive: false}); 
+    // -> 모바일은 handleTouchStart 내부 클로저에서 처리함
     
     updateGhost(idx);
 }
@@ -962,18 +968,39 @@ function onGlobalClick(e) {
     }
 }
 
-function onGlobalTouchStart(e) {
-    if(pickedPieceIdx !== null && e.touches.length > 1) {
-        e.preventDefault(); 
-        rotatePieceData(pickedPieceIdx);
+// [중요] 강제 리셋 함수 (상태 꼬임 방지)
+function releasePiece() {
+    if (pickedPieceIdx === null) return;
+    const p = pieces[pickedPieceIdx];
+    const el = document.getElementById(`p-${pickedPieceIdx}`);
+    if (el) {
+        // 원래 자리나 트레이로 강제 복귀
+        if (dragStartGridX !== -1) {
+            placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
+            p.x = dragStartGridX; p.y = dragStartGridY;
+        } else {
+            returnToTrayRandomly(p);
+        }
     }
+    cleanupListeners();
+    pickedPieceIdx = null;
+    ghostEl.style.display = 'none';
+    renderPieces();
 }
 
-function dropPiece(idx, el) {
+function dropPiece(idx, el, forcedX, forcedY) {
     const p = pieces[idx];
     let targetR, targetC, isValid;
 
-    if (lastValidGhostPos) {
+    // 모바일 터치엔드 등에서 좌표를 강제로 줬다면 그것을 우선 사용
+    if (forcedX !== undefined && forcedY !== undefined) {
+         // 터치 좌표가 보드 내부인지 체크하여 유효성 판단
+         const result = getHoveredGridPosition(idx, el, forcedX, forcedY);
+         targetR = result.r;
+         targetC = result.c;
+         isValid = result.valid;
+    } 
+    else if (lastValidGhostPos) {
         targetR = lastValidGhostPos.r;
         targetC = lastValidGhostPos.c;
         isValid = true;
@@ -989,11 +1016,19 @@ function dropPiece(idx, el) {
         p.x = targetC; p.y = targetR;
         checkWinCondition();
     } else {
+        // 드롭 실패 시 처리
         const trayRect = trayEl.getBoundingClientRect();
-        const pieceRect = el.getBoundingClientRect();
+        let pieceRect = el.getBoundingClientRect();
         
-        const pieceCX = pieceRect.left + pieceRect.width / 2;
-        const pieceCY = pieceRect.top + pieceRect.height / 2;
+        let pieceCX, pieceCY;
+        
+        if (forcedX !== undefined && forcedY !== undefined) {
+            pieceCX = forcedX;
+            pieceCY = forcedY;
+        } else {
+            pieceCX = pieceRect.left + pieceRect.width / 2;
+            pieceCY = pieceRect.top + pieceRect.height / 2;
+        }
 
         const buffer = 50; 
         const insideTrayArea = (
@@ -1004,8 +1039,16 @@ function dropPiece(idx, el) {
         );
 
         if (insideTrayArea) {
-             let newTrayX = pieceRect.left - trayRect.left;
-             let newTrayY = pieceRect.top - trayRect.top;
+             // 트레이 안으로 드롭됨
+             let newTrayX, newTrayY;
+             
+             if (forcedX !== undefined) {
+                 newTrayX = forcedX - (pieceRect.width/2) - trayRect.left;
+                 newTrayY = forcedY - (pieceRect.height/2) - trayRect.top;
+             } else {
+                 newTrayX = pieceRect.left - trayRect.left;
+                 newTrayY = pieceRect.top - trayRect.top;
+             }
 
              const trayW = trayEl.clientWidth;
              const trayH = trayEl.clientHeight;
@@ -1019,7 +1062,14 @@ function dropPiece(idx, el) {
              p.trayY = newTrayY;
              p.x = -1; p.y = -1;
         } else {
-            returnToTrayRandomly(p);
+            // 보드도 아니고 트레이도 아니면 => 원래 자리로 돌아가거나(보드였던 경우) 트레이로 리셋
+            if (dragStartGridX !== -1) {
+                // 원래 보드에 있던 놈이면 되돌림
+                placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
+                p.x = dragStartGridX; p.y = dragStartGridY;
+            } else {
+                returnToTrayRandomly(p);
+            }
         }
     }
 
@@ -1027,6 +1077,7 @@ function dropPiece(idx, el) {
     pickedPieceIdx = null; 
     ghostEl.style.display = 'none';
     lastValidGhostPos = null;
+    isDragging = false;
     renderPieces();
 }
 
@@ -1044,14 +1095,25 @@ function cleanupListeners() {
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('wheel', onWheel);
     document.removeEventListener('mousedown', onGlobalClick);
-    document.removeEventListener('touchstart', onGlobalTouchStart); 
+    
+    // 모바일 리스너는 각 touchstart 클로저 내에서 제거되지만, 안전을 위해 추가적인 플래그 처리
+    isDragging = false;
 }
 
-// 📱 Mobile Logic
+// 📱 Mobile Logic Refined
 function handleTouchStart(e, idx, el) {
     e.preventDefault(); e.stopPropagation();
 
-    if (e.touches.length > 1 && pickedPieceIdx === idx) return;
+    // 멀티터치 방지
+    if (e.touches.length > 1) {
+        if (pickedPieceIdx === idx) {
+             // 이미 잡고 있는 상태에서 터치가 추가됨 -> 회전
+             rotatePieceData(idx);
+        }
+        return;
+    }
+    
+    // 다른 조각 잡고 있으면 무시
     if(pickedPieceIdx !== null && pickedPieceIdx !== idx) return;
 
     pieces[idx].zIndex = ++globalZIndex;
@@ -1063,6 +1125,8 @@ function handleTouchStart(e, idx, el) {
     isDragging = false;
     startX = touch.clientX;
     startY = touch.clientY;
+    lastTouchX = startX;
+    lastTouchY = startY;
     
     const rect = el.getBoundingClientRect();
     dragOffsetX = touch.clientX - rect.left;
@@ -1072,7 +1136,6 @@ function handleTouchStart(e, idx, el) {
 
     const onTouchMove = (ev) => {
         ev.preventDefault();
-        
         let myTouch = null;
         for(let i=0; i<ev.touches.length; i++) {
             if(ev.touches[i].identifier === touchId) {
@@ -1082,7 +1145,10 @@ function handleTouchStart(e, idx, el) {
         }
         if(!myTouch) return;
 
-        if (Math.abs(myTouch.clientX - startX) > 10 || Math.abs(myTouch.clientY - startY) > 10) {
+        lastTouchX = myTouch.clientX;
+        lastTouchY = myTouch.clientY;
+
+        if (Math.abs(myTouch.clientX - startX) > 5 || Math.abs(myTouch.clientY - startY) > 5) {
             isDragging = true;
         }
         
@@ -1099,41 +1165,32 @@ function handleTouchStart(e, idx, el) {
                 break;
             }
         }
+        // 내 손가락이 떨어졌을 때만 실행
         if(myTouchStillActive) return;
 
         document.removeEventListener('touchmove', onTouchMove);
         document.removeEventListener('touchend', onTouchEnd);
         
+        // 클릭(탭)으로 간주되는 경우 -> 뒤집기
         if(!isDragging) { 
             flipPieceData(idx);
             
+            // 제자리 드롭 시도 (보드 위라면)
             const p = pieces[idx];
+            // 원래 보드 위였으면 그 자리에 다시 놓을 수 있는지 체크
             if (dragStartGridX !== -1 && canPlace(p.currentShape, dragStartGridY, dragStartGridX)) {
-                placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
-                p.x = dragStartGridX; 
-                p.y = dragStartGridY;
-                cleanupListeners();
-                pickedPieceIdx = null; 
-                ghostEl.style.display = 'none';
-                renderPieces();
+                dropPiece(idx, el, lastTouchX, lastTouchY); 
             } else {
-                if(dragStartGridX !== -1) {
-                    flipPieceData(idx); 
-                    placePieceToBoardState(p.currentShape, dragStartGridY, dragStartGridX, p.id);
-                    p.x = dragStartGridX; 
-                    p.y = dragStartGridY;
-                    cleanupListeners();
-                    pickedPieceIdx = null; 
-                    ghostEl.style.display = 'none';
-                    renderPieces();
-                } else {
-                    dropPiece(idx, el);
-                }
+                // 뒤집고 나서 못 놓으면? -> 일단 들고 있는 상태 유지할지, 아니면 그냥 드롭 시도할지
+                // 여기서는 '탭' 동작이므로 그냥 제자리에 놓는 시늉을 함 (실패하면 원복됨)
+                dropPiece(idx, el, lastTouchX, lastTouchY);
             }
         } else {
-            dropPiece(idx, el);
+            // 드래그 끝 -> 드롭
+            dropPiece(idx, el, lastTouchX, lastTouchY);
         }
     };
+    
     document.addEventListener('touchmove', onTouchMove, {passive: false});
     document.addEventListener('touchend', onTouchEnd);
 }
