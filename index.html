@@ -468,10 +468,10 @@ let dragStartGridY = -1;
 let lastValidGhostPos = null; 
 let globalZIndex = 100;
 
-// 💡 [추가] 회전 여부를 감지하는 플래그 변수
-let hasRotated = false; 
+// 💡 [추가] 찰나의 순간을 기억하는 '끈적한' 고스트 메모리
+let recentValidGhostPos = null;
 
-// 중복 방지를 위한 이전 문제 인덱스
+let hasRotated = false; 
 let currentProblemIdx = -1;
 
 const boardEl = document.getElementById('board');
@@ -918,9 +918,9 @@ function pickUpPiece(idx, el, startX, startY) {
     dragStartGridX = p.x;
     dragStartGridY = p.y;
     lastValidGhostPos = null; 
+    recentValidGhostPos = null; // 💡 집을 때는 메모리 초기화
 
     // 🛡️ [Deep Clean] 보드 전체를 스캔하여 이 조각(id)의 흔적을 완벽히 지웁니다.
-    // 기존 좌표 정보가 꼬여있더라도, 이 과정에서 보드가 깨끗해집니다.
     for(let r=0; r<ROWS; r++) {
         for(let c=0; c<COLS; c++) {
             if(boardState[r][c] === p.id) boardState[r][c] = -1;
@@ -941,6 +941,39 @@ function pickUpPiece(idx, el, startX, startY) {
     updateGhost(idx);
 }
 
+function updateGhost(idx) {
+    const el = document.getElementById(`p-${idx}`);
+    if(!el) return;
+    
+    const result = getHoveredGridPosition(idx, el);
+    const p = pieces[idx];
+
+    if(result.valid) {
+        lastValidGhostPos = { r: result.r, c: result.c };
+        recentValidGhostPos = { r: result.r, c: result.c }; // 💡 유효한 위치를 '백업'해둡니다.
+
+        ghostEl.style.display = 'grid';
+        ghostEl.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
+        ghostEl.innerHTML = ''; 
+        p.currentShape.forEach(row => row.forEach(v => {
+            const b = document.createElement('div');
+            if(v) b.className = 'ghost-block';
+            else b.style.visibility = 'hidden';
+            ghostEl.appendChild(b);
+        }));
+        
+        ghostEl.style.left = `${result.pxX}px`;
+        ghostEl.style.top = `${result.pxY}px`;
+        ghostEl.style.zIndex = globalZIndex + 1; 
+    } else {
+        lastValidGhostPos = null; 
+        ghostEl.style.display = 'none';
+        // 💡 주의: 여기서 recentValidGhostPos는 지우지 않습니다! (이게 핵심)
+    }
+}
+
+    
+    
 function onMouseMove(e) {
     if(pickedPieceIdx !== null) {
         const el = document.getElementById(`p-${pickedPieceIdx}`);
@@ -973,18 +1006,21 @@ function dropPiece(idx, el) {
     const p = pieces[idx];
     let targetR, targetC, isValid = false;
 
-    // 🛡️ [Ghost Trust] 고스트가 떠 있다면, 무조건 그 자리를 최우선으로 사용합니다.
-    if (lastValidGhostPos) {
-        targetR = lastValidGhostPos.r;
-        targetC = lastValidGhostPos.c;
-        // 안전장치: 혹시 모를 충돌을 한 번 더 검사하지만, 
-        // Deep Clean 덕분에 오염된 자리가 없어 거의 100% 성공합니다.
-        if (canPlace(p.currentShape, targetR, targetC)) {
+    // 1순위: 현재 눈에 보이는 고스트 위치
+    // 2순위: 방금 전까지 보였던 고스트 위치 (Sticky Logic)
+    let finalTarget = lastValidGhostPos || recentValidGhostPos;
+
+    if (finalTarget) {
+        // 🛡️ [Double Check] 해당 위치가 정말 유효한지 최종 확인
+        // Deep Clean 덕분에 데이터 꼬임이 없어 거의 100% 통과합니다.
+        if (canPlace(p.currentShape, finalTarget.r, finalTarget.c)) {
+            targetR = finalTarget.r;
+            targetC = finalTarget.c;
             isValid = true;
         }
     } 
     
-    // 고스트가 없었다면(혹은 실패했다면) 현재 위치 기준으로 다시 계산
+    // 위에서 못 찾았다면, 최후의 수단으로 현재 마우스 위치 재계산
     if (!isValid) {
         const result = getHoveredGridPosition(idx, el);
         if (result.valid) {
@@ -1038,6 +1074,7 @@ function dropPiece(idx, el) {
     pickedPieceIdx = null; 
     ghostEl.style.display = 'none';
     lastValidGhostPos = null;
+    recentValidGhostPos = null; // 사용 후 초기화
     renderPieces();
 }
     
