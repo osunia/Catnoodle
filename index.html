@@ -737,15 +737,16 @@ function removePieceFromBoardState(shape, r, c) {
     }
 }
 
+// ⚠️ 버그 수정: 회전 시 전체가 아닌 해당 조각만 업데이트
 function updateVisualsInDrag(idx) {
     const p = pieces[idx];
     if(pickedPieceIdx === idx) {
         const el = document.getElementById(`p-${idx}`);
+        // 요소 초기화
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
-        el.style.width = 'auto'; 
-        el.style.height = 'auto';
         el.innerHTML = ''; 
 
+        // 새 모양으로 DOM 재생성
         p.currentShape.forEach((row, r) => {
             row.forEach((v, c) => {
                 const b = document.createElement('div');
@@ -758,6 +759,7 @@ function updateVisualsInDrag(idx) {
                     atom.style.backgroundColor = p.color;
                     b.appendChild(atom);
 
+                    // 연결부 재생성
                     if(c + 1 < row.length && row[c+1]) {
                         const h = document.createElement('div'); h.className = 'connector-h'; b.appendChild(h);
                     }
@@ -770,10 +772,12 @@ function updateVisualsInDrag(idx) {
                 el.appendChild(b);
             });
         });
+        updateGhost(idx);
     } else {
         renderPieces();
     }
 }
+
 
 function renderPieces() {
     document.querySelectorAll('.piece').forEach(e => {
@@ -1197,17 +1201,13 @@ function handleTouchStart(e, idx, el) {
     document.addEventListener('touchend', onTouchEnd);
 }
 
+// Logic Utils (Re-rendering Fix)
 function rotatePieceData(idx) {
     const p = pieces[idx];
     const oldShape = p.currentShape;
     const newShape = rotateMatrix(oldShape);
     p.currentShape = newShape;
-    
-    updateVisualsInDrag(idx); 
-    // ⚠️ PC 튕김 방지: 잡고 있을 때만 중심 재조정
-    if (pickedPieceIdx === idx) {
-        recenterPieceOnFinger(idx); 
-    }
+    updateVisualsInDrag(idx); // 즉시 렌더링 호출
 }
 
 function flipPieceData(idx) {
@@ -1215,12 +1215,7 @@ function flipPieceData(idx) {
     const oldShape = p.currentShape;
     const newShape = oldShape.map(row => [...row].reverse());
     p.currentShape = newShape;
-    
-    updateVisualsInDrag(idx); 
-    // ⚠️ PC 튕김 방지: 잡고 있을 때만 중심 재조정
-    if (pickedPieceIdx === idx) {
-        recenterPieceOnFinger(idx); 
-    }
+    updateVisualsInDrag(idx); // 즉시 렌더링 호출
 }
 
 // 3. [수정됨] 회전 시 좌표가 튀는 현상을 막기 위해 고스트를 즉시 업데이트합니다.
