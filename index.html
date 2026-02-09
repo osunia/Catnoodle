@@ -918,7 +918,7 @@ function pickUpPiece(idx, el, startX, startY) {
     dragStartGridX = p.x;
     dragStartGridY = p.y;
     lastValidGhostPos = null; 
-    recentValidGhostPos = null; // 💡 집을 때는 메모리 초기화
+    // recentValidGhostPos 삭제됨
 
     // 🛡️ [Deep Clean] 보드 전체를 스캔하여 이 조각(id)의 흔적을 완벽히 지웁니다.
     for(let r=0; r<ROWS; r++) {
@@ -950,7 +950,7 @@ function updateGhost(idx) {
 
     if(result.valid) {
         lastValidGhostPos = { r: result.r, c: result.c };
-        recentValidGhostPos = { r: result.r, c: result.c }; // 💡 유효한 위치를 '백업'해둡니다.
+        // recentValidGhostPos 로직 삭제됨
 
         ghostEl.style.display = 'grid';
         ghostEl.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
@@ -968,10 +968,8 @@ function updateGhost(idx) {
     } else {
         lastValidGhostPos = null; 
         ghostEl.style.display = 'none';
-        // 💡 주의: 여기서 recentValidGhostPos는 지우지 않습니다! (이게 핵심)
     }
 }
-
     
     
 function onMouseMove(e) {
@@ -1006,21 +1004,16 @@ function dropPiece(idx, el) {
     const p = pieces[idx];
     let targetR, targetC, isValid = false;
 
-    // 1순위: 현재 눈에 보이는 고스트 위치
-    // 2순위: 방금 전까지 보였던 고스트 위치 (Sticky Logic)
-    let finalTarget = lastValidGhostPos || recentValidGhostPos;
-
-    if (finalTarget) {
-        // 🛡️ [Double Check] 해당 위치가 정말 유효한지 최종 확인
-        // Deep Clean 덕분에 데이터 꼬임이 없어 거의 100% 통과합니다.
-        if (canPlace(p.currentShape, finalTarget.r, finalTarget.c)) {
-            targetR = finalTarget.r;
-            targetC = finalTarget.c;
-            isValid = true;
-        }
+    // 1. 고스트가 떠 있었다면 그 좌표를 1순위로 신뢰
+    if (lastValidGhostPos && canPlace(p.currentShape, lastValidGhostPos.r, lastValidGhostPos.c)) {
+        targetR = lastValidGhostPos.r;
+        targetC = lastValidGhostPos.c;
+        isValid = true;
     } 
     
-    // 위에서 못 찾았다면, 최후의 수단으로 현재 마우스 위치 재계산
+    // 2. [모바일 회전 튕김 방지] 
+    // 고스트가 없거나(혹은 미세한 차이로 사라졌거나) 했더라도,
+    // '지금 이 순간' 놓을 수 있는 자리인지 다시 한번 계산합니다.
     if (!isValid) {
         const result = getHoveredGridPosition(idx, el);
         if (result.valid) {
@@ -1031,11 +1024,12 @@ function dropPiece(idx, el) {
     }
     
     if (isValid) {
+        // 게임판에 배치
         placePieceToBoardState(p.currentShape, targetR, targetC, p.id);
         p.x = targetC; p.y = targetR;
         checkWinCondition();
     } else {
-        // 놓을 수 없는 경우 트레이로 복귀
+        // 놓을 수 없음 -> 트레이 영역 확인
         const trayRect = trayEl.getBoundingClientRect();
         const pieceRect = el.getBoundingClientRect();
         
@@ -1051,6 +1045,7 @@ function dropPiece(idx, el) {
         );
 
         if (insideTrayArea) {
+             // [트레이 안착] 게임판으로 돌아가지 않고 트레이 좌표 계산
              let newTrayX = pieceRect.left - trayRect.left;
              let newTrayY = pieceRect.top - trayRect.top;
 
@@ -1064,8 +1059,9 @@ function dropPiece(idx, el) {
 
              p.trayX = newTrayX;
              p.trayY = newTrayY;
-             p.x = -1; p.y = -1;
+             p.x = -1; p.y = -1; // 확실하게 게임판 좌표 해제
         } else {
+            // 트레이도 아니고 게임판도 아니면 -> 트레이 랜덤 복귀
             returnToTrayRandomly(p);
         }
     }
@@ -1074,7 +1070,6 @@ function dropPiece(idx, el) {
     pickedPieceIdx = null; 
     ghostEl.style.display = 'none';
     lastValidGhostPos = null;
-    recentValidGhostPos = null; // 사용 후 초기화
     renderPieces();
 }
     
