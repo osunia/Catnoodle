@@ -198,10 +198,13 @@
         }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-                .piece {
+<style>
+        .piece {
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
-            transition: transform 0.1s; pointer-events: auto;
+            transition: transform 0.1s; 
+            /* ⚠️ 수정됨: 컨테이너 자체는 이벤트를 통과시킴 */
+            pointer-events: none; 
             isolation: isolate; 
         }
         .piece.on-board { position: absolute; gap: 2px; }
@@ -212,12 +215,15 @@
             transform: scale(1.05); pointer-events: none; z-index: 9999;
             gap: 2px; transition: none; 
         }
+        /* locked는 이미 pointer-events: none이므로 유지 */
         .piece.locked { cursor: not-allowed; pointer-events: none; }
         
         .block {
             width: var(--cell-size); height: var(--cell-size);
             position: relative; 
             border-radius: 50%;
+            /* ⚠️ 추가됨: 실제 보이는 블럭만 이벤트를 받음 */
+            pointer-events: auto; 
         }
 
         .visual-atom {
