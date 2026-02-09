@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CATNOODLE - Verification Mode</title>
+    <title>CATNOODLE v3.1</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
@@ -201,8 +201,7 @@
         .piece {
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
-            transition: transform 0.1s; 
-            pointer-events: none; 
+            transition: transform 0.1s; pointer-events: auto; 
             isolation: isolate; 
         }
         .piece.on-board { position: absolute; gap: 2px; }
@@ -219,7 +218,6 @@
             width: var(--cell-size); height: var(--cell-size);
             position: relative; 
             border-radius: 50%;
-            pointer-events: auto; 
         }
 
         .visual-atom {
@@ -228,12 +226,12 @@
             border-radius: 50%;
             z-index: 2; 
             background-image: 
-                radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 45%),
-                radial-gradient(circle at 65% 65%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 100%);
+                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%),
+                radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.2) 100%);
             box-shadow: 
-                inset -3px -3px 6px rgba(0,0,0,0.25),
-                inset 2px 2px 4px rgba(255,255,255,0.2),
-                1px 2px 4px rgba(0,0,0,0.25); 
+                inset -2px -2px 6px rgba(0,0,0,0.15), 
+                inset 1px 1px 2px rgba(255,255,255,0.15), 
+                1px 1px 3px rgba(0,0,0,0.2); 
         }
 
         .connector-h, .connector-v {
@@ -257,31 +255,17 @@
         }
 
         .piece.locked .visual-atom {
-            filter: brightness(0.8) grayscale(0.2);
+            filter: brightness(0.9) grayscale(0.4);
             background-image: 
                 repeating-linear-gradient(
                     45deg,
-                    rgba(255,255,255,0.15),
-                    rgba(255,255,255,0.15) 8px, 
-                    transparent 8px,
-                    transparent 16px
+                    rgba(255,255,255,0.2),
+                    rgba(255,255,255,0.2) 5px, 
+                    transparent 5px,
+                    transparent 10px
                 ),
                 radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
         }
-
-        #p-5.locked .visual-atom {
-            filter: brightness(0.8);
-            background-image: 
-                repeating-linear-gradient(
-                    45deg,
-                    rgba(0,0,0,0.1),
-                    rgba(0,0,0,0.1) 8px,
-                    transparent 8px,
-                    transparent 16px
-                ),
-                radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0) 40%);
-        }
-
         .piece.locked .connector-h, .piece.locked .connector-v {
             filter: brightness(0.8) grayscale(0.4);
         }
@@ -435,18 +419,18 @@
 document.addEventListener('contextmenu', event => event.preventDefault());
 
 const SHAPES_DEF = [
-    { id: 0, color: '#ff8a00', shape: [[1,0],[1,0],[1,1]] }, 
-    { id: 1, color: '#f44336', shape: [[1,1],[1,1],[0,1]] }, 
-    { id: 2, color: '#005db0', shape: [[1,1,1,1],[1,0,0,0]] }, 
+    { id: 0, color: '#f39c12', shape: [[1,0],[1,0],[1,1]] }, 
+    { id: 1, color: '#c0392b', shape: [[1,1],[1,1],[0,1]] }, 
+    { id: 2, color: '#2980b9', shape: [[1,1,1,1],[1,0,0,0]] }, 
     { id: 3, color: '#ffcccc', shape: [[0,1],[0,1],[1,1],[0,1]] }, 
-    { id: 4, color: '#009f07', shape: [[1,1],[1,1],[0,1]] }, 
-    { id: 5, color: '#f3f6f4', shape: [[1,1],[0,1]] }, 
-    { id: 6, color: '#88ddf0', shape: [[1,0,0],[1,0,0],[1,1,1]] }, 
-    { id: 7, color: '#ff76a7', shape: [[1,0,0],[1,1,0],[0,1,1]] }, 
-    { id: 8, color: '#ffdd57', shape: [[1,0,1],[1,1,1]] }, 
+    { id: 4, color: '#27ae60', shape: [[1,1],[1,1],[0,1]] }, 
+    { id: 5, color: '#ffffff', shape: [[1,1],[0,1]] }, 
+    { id: 6, color: '#82ccdd', shape: [[1,0,0],[1,0,0],[1,1,1]] }, 
+    { id: 7, color: '#fd79a8', shape: [[1,0,0],[1,1,0],[0,1,1]] }, 
+    { id: 8, color: '#f1c40f', shape: [[1,0,1],[1,1,1]] }, 
     { id: 9, color: '#8e44ad', shape: [[1],[1],[1],[1]] }, 
-    { id: 10, color: '#baf776', shape: [[1,1],[1,1]] }, 
-    { id: 11, color: '#bfbfbf', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
+    { id: 10, color: '#b8e994', shape: [[1,1],[1,1]] }, 
+    { id: 11, color: '#95a5a6', shape: [[0,1,0],[1,1,1],[0,1,0]] } 
 ];
 
 const COLS = 11;
@@ -828,24 +812,14 @@ function setupInteraction(el, idx) {
 }
 
 // 🐛 고스트/놓기 오류 수정: 좌표 계산을 마우스/터치 위치 기반으로 명확화
-function getHoveredGridPosition(pieceIdx, el, forcedX, forcedY) {
+function getHoveredGridPosition(pieceIdx, clientX, clientY) {
     const p = pieces[pieceIdx];
     const bRect = boardEl.getBoundingClientRect();
     
-    // 현재 드래그 중인 비주얼상의 Left/Top을 계산
-    // getBoundingClientRect는 transform이 적용된 후의 좌표라 오차가 있을 수 있음
-    // 따라서 마우스 좌표 - dragOffset을 통해 원본 왼쪽 상단 위치를 추론
-    let visualLeft, visualTop;
-
-    if (forcedX !== undefined && forcedY !== undefined) {
-        visualLeft = forcedX - dragOffsetX;
-        visualTop = forcedY - dragOffsetY;
-    } else {
-        // Fallback (혹시 모를 상황)
-        const elRect = el.getBoundingClientRect();
-        visualLeft = elRect.left;
-        visualTop = elRect.top;
-    }
+    // 💡 핵심 수정: getBoundingClientRect 대신 순수 포인터 좌표로 계산 (흔들림 방지)
+    // "지금 내 손가락(clientX)이 조각을 잡은 지점(dragOffsetX)에서 얼마나 떨어져 있는가?"
+    const visualLeft = clientX - dragOffsetX;
+    const visualTop = clientY - dragOffsetY;
     
     const gap = 2; const padding = 10;
     
@@ -873,16 +847,11 @@ function updateGhost(idx) {
     const el = document.getElementById(`p-${idx}`);
     if(!el) return;
     
-    // 현재 터치/마우스 좌표가 있다면 그것을 사용 (더 정확함)
-    let result;
-    if (isDragging && lastTouchX !== 0) {
-         result = getHoveredGridPosition(idx, el, lastTouchX, lastTouchY);
-    } else {
-         // 마우스의 경우 전역 변수를 쓰지 않고 있어 rect로 fallback되지만
-         // 마우스 이벤트 내에서 호출될 때는 보통 좌표가 보정됨.
-         // 여기서는 간단히 getBoundingClientRect fallback 사용
-         result = getHoveredGridPosition(idx, el);
-    }
+    // 마우스/터치 좌표가 없으면(초기 로드 등) 실행 안 함
+    if (lastTouchX === 0 && lastTouchY === 0) return;
+    
+    // 💡 수정: 현재 포인터 좌표를 직접 전달
+    const result = getHoveredGridPosition(idx, lastTouchX, lastTouchY);
 
     const p = pieces[idx];
 
@@ -915,7 +884,8 @@ function handleMouseDown(e, idx, el) {
     if(e.button !== 0) return;
     
     if(pickedPieceIdx !== null) {
-        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`));
+        // 이미 들고 있으면 드롭
+        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
         return;
     }
 
@@ -937,6 +907,10 @@ function pickUpPiece(idx, el, startX, startY) {
     dragStartGridX = p.x;
     dragStartGridY = p.y;
     lastValidGhostPos = null; 
+    
+    // 마우스 좌표 추적 변수 초기화 (PC용)
+    lastTouchX = startX;
+    lastTouchY = startY;
 
     if(p.x !== -1) {
         removePieceFromBoardState(p.currentShape, p.y, p.x);
@@ -952,16 +926,16 @@ function pickUpPiece(idx, el, startX, startY) {
     document.addEventListener('wheel', onWheel, {passive: false});
     document.addEventListener('mousedown', onGlobalClick);
     
-    // 🚀 모바일 멀티터치(회전) 감지를 위한 전역 터치 리스너 추가
+    // 🚀 모바일 멀티터치(회전) 감지를 위한 전역 터치 리스너 추가 (수정됨)
     document.addEventListener('touchstart', onGlobalTouchStart, {passive: false});
     
     updateGhost(idx);
 }
 
-// 🚀 추가된 함수: 잡고 있는 상태에서 다른 손가락 터치 감지
+// 🚀 핵심 수정: 멀티터치 감지 로직 강화
 function onGlobalTouchStart(e) {
     if(pickedPieceIdx !== null && e.touches.length > 1) {
-        e.preventDefault(); // 화면 확대 등 방지
+        e.preventDefault(); // 핀치 줌 방지
         rotatePieceData(pickedPieceIdx);
     }
 }
@@ -969,12 +943,8 @@ function onGlobalTouchStart(e) {
 function onMouseMove(e) {
     if(pickedPieceIdx !== null) {
         const el = document.getElementById(`p-${pickedPieceIdx}`);
-        // 마우스의 경우 lastTouchX/Y를 업데이트 해줘야 getHoveredGridPosition에서 
-        // fallback 대신 정확한 좌표 사용 가능 (여기서는 forcedX 파라미터 전달은 drop에서 함)
-        // updateGhost 내부에서 lastTouchX를 쓰는데 마우스는 이게 0일수 있음. 
-        // 일관성을 위해 마우스 좌표도 lastTouchX에 넣거나, updateGhost를 수정.
-        // 여기선 updateGhost가 마우스 이벤트에서 호출될 때 좌표 전달이 없으므로
-        // getHoveredGridPosition의 fallback 로직을 개선했으므로 그대로 둠.
+        lastTouchX = e.clientX;
+        lastTouchY = e.clientY;
         
         el.style.left = `${e.clientX - dragOffsetX}px`;
         el.style.top = `${e.clientY - dragOffsetY}px`;
@@ -989,7 +959,7 @@ function onWheel(e) {
 function onGlobalClick(e) {
     if(pickedPieceIdx !== null) {
         if(e.button === 2) return; 
-        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`));
+        dropPiece(pickedPieceIdx, document.getElementById(`p-${pickedPieceIdx}`), e.clientX, e.clientY);
     }
 }
 
@@ -1015,26 +985,15 @@ function dropPiece(idx, el, forcedX, forcedY) {
     const p = pieces[idx];
     let targetR, targetC, isValid;
 
-    if (forcedX !== undefined && forcedY !== undefined) {
-         const result = getHoveredGridPosition(idx, el, forcedX, forcedY);
-         targetR = result.r;
-         targetC = result.c;
-         isValid = result.valid;
-    } 
-    else if (lastValidGhostPos) {
-        targetR = lastValidGhostPos.r;
-        targetC = lastValidGhostPos.c;
-        isValid = true;
-    } else {
-        // Mouse drop의 경우 forced 좌표가 없을 수 있음.
-        // 현재 마우스 위치(el의 위치) 기반 계산
-        const rect = el.getBoundingClientRect();
-        // 비주얼 중심 말고 왼쪽 위 좌표 복원해서 계산 (이미 getHoveredGridPosition가 개선됨)
-        const result = getHoveredGridPosition(idx, el); 
-        targetR = result.r;
-        targetC = result.c;
-        isValid = result.valid;
-    }
+    // 💡 수정: dropPiece 호출 시 좌표를 명시적으로 받도록 함
+    // forcedX/Y가 없으면 lastTouchX/Y 사용 (안전장치)
+    const dropX = (forcedX !== undefined) ? forcedX : lastTouchX;
+    const dropY = (forcedY !== undefined) ? forcedY : lastTouchY;
+
+    const result = getHoveredGridPosition(idx, dropX, dropY);
+    targetR = result.r;
+    targetC = result.c;
+    isValid = result.valid;
     
     if (isValid) {
         placePieceToBoardState(p.currentShape, targetR, targetC, p.id);
@@ -1045,14 +1004,8 @@ function dropPiece(idx, el, forcedX, forcedY) {
         let pieceRect = el.getBoundingClientRect();
         
         let pieceCX, pieceCY;
-        
-        if (forcedX !== undefined && forcedY !== undefined) {
-            pieceCX = forcedX;
-            pieceCY = forcedY;
-        } else {
-            pieceCX = pieceRect.left + pieceRect.width / 2;
-            pieceCY = pieceRect.top + pieceRect.height / 2;
-        }
+        pieceCX = dropX;
+        pieceCY = dropY;
 
         const buffer = 50; 
         const insideTrayArea = (
@@ -1064,14 +1017,8 @@ function dropPiece(idx, el, forcedX, forcedY) {
 
         if (insideTrayArea) {
              let newTrayX, newTrayY;
-             
-             if (forcedX !== undefined) {
-                 newTrayX = forcedX - (pieceRect.width/2) - trayRect.left;
-                 newTrayY = forcedY - (pieceRect.height/2) - trayRect.top;
-             } else {
-                 newTrayX = pieceRect.left - trayRect.left;
-                 newTrayY = pieceRect.top - trayRect.top;
-             }
+             newTrayX = dropX - (pieceRect.width/2) - trayRect.left;
+             newTrayY = dropY - (pieceRect.height/2) - trayRect.top;
 
              const trayW = trayEl.clientWidth;
              const trayH = trayEl.clientHeight;
@@ -1225,12 +1172,14 @@ function rotateMatrix(m) {
     return n;
 }
 
-// 🐛 고스트 사라짐(Script Crash) 방지: 배열 범위 초과 검사 추가
+// 🐛 고스트 사라짐(Script Crash) 방지 및 관대한 판정 적용
 function canPlace(shape, r, c) {
     for(let i=0; i<shape.length; i++) {
         for(let j=0; j<shape[0].length; j++) {
-            if(shape[i][j]) {
-                // 1. 보드 전체 범위를 벗어나는지 먼저 체크 (이게 없으면 boardState[r+i]가 undefined되어 에러남)
+            // 💡 핵심 수정: 모양이 있는(1) 부분만 검사. 
+            // 0인 부분은 보드 밖(Index Out)이어도 상관없음 -> Error 방지
+            if(shape[i][j] === 1) {
+                // 1. 블록이 보드 밖으로 나가는지 체크
                 if (r + i < 0 || r + i >= ROWS) return false;
                 if (c + j < 0 || c + j >= COLS) return false;
                 
