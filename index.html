@@ -1170,12 +1170,15 @@ function handleTouchStart(e, idx, el) {
     document.addEventListener('touchend', onTouchEnd);
 }
 
+// 🔄 회전/반전 시 오프셋 재계산 로직 추가 (필수 수정)
 function rotatePieceData(idx) {
     const p = pieces[idx];
     const oldShape = p.currentShape;
     const newShape = rotateMatrix(oldShape);
     p.currentShape = newShape;
-    updateVisualsInDrag(idx); 
+    
+    updateVisualsInDrag(idx); // DOM 모양 업데이트
+    recenterPieceOnFinger(idx); // 💡 핵심: 손가락 위치로 조각 중심 재정렬
 }
 
 function flipPieceData(idx) {
@@ -1183,7 +1186,73 @@ function flipPieceData(idx) {
     const oldShape = p.currentShape;
     const newShape = oldShape.map(row => [...row].reverse());
     p.currentShape = newShape;
-    updateVisualsInDrag(idx); 
+    
+    updateVisualsInDrag(idx); // DOM 모양 업데이트
+    recenterPieceOnFinger(idx); // 💡 핵심: 손가락 위치로 조각 중심 재정렬
+}
+
+    
+// 🧲 조각을 손가락 중심으로 '착' 붙이는 함수 (새로 추가)
+function recenterPieceOnFinger(idx) {
+    // 마우스나 터치 위치가 없으면 실행 안 함
+    if (lastTouchX === 0 && lastTouchY === 0) return;
+
+    const el = document.getElementById(`p-${idx}`);
+    if (!el) return;
+
+    // 회전/반전 후 변한 크기 측정
+    const rect = el.getBoundingClientRect();
+    
+    // 잡는 위치를 조각의 '정중앙'으로 강제 보정
+    dragOffsetX = rect.width / 2;
+    dragOffsetY = rect.height / 2;
+
+    // 조각 위치 즉시 동기화
+    el.style.left = `${lastTouchX - dragOffsetX}px`;
+    el.style.top = `${lastTouchY - dragOffsetY}px`;
+
+    // 고스트 즉시 갱신
+    updateGhost(idx);
+}
+
+function updateVisualsInDrag(idx) {
+    const p = pieces[idx];
+    if(pickedPieceIdx === idx) {
+        const el = document.getElementById(`p-${idx}`);
+        // 기존 그리드 스타일 제거 후 재설정
+        el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
+        el.style.width = 'auto'; // 크기 자동 조절 허용
+        el.style.height = 'auto';
+        el.innerHTML = ''; 
+
+        p.currentShape.forEach((row, r) => {
+            row.forEach((v, c) => {
+                const b = document.createElement('div');
+                if(v) { 
+                    b.className = 'block'; 
+                    b.style.backgroundColor = p.color;
+                    
+                    const atom = document.createElement('div');
+                    atom.className = 'visual-atom';
+                    atom.style.backgroundColor = p.color;
+                    b.appendChild(atom);
+
+                    if(c + 1 < row.length && row[c+1]) {
+                        const h = document.createElement('div'); h.className = 'connector-h'; b.appendChild(h);
+                    }
+                    if(r + 1 < p.currentShape.length && p.currentShape[r+1][c]) {
+                        const v = document.createElement('div'); v.className = 'connector-v'; b.appendChild(v);
+                    }
+                } else {
+                    b.style.visibility = 'hidden';
+                }
+                el.appendChild(b);
+            });
+        });
+        // 여기서는 updateGhost 호출하지 않음 (recenterPieceOnFinger에서 처리)
+    } else {
+        renderPieces();
+    }
 }
 
 function rotateMatrix(m) {
