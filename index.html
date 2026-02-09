@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CATNOODLE v3.2</title>
+    <title>CATNOODLE v3.3</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
@@ -202,7 +202,6 @@
             display: grid; gap: 1px;
             cursor: grab; touch-action: none; z-index: 100;
             transition: transform 0.1s; 
-            /* 🔧 수정: 조각 틀 자체는 이벤트를 통과시켜야 아래 조각을 선택 가능함 */
             pointer-events: none; 
             isolation: isolate; 
         }
@@ -220,7 +219,6 @@
             width: var(--cell-size); height: var(--cell-size);
             position: relative; 
             border-radius: 50%;
-            /* 🔧 수정: 실제 블록 부분만 이벤트를 받도록 설정 */
             pointer-events: auto; 
         }
         
@@ -461,9 +459,9 @@ let pickedPieceIdx = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 let isDragging = false;
+let isRotating = false; // 🔄 회전 중인지 확인하는 플래그 추가
 let startX = 0;
 let startY = 0;
-// 추가: 모바일 터치 좌표 추적용
 let lastTouchX = 0;
 let lastTouchY = 0;
 
@@ -735,6 +733,8 @@ function updateVisualsInDrag(idx) {
     if(pickedPieceIdx === idx) {
         const el = document.getElementById(`p-${idx}`);
         el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
+        el.style.width = 'auto'; // 크기 자동 조절 허용
+        el.style.height = 'auto';
         el.innerHTML = ''; 
 
         p.currentShape.forEach((row, r) => {
@@ -761,7 +761,7 @@ function updateVisualsInDrag(idx) {
                 el.appendChild(b);
             });
         });
-        updateGhost(idx);
+        // 여기서는 updateGhost 호출하지 않음 (recenterPieceOnFinger에서 처리)
     } else {
         renderPieces();
     }
@@ -925,9 +925,10 @@ function pickUpPiece(idx, el, startX, startY) {
     dragStartGridY = p.y;
     lastValidGhostPos = null; 
     
-    // 마우스 좌표 추적 변수 초기화 (PC용)
+    // 마우스 좌표 추적 변수 초기화
     lastTouchX = startX;
     lastTouchY = startY;
+    isRotating = false; // 회전 상태 초기화
 
     if(p.x !== -1) {
         removePieceFromBoardState(p.currentShape, p.y, p.x);
@@ -943,19 +944,18 @@ function pickUpPiece(idx, el, startX, startY) {
     document.addEventListener('wheel', onWheel, {passive: false});
     document.addEventListener('mousedown', onGlobalClick);
     
-    // 🔧 핵심 수정 1: 모바일 회전 감지 (Capture 모드 사용)
-    // 게임판 등 다른 요소가 터치를 삼키기 전에 먼저 감지합니다.
+    // 모바일 회전 감지 (Capture 모드 사용)
     document.addEventListener('touchstart', onGlobalTouchStart, {capture: true, passive: false});
     
     updateGhost(idx);
 }
 
-// 🚀 멀티터치 감지 로직
+// 🚀 멀티터치 감지 로직 (수정됨: 회전 플래그 설정)
 function onGlobalTouchStart(e) {
-    // 조각을 들고 있고, 손가락이 2개 이상이 되면 -> 회전!
     if(pickedPieceIdx !== null && e.touches.length > 1) {
         e.preventDefault(); 
-        e.stopPropagation(); // 다른 동작 방지
+        e.stopPropagation(); 
+        isRotating = true; // ⚠️ 회전 상태로 진입 (이게 중요!)
         rotatePieceData(pickedPieceIdx);
     }
 }
@@ -1005,7 +1005,6 @@ function dropPiece(idx, el, forcedX, forcedY) {
     const p = pieces[idx];
     let targetR, targetC, isValid;
 
-    // forcedX/Y가 없으면 lastTouchX/Y 사용 (안전장치)
     const dropX = (forcedX !== undefined) ? forcedX : lastTouchX;
     const dropY = (forcedY !== undefined) ? forcedY : lastTouchY;
 
@@ -1065,6 +1064,7 @@ function dropPiece(idx, el, forcedX, forcedY) {
     ghostEl.style.display = 'none';
     lastValidGhostPos = null;
     isDragging = false;
+    isRotating = false; // 회전 상태 초기화
     renderPieces();
 }
 
@@ -1083,9 +1083,9 @@ function cleanupListeners() {
     document.removeEventListener('wheel', onWheel);
     document.removeEventListener('mousedown', onGlobalClick);
     
-    // 🔧 수정: capture 리스너도 제거
     document.removeEventListener('touchstart', onGlobalTouchStart, {capture: true}); 
     isDragging = false;
+    isRotating = false; // 초기화
 }
 
 // 📱 Mobile Logic Refined
@@ -1104,6 +1104,7 @@ function handleTouchStart(e, idx, el) {
     const touchId = touch.identifier;
 
     isDragging = false;
+    isRotating = false; // 새로운 터치 시작 시 회전 상태 초기화
     startX = touch.clientX;
     startY = touch.clientY;
     lastTouchX = startX;
@@ -1133,8 +1134,12 @@ function handleTouchStart(e, idx, el) {
             isDragging = true;
         }
         
-        el.style.left = `${myTouch.clientX - dragOffsetX}px`;
-        el.style.top = `${myTouch.clientY - dragOffsetY}px`;
+        // 🚀 회전 후 조각 위치 동기화 (recenterPieceOnFinger와 호환성 유지)
+        const el = document.getElementById(`p-${idx}`);
+        if(el) {
+            el.style.left = `${myTouch.clientX - dragOffsetX}px`;
+            el.style.top = `${myTouch.clientY - dragOffsetY}px`;
+        }
         updateGhost(idx);
     };
     
@@ -1151,6 +1156,13 @@ function handleTouchStart(e, idx, el) {
         document.removeEventListener('touchmove', onTouchMove);
         document.removeEventListener('touchend', onTouchEnd);
         
+        // ✋ 핵심 수정: 회전(멀티터치) 중이었다면 아무것도 하지 않고 함수 종료!
+        // 이렇게 해야 회전된 채로 손가락에 붙어있게 됨.
+        if (isRotating) {
+            isRotating = false; // 상태만 리셋하고 리턴
+            return; 
+        }
+
         if(!isDragging) { 
             flipPieceData(idx);
             
@@ -1170,15 +1182,14 @@ function handleTouchStart(e, idx, el) {
     document.addEventListener('touchend', onTouchEnd);
 }
 
-// 🔄 회전/반전 시 오프셋 재계산 로직 추가 (필수 수정)
 function rotatePieceData(idx) {
     const p = pieces[idx];
     const oldShape = p.currentShape;
     const newShape = rotateMatrix(oldShape);
     p.currentShape = newShape;
     
-    updateVisualsInDrag(idx); // DOM 모양 업데이트
-    recenterPieceOnFinger(idx); // 💡 핵심: 손가락 위치로 조각 중심 재정렬
+    updateVisualsInDrag(idx); 
+    recenterPieceOnFinger(idx); 
 }
 
 function flipPieceData(idx) {
@@ -1187,72 +1198,26 @@ function flipPieceData(idx) {
     const newShape = oldShape.map(row => [...row].reverse());
     p.currentShape = newShape;
     
-    updateVisualsInDrag(idx); // DOM 모양 업데이트
-    recenterPieceOnFinger(idx); // 💡 핵심: 손가락 위치로 조각 중심 재정렬
+    updateVisualsInDrag(idx); 
+    recenterPieceOnFinger(idx); 
 }
 
-    
-// 🧲 조각을 손가락 중심으로 '착' 붙이는 함수 (새로 추가)
+// 🧲 조각을 손가락 중심으로 '착' 붙이는 함수
 function recenterPieceOnFinger(idx) {
-    // 마우스나 터치 위치가 없으면 실행 안 함
     if (lastTouchX === 0 && lastTouchY === 0) return;
 
     const el = document.getElementById(`p-${idx}`);
     if (!el) return;
 
-    // 회전/반전 후 변한 크기 측정
     const rect = el.getBoundingClientRect();
     
-    // 잡는 위치를 조각의 '정중앙'으로 강제 보정
     dragOffsetX = rect.width / 2;
     dragOffsetY = rect.height / 2;
 
-    // 조각 위치 즉시 동기화
     el.style.left = `${lastTouchX - dragOffsetX}px`;
     el.style.top = `${lastTouchY - dragOffsetY}px`;
 
-    // 고스트 즉시 갱신
     updateGhost(idx);
-}
-
-function updateVisualsInDrag(idx) {
-    const p = pieces[idx];
-    if(pickedPieceIdx === idx) {
-        const el = document.getElementById(`p-${idx}`);
-        // 기존 그리드 스타일 제거 후 재설정
-        el.style.gridTemplateColumns = `repeat(${p.currentShape[0].length}, 1fr)`;
-        el.style.width = 'auto'; // 크기 자동 조절 허용
-        el.style.height = 'auto';
-        el.innerHTML = ''; 
-
-        p.currentShape.forEach((row, r) => {
-            row.forEach((v, c) => {
-                const b = document.createElement('div');
-                if(v) { 
-                    b.className = 'block'; 
-                    b.style.backgroundColor = p.color;
-                    
-                    const atom = document.createElement('div');
-                    atom.className = 'visual-atom';
-                    atom.style.backgroundColor = p.color;
-                    b.appendChild(atom);
-
-                    if(c + 1 < row.length && row[c+1]) {
-                        const h = document.createElement('div'); h.className = 'connector-h'; b.appendChild(h);
-                    }
-                    if(r + 1 < p.currentShape.length && p.currentShape[r+1][c]) {
-                        const v = document.createElement('div'); v.className = 'connector-v'; b.appendChild(v);
-                    }
-                } else {
-                    b.style.visibility = 'hidden';
-                }
-                el.appendChild(b);
-            });
-        });
-        // 여기서는 updateGhost 호출하지 않음 (recenterPieceOnFinger에서 처리)
-    } else {
-        renderPieces();
-    }
 }
 
 function rotateMatrix(m) {
@@ -1266,14 +1231,9 @@ function rotateMatrix(m) {
 function canPlace(shape, r, c) {
     for(let i=0; i<shape.length; i++) {
         for(let j=0; j<shape[0].length; j++) {
-            // 모양이 있는(1) 부분만 검사. 
-            // 0인 부분은 보드 밖(Index Out)이어도 상관없음 -> Error 방지
             if(shape[i][j] === 1) {
-                // 1. 블록이 보드 밖으로 나가는지 체크
                 if (r + i < 0 || r + i >= ROWS) return false;
                 if (c + j < 0 || c + j >= COLS) return false;
-                
-                // 2. 이미 다른 조각이 있는지 체크
                 if (boardState[r+i][c+j] !== -1) return false;
             }
         }
