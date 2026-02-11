@@ -138,7 +138,7 @@ header {
     color: #636e72;
     
     display: inline-block;
-    transform: scaleX(0.8);
+    transform: scaleX(0.9);
     /* 👇 PC: 왼쪽 기준으로 축소해야 타이머와 시작점이 맞음 */
     transform-origin: left; 
     white-space: nowrap;
@@ -317,6 +317,15 @@ header {
             display: flex; gap: 8px; margin-bottom: 5px; 
             flex-wrap: wrap; justify-content: center; z-index: 20; 
         }
+/* 👇 비활성화된 버튼 스타일 추가 */
+button.game-btn:disabled {
+    background-color: #b2bec3 !important; /* 연한 회색 */
+    color: #dfe6e9 !important; /* 글자도 연하게 */
+    cursor: not-allowed; /* 금지 커서 */
+    box-shadow: none; /* 그림자 제거 */
+    transform: none !important; /* 눌리는 효과 제거 */
+}
+        
         select, button.game-btn {
             padding: 8px 14px; border-radius: 6px; border: none; font-size: 0.95rem;
             cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.1); font-weight: 400; color: white;
@@ -689,7 +698,7 @@ header {
 <p style="font-size: 0.75rem; color: #888; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px; line-height: 1.4; text-align: center;">
     Educational Insights의 퍼즐 게임 <br>
     <i>Kanoodle</i>을 오마주한 팬 메이드 웹 앱입니다. <br><br>
-    © 2026. R. All rights reserved.
+    © 2026. 3arch2nd. All rights reserved.
 </p>
         <button class="close-btn" onclick="closeHelp()">닫기</button>
     </div>
@@ -984,11 +993,17 @@ function closeGen() { document.getElementById('genModal').style.display = 'none'
 function executeShowAnswer() {
     closeAnswer();
     
-    // 🛑 타이머 정지 및 00:00:00으로 초기화 (추가된 부분)
-    stopTimer();
-    document.getElementById('game-timer').innerText = "00:00:00";
+    // 🛑 타이머 정지 및 초기화
+    if (isChallengerMode) {
+        stopTimer();
+        document.getElementById('game-timer').innerText = "00:00:00";
+    }
     
-    // 기존 정답 처리 로직
+    // 🔒 [수정] 초기화 버튼과 정답 버튼을 모두 비활성화(잠금)
+    document.querySelector('.btn-reset').disabled = true;
+    document.querySelector('.btn-answer').disabled = true;
+
+    // 기존 정답 로직
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard(); 
     renderPieces();
@@ -1151,9 +1166,13 @@ function loadNewGame() {
 }
 
 function loadNewGameLogic() {
+    // 🔓 [수정] 새 게임 시작 시 버튼들 다시 활성화
+    document.querySelector('.btn-reset').disabled = false;
+    document.querySelector('.btn-answer').disabled = false;
+
     if (isChallengerMode) {
         startTimerLogic(); 
-        document.getElementById('timer-container').style.display = 'flex'; // 유지
+        document.getElementById('timer-container').style.display = 'flex'; 
     } else {
         stopTimer();
         document.getElementById('timer-container').style.display = 'none';
