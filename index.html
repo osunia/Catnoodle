@@ -6,7 +6,7 @@
     <title>CATNOODLE v3.4</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@500;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -40,12 +40,21 @@
             padding-bottom: 20px; 
         }
 
-        header { 
-            flex: 0 0 auto;
-            padding-top: 15px; 
-            margin: 5px 0 5px; 
-            text-align: center; display: flex; align-items: center; gap: 10px; 
-        }
+/* 1. 헤더 수정: 양옆에 QR 버튼이 들어갈 공간(60px)을 미리 비워둡니다 */
+header { 
+    position: relative;
+    flex: 0 0 auto;
+    /* 👇 위쪽 15px, 양옆 60px 패딩 (핵심!) */
+    padding: 15px 60px 0 60px; 
+    margin: 5px 0 5px; 
+    text-align: center; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 10px; 
+    width: 100%; /* 전체 폭 다 쓰기 */
+}
+
         
         h1 { 
             margin: 0; font-size: 1.8rem; color: #2d3436; 
@@ -59,13 +68,250 @@
             object-fit: contain;
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
         }
-        
-        .btn-help {
-            width: 24px; height: 24px; border-radius: 50%;
-            background: #b2bec3; color: white; border: none; font-weight: bold; font-size: 0.9rem; cursor: pointer;
-            font-family: 'Oswald', sans-serif;
-        }
 
+/* 🆕 도전자 버튼 (왼쪽 상단) */
+.btn-challenger {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #fab1a0; /* 살구색 포인트 */
+    border: none;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    z-index: 100;
+    transition: transform 0.2s;
+}
+.btn-challenger:hover { transform: translateY(-50%) scale(1.1); }
+
+/* 🆕 타이머 컨테이너 (PC) */
+#timer-container {
+    position: absolute;
+    /* 👇 왼쪽 간격을 줄여서 타이머가 버튼에 더 가깝게 (기존 70px -> 65px) */
+    /* 필요 시 이 숫자를 조금씩 조절해 보세요 */
+    left: 70px; 
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: left;
+    
+    display: none; 
+    flex-direction: column; 
+    gap: 2px;
+}
+
+/* 타이머 숫자 디자인 (기존 유지) */
+#game-timer {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: #2d3436;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    /* 👇 왼쪽 패딩 제거 (완전한 왼쪽 정렬) */
+    padding-left: 0; 
+    margin-left: 0;
+}
+
+/* BEST 기록 컨테이너 (Flex로 배치) */
+#best-record {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    /* 👇 오른쪽 간격 축소 (8px -> 4px) */
+    gap: 4px; 
+    
+    /* 👇 타이머와 왼쪽 라인을 정확히 맞추기 위해 미세 조정 */
+    /* 장평 축소(scaleX) 때문에 시각적으로 왼쪽이 비어 보일 수 있어 마진으로 당김 */
+    margin-left: 1px; 
+    margin-top: -2px;
+}
+
+/* 1. 한글 텍스트 (Noto Sans KR + 장평 80%) */
+.best-txt {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #636e72;
+    
+    display: inline-block;
+    transform: scaleX(0.8);
+    /* 👇 PC: 왼쪽 기준으로 축소해야 타이머와 시작점이 맞음 */
+    transform-origin: left; 
+    white-space: nowrap;
+}
+
+/* 2. 숫자 텍스트 (Oswald) */
+.best-time {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 1.0rem;
+    color: #636e72;
+    letter-spacing: 0.5px;
+}
+
+/* 1️⃣ 공통 반응형 (PC 창 줄임 & 모바일 모두 적용) */
+/* 👉 타이머 하단 배치, 게임 유닛 정렬 등은 화면 너비만 보고 판단 */
+@media (max-width: 700px) {
+    #timer-container {
+        position: fixed;
+        left: 0;
+        bottom: 20px;
+        width: 100%;
+        top: auto;
+        transform: none;
+        
+        background: transparent;
+        box-shadow: none;
+        padding: 0 30px;
+        border-radius: 0;
+        
+        /* 가로 배치 (타이머 | 기록) */
+        flex-direction: row; 
+        justify-content: space-between;
+        align-items: baseline;
+        z-index: 8000;
+        pointer-events: none;
+    }
+
+    #game-timer {
+        color: #2d3436;
+        font-size: 1.6rem;
+        text-shadow: 0 2px 10px rgba(255,255,255,0.8);
+        line-height: 1;
+    }
+
+    #best-record {
+        justify-content: flex-end;
+        margin: 0;
+        border: none;
+        padding: 0;
+    }
+    
+    .best-txt {
+        transform-origin: right;
+    }
+    
+    #game-unit {
+        justify-content: center;
+        padding-top: 0;
+        padding-bottom: 30px;
+    }
+}
+
+/* 2️⃣ 찐 모바일 전용 (스마트폰 터치 기기만 적용) */
+/* 👉 제목 내리기, 상단 버튼 고정은 오직 폰에서만! */
+@media (max-width: 700px) and (hover: none) {
+    /* 버튼들을 최상단 구석으로 강제 이동 */
+    .btn-challenger, .btn-qr {
+        top: 25px !important; 
+        transform: none !important;
+    }
+
+    /* 헤더 윗공간 확보하여 제목을 아래로 밀기 */
+    header {
+        padding-top: 60px !important;
+        margin-bottom: 15px !important;
+    }
+
+    /* 컨트롤 버튼 간격 미세 조정 */
+    .controls {
+        margin-bottom: 10px;
+    }
+}
+        
+/* 2. 물음표 버튼: 원래대로 복구 (기존 코드에 있다면 확인만 하세요) */
+.btn-help {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #b2bec3; color: white; border: none; 
+    font-weight: bold; font-size: 0.9rem; cursor: pointer;
+    font-family: 'Oswald', sans-serif;
+    /* Flex 아이템으로서 중앙 정렬 유지 */
+}
+
+/* 3. QR 버튼 수정: 세로 중앙 정렬을 완벽하게 보정 */
+.btn-qr {
+    position: absolute;
+    right: 15px;         /* 오른쪽 벽에서 15px 떨어짐 */
+    top: 50%;            /* 부모의 정중앙 높이 */
+    /* 👇 -20% 대신 -50%를 써야 정확한 수직 중앙이 됩니다 */
+    transform: translateY(-50%); 
+    
+    background-color: #dfe6e9;
+    color: #636e72;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    z-index: 100;
+    white-space: nowrap; /* 글자 줄바꿈 방지 */
+}
+
+/* 마우스 올렸을 때 효과 (기존 코드에 클래스명이 다를 수 있어 추가) */
+.btn-qr:hover {
+    background: #b2bec3; 
+}
+        
+/* 👇 기존 클래스 수정: 기준점(relative) 설정 추가 */
+.qr-modal-content {
+    position: relative; /* 📍 X 버튼이 이 상자를 기준으로 위치를 잡습니다 */
+    
+    /* (기존 스타일 유지) */
+    background: var(--modal-bg); color: var(--modal-text);
+    padding: 20px; border-radius: 12px; border: 1px solid #444;
+    width: 85%; max-width: 320px;
+    height: 40vh; /* 화면 높이의 1/3 */
+    display: flex; flex-direction: column; align-items: center; justify-content: center; /* 간격 조정 */
+    gap: 15px; /* 요소 사이 간격 */
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    animation: popIn 0.2s ease-out;
+}
+
+/* 👇 🆕 우측 상단 X 버튼 스타일 추가 */
+.close-x-btn {
+    position: absolute; /* 절대 위치 */
+    top: 15px;          /* 위에서 15px */
+    right: 15px;        /* 오른쪽에서 15px */
+    
+    background: transparent; /* 투명 배경 */
+    border: none;
+    color: #888;        /* 기본은 회색 */
+    font-size: 1.8rem;  /* 크기 키움 */
+    line-height: 1;
+    font-weight: 400;   /* 너무 굵지 않게 */
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.close-x-btn:hover {
+    color: #ffffff; /* 마우스 올리면 흰색으로 강조 */
+}
+
+/* 3. QR 모달 전용 스타일 (높이 1/3) */
+.qr-modal-box {
+    background: var(--modal-bg);
+    color: var(--modal-text);
+    padding: 20px;
+    border-radius: 12px;
+    width: 85%;
+    max-width: 320px;
+    height: 40vh; /* 💡 화면 높이의 1/3 고정 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly; /* 내부 요소 간격 균등 */
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    border: 1px solid #444;
+    animation: popIn 0.2s ease-out;
+}
+        
         .controls { 
             flex: 0 0 auto;
             display: flex; gap: 8px; margin-bottom: 5px; 
@@ -338,20 +584,29 @@
 </head>
 <body>
 <header>
+    <button class="btn-challenger" onclick="confirmChallenger()">⏱️</button>
+    
+    <div id="timer-container" style="display:none;">
+        <div id="game-timer">00:00:00</div>
+        <div id="best-record">BEST 00:00:00</div>
+    </div>
+
     <h1>
         <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Grinning%20cat/3D/grinning_cat_3d.png" alt="Cat" class="title-icon">
         CATNOODLE
         <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Puzzle%20piece/3D/puzzle_piece_3d.png" alt="Puzzle" class="title-icon">
     </h1>
     <button class="btn-help" onclick="openHelp()">?</button>
+    <button class="btn-qr" onclick="openQR()">QR</button>
 </header>
 
 <div class="controls">
-    <select id="difficulty">
-        <option value="2">2개</option>
-        <option value="4" selected>4개</option>
-        <option value="6">6개</option>
-    </select>
+<select id="difficulty">
+    <option value="2">2개</option>
+    <option value="4">4개</option>
+    <option value="half" selected>반냥</option> 
+    <option value="novice">초보냥</option>
+</select>
     <button class="game-btn btn-gen" onclick="confirmNewGame()">생성</button>
     <button class="game-btn btn-reset" onclick="confirmReset()">초기화</button>
     <button class="game-btn btn-answer" onclick="confirmShowAnswer()">정답</button>
@@ -380,19 +635,61 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="diffChangeModal" onclick="cancelDiffChange()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3>난이도 변경 ⚠️</h3>
+        <p style="text-align:center; color:#ddd; margin: 20px 0; line-height: 1.5;">
+            난이도를 변경하면<br>
+            <span style="color:#ff7675; font-weight:bold;">최고 기록</span>이 초기화됩니다.<br>
+            진행할까요?
+        </p>
+        <div class="modal-btn-group">
+            <button class="btn-no" onclick="cancelDiffChange()">아니오</button>
+            <button class="btn-yes" onclick="executeDiffChange()">예</button>
+        </div>
+    </div>
+</div>
+    
+<div class="modal-overlay" id="challengerModal" onclick="closeChallenger()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3>도전자 모드 🔥</h3>
+        <p style="text-align:center; color:#ddd; margin: 20px 0; line-height: 1.5;">
+            현재 퍼즐을 초기화하고<br>
+            <span style="color:#ff7675; font-weight:bold;">타이머</span>를 켤까요?
+        </p>
+        <div class="modal-btn-group">
+            <button class="btn-no" onclick="closeChallenger()">아니오</button>
+            <button class="btn-yes" onclick="executeChallenger()">예</button>
+        </div>
+    </div>
+</div>
+
+    <div class="modal-overlay" id="stopChallengerModal" onclick="closeStopChallenger()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3>도전 중단</h3>
+        <p style="text-align:center; color:#ddd; margin: 20px 0; line-height: 1.5;">
+            도전자 모드를 종료하고<br>일반 모드로 돌아갈까요?
+        </p>
+        <div class="modal-btn-group">
+            <button class="btn-no" onclick="closeStopChallenger()">아니오</button>
+            <button class="btn-yes" onclick="executeStopChallenger()">예</button>
+        </div>
+    </div>
+</div>
+    
 <div class="modal-overlay" id="helpModal" onclick="closeHelp()">
     <div class="modal" onclick="event.stopPropagation()">
         <h3>조작 방법</h3>
         <ul>
             <li><span>조각 들기</span> <span class="key">클릭 / 드래그</span></li>
             <li><span>뒤집기</span> <span class="key">우클릭 / 탭</span></li>
-            <li><span>회전</span> <span class="key">휠 / 다른손 터치</span></li>
+            <li><span>회전</span> <span class="key">휠 / 드래그+빈 화면 터치</span></li>
         </ul>
         
-        <p style="font-size: 0.75rem; color: #888; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px; line-height: 1.4; text-align: center;">
+<p style="font-size: 0.75rem; color: #888; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px; line-height: 1.4; text-align: center;">
     Educational Insights의 퍼즐 게임 <br>
-    <i>Kanoodle</i>을 오마주한 팬 메이드 웹 앱입니다. <br>
-    ⓒ 2026. R. All rights reserved.
+    <i>Kanoodle</i>을 오마주한 팬 메이드 웹 앱입니다. <br><br>
+    © 2026. R. All rights reserved.
 </p>
         <button class="close-btn" onclick="closeHelp()">닫기</button>
     </div>
@@ -409,6 +706,19 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="qrModal" onclick="closeQR()">
+    <div class="qr-modal-content" onclick="event.stopPropagation()">
+        <button class="close-x-btn" onclick="closeQR()">&times;</button>
+        
+        <h3 style="margin:0; border:none; color:white;">Scan Me!</h3>
+        
+        <img id="qr-image" src="" alt="QR Code" style="width: 140px; height: 140px; border-radius: 8px; border: 4px solid white;">
+        
+        <p style="margin:0; font-size: 0.85rem; color:#aaa;">카메라로 스캔해 접속하세요</p>
+        
+        </div>
+</div>
+    
 <div class="modal-overlay" id="resetModal" onclick="closeReset()">
     <div class="modal" onclick="event.stopPropagation()">
         <h3>초기화</h3>
@@ -423,9 +733,7 @@
 <div class="modal-overlay" id="genModal" onclick="closeGen()">
     <div class="modal" onclick="event.stopPropagation()">
         <h3>새 게임</h3>
-        <p style="text-align:center; color:#ddd; margin: 20px 0;">
-            <span id="gen-count-text" style="color:var(--reset-btn); font-weight:bold;">4개</span> 고정으로<br>
-            새로운 게임을 만들까요?
+        <p id="gen-message" style="text-align:center; color:#ddd; margin: 20px 0; line-height: 1.6;">
         </p>
         <div class="modal-btn-group">
             <button class="btn-no" onclick="closeGen()">아니오</button>
@@ -477,12 +785,20 @@ let lastValidGhostPos = null;
 let globalZIndex = 100;
 
 let hasRotated = false; 
-// currentProblemIdx 변수는 이제 사용하지 않지만, 호환성을 위해 둬도 무방합니다.
-
-// 🎲 [추가] 셔플 로직을 위한 전역 변수
-let puzzleDeck = []; // 아직 풀지 않은 문제 번호(인덱스)들이 들어있는 카드 덱
 let currentProblemIdx = -1;
 
+// 🎲 [추가] 셔플 로직을 위한 전역 변수
+let puzzleDeck = [];
+
+    // 기존 변수들 아래에 추가
+let timerInterval = null;
+let startTime = 0;
+let isChallengerMode = false;
+// 기존 변수 아래에 추가
+let bestTime = Infinity; // 초기값은 무한대 (기록 없음)
+let currentDifficultyMode = 'half';
+let pendingDifficulty = '';      // 변경 대기 중인 난이도
+    
 const boardEl = document.getElementById('board');
 const trayEl = document.getElementById('tray');
 const gameUnitEl = document.getElementById('game-unit');
@@ -490,6 +806,113 @@ const trayOverlay = document.getElementById('tray-overlay');
 const boardOverlay = document.getElementById('board-overlay'); 
 const ghostEl = document.getElementById('ghost');
 
+// 🆕 모달 제어 함수
+function closeStopChallenger() {
+    document.getElementById('stopChallengerModal').style.display = 'none';
+}
+function executeStopChallenger() {
+    closeStopChallenger();
+    stopChallenger(); // 실제 종료 함수 호출
+}
+
+// 기존 confirmChallenger 수정
+function confirmChallenger() {
+    if (isChallengerMode) {
+        // 🆕 팝업 대신 모달 띄우기
+        document.getElementById('stopChallengerModal').style.display = 'flex';
+    } else {
+        document.getElementById('challengerModal').style.display = 'flex';
+    }
+}
+
+    // 👇 [누락된 함수들 추가] 이 코드를 confirmChallenger 근처에 붙여넣으세요.
+
+function closeChallenger() {
+    document.getElementById('challengerModal').style.display = 'none';
+}
+
+function closeStopChallenger() {
+    document.getElementById('stopChallengerModal').style.display = 'none';
+}
+
+function executeStopChallenger() {
+    closeStopChallenger();
+    stopChallenger(); // 실제 종료 로직 실행
+}
+
+// (참고) 승리 시 소리 재생 함수도 없어서 오류가 날 수 있으니 빈 함수로 추가해둡니다.
+function playSound(type) {
+    console.log("Sound played:", type); 
+}
+
+// 타이머 시작 시 display 속성 수정 (block -> flex)
+function executeChallenger() {
+    closeChallenger();
+    isChallengerMode = true;
+    document.querySelector('.btn-challenger').innerText = '🐱';
+    
+    // 💡 flex로 보여야 모바일 정렬이 예쁩니다
+    document.getElementById('timer-container').style.display = 'flex'; 
+    
+    loadNewGameLogic(); 
+    startTimerLogic(); 
+    showMessage("도전자 모드 🔥");
+}
+
+// 타이머 종료 시 (도전자 -> 일반 모드 전환)
+function stopChallenger() {
+    isChallengerMode = false;
+    document.querySelector('.btn-challenger').innerText = '⏱️';
+    stopTimer();
+    
+    // 타이머 UI 숨기기
+    document.getElementById('timer-container').style.display = 'none'; 
+    
+    // 🛑 [수정] 아래 줄을 삭제하거나 주석 처리하여 현재 퍼즐을 유지합니다!
+    // loadNewGameLogic(); 
+    
+    showMessage("일반 모드 😺");
+}
+
+// (타이머 시작 로직을 별도 함수로 분리하면 재사용하기 좋습니다)
+function startTimerLogic() {
+    stopTimer();
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 10);
+}
+
+function updateTimer() {
+    const now = Date.now();
+    const diff = now - startTime;
+    
+    const m = Math.floor(diff / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const ms = Math.floor((diff % 1000) / 10);
+    
+    // ✅ 중앙 타이머 숫자만 업데이트합니다.
+    document.getElementById('game-timer').innerText = 
+        `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(ms).padStart(2,'0')}`;
+}
+
+function stopTimer() {
+    if(timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+// 🌐 IT 지식: window.location.href는 현재 브라우저의 주소창 내용을 가져옵니다.
+// qrserver.com API를 사용하여 이미지를 실시간으로 생성합니다.
+
+    function openQR() {
+        const url = window.location.href;
+        document.getElementById('qr-image').src = 
+            `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+        document.getElementById('qrModal').style.display = 'flex';
+    }
+    function closeQR() {
+        document.getElementById('qrModal').style.display = 'none';
+    }
+    
 // Functions
 function openHelp() { document.getElementById('helpModal').style.display = 'flex'; }
 function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
@@ -497,15 +920,75 @@ function confirmShowAnswer() { document.getElementById('answerModal').style.disp
 function closeAnswer() { document.getElementById('answerModal').style.display = 'none'; }
 function confirmReset() { document.getElementById('resetModal').style.display = 'flex'; }
 function closeReset() { document.getElementById('resetModal').style.display = 'none'; }
+
+// 🆕 [생성] 버튼 클릭 시 호출되는 함수 (핵심 로직 변경)
 function confirmNewGame() { 
-    const count = document.getElementById('difficulty').value;
-    document.getElementById('gen-count-text').innerText = `${count}개`;
+    const selectedVal = document.getElementById('difficulty').value;
+    
+    // 1. 도전자 모드인데, 난이도를 변경하려고 시도한 경우 -> ⚠️ 경고 모달 띄움
+    if (isChallengerMode && selectedVal !== currentDifficultyMode) {
+        pendingDifficulty = selectedVal; // 변경하려는 값 임시 저장
+        document.getElementById('diffChangeModal').style.display = 'flex';
+        return; // 여기서 중단 (기존 새 게임 모달 안 띄움)
+    }
+
+    // 2. 그 외(일반 모드거나 난이도 변경 없음) -> ✅ 기존 새 게임 로직 진행
+    showGenModal(selectedVal);
+}
+
+
+// 📌 기존 confirmNewGame의 뒷부분을 별도 함수로 분리 (재사용 목적)
+function showGenModal(val) {
+    const msgEl = document.getElementById('gen-message');
+    const highlightStyle = 'color:var(--reset-btn); font-weight:bold;';
+
+    if (val === 'novice') {
+        msgEl.innerHTML = `<span style="${highlightStyle}">초보냥</span> 모드로<br>9개의 조각을 미리 맞추고<br>남은 3개만 풀어볼까요?`;
+    } else if (val === 'half') {
+        msgEl.innerHTML = `<span style="${highlightStyle}">반냥</span> 모드로<br>6개의 조각을 왼쪽에 배열하여<br>새 게임을 시작할까요?`;
+    } else {
+        msgEl.innerHTML = `<span style="${highlightStyle}">랜덤 ${val}개</span> 고정으로<br>새로운 게임을 만들까요?`;
+    }
+    
     document.getElementById('genModal').style.display = 'flex'; 
 }
+
+// ⚠️ 경고 모달: 예 (변경 확정 및 게임 시작)
+function executeDiffChange() {
+    document.getElementById('diffChangeModal').style.display = 'none';
+    
+    // 1. 난이도 변경 적용
+    currentDifficultyMode = pendingDifficulty;
+    
+    // 2. 기록 초기화 및 라벨 업데이트
+    bestTime = Infinity;
+    updateBestRecordLabel();
+    saveDifficulty();
+    
+    showMessage("난이도 변경! 기록 초기화");
+
+    // 3. 바로 게임 생성 실행 (다시 묻지 않고 바로 시작)
+    executeNewGame(); 
+}
+
+// ⚠️ 경고 모달: 아니오 (취소)
+function cancelDiffChange() {
+    document.getElementById('diffChangeModal').style.display = 'none';
+    
+    // 선택을 취소했으므로, 드롭다운을 다시 원래(현재 플레이 중인) 난이도로 되돌림
+    document.getElementById('difficulty').value = currentDifficultyMode;
+}
+    
 function closeGen() { document.getElementById('genModal').style.display = 'none'; }
 
 function executeShowAnswer() {
     closeAnswer();
+    
+    // 🛑 타이머 정지 및 00:00:00으로 초기화 (추가된 부분)
+    stopTimer();
+    document.getElementById('game-timer').innerText = "00:00:00";
+    
+    // 기존 정답 처리 로직
     boardState = JSON.parse(JSON.stringify(answerKey));
     extractPiecesFromBoard(); 
     renderPieces();
@@ -531,6 +1014,63 @@ function executeNewGame() {
     loadNewGameLogic();
 }
 
+// 🆕 난이도 라벨을 반환하는 헬퍼 함수
+function getModeTitle(val) {
+    const map = {
+        '2': '2개',
+        '4': '4개',
+        'half': '반냥',
+        'novice': '초보냥'
+    };
+    return map[val] || 'BEST';
+}
+    
+// 이 함수가 이미 innerHTML을 사용하고 있으므로, 
+// 기록이 바뀔 땐 항상 이 함수를 부르거나 이 형식을 따라야 합니다.
+function updateBestRecordLabel() {
+    const title = getModeTitle(currentDifficultyMode);
+    const timeStr = (bestTime === Infinity) ? "00:00:00" : msToTime(bestTime);
+    
+    document.getElementById('best-record').innerHTML = 
+        `<span class="best-txt">${title}</span><span class="best-time">${timeStr}</span>`;
+}
+
+// 🆕 시간 포맷팅 헬퍼 (기존 코드 재사용을 위해 분리)
+function msToTime(duration) {
+    const m = Math.floor(duration / 60000);
+    const s = Math.floor((duration % 60000) / 1000);
+    const ms = Math.floor((duration % 1000) / 10);
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(ms).padStart(2,'0')}`;
+}
+
+// 💾 (기존 함수 유지하되 내용 확인)
+function saveDifficulty() {
+    const val = document.getElementById('difficulty').value;
+    localStorage.setItem('catnoodle_difficulty', val);
+}
+
+function loadDifficultySetting() {
+    const saved = localStorage.getItem('catnoodle_difficulty');
+    const select = document.getElementById('difficulty');
+    
+    if (saved && select.querySelector(`option[value="${saved}"]`)) {
+        select.value = saved;
+        currentDifficultyMode = saved; // 저장된 값으로 동기화
+    } else {
+        // 저장된 게 없으면 현재 선택된 값(기본값)으로 동기화
+        currentDifficultyMode = select.value; 
+    }
+    
+    // 화면에 텍스트 반영 (2개 00:00:00 등)
+    updateBestRecordLabel(); 
+}
+
+// 초기화 순서에 로드 함수 추가
+window.addEventListener('resize', initLayout);
+loadDifficultySetting(); // 💡 게임 시작 전 설정 불러오기
+initLayout();
+loadNewGame();
+    
 function initLayout() {
     const headerH = document.querySelector('header').offsetHeight;
     const controlsH = document.querySelector('.controls').offsetHeight;
@@ -611,17 +1151,24 @@ function loadNewGame() {
 }
 
 function loadNewGameLogic() {
+    if (isChallengerMode) {
+        startTimerLogic(); 
+        document.getElementById('timer-container').style.display = 'flex'; // 유지
+    } else {
+        stopTimer();
+        document.getElementById('timer-container').style.display = 'none';
+    }
     if(pickedPieceIdx !== null) releasePiece();
     trayOverlay.style.display = 'none';
     const bOverlay = document.getElementById('board-overlay');
     if(bOverlay) bOverlay.style.display = 'none';
     
-    let newIdx = 0; // 기본값
+    let newIdx = 0;
 
     if (typeof SOLUTION_DB !== 'undefined' && SOLUTION_DB.length > 0) {
         // 1. 덱이 비어있거나 초기화되지 않았다면 새로 만듭니다. (All Reset)
         if (puzzleDeck.length === 0) {
-            console.log("모든 문제를 풀었습니다! 문제를 다시 섞습니다...");
+            console.log("🔀 모든 문제를 풀었습니다! 카드를 다시 섞습니다...");
             // 0부터 DB 길이-1 까지의 숫자를 채워넣음
             puzzleDeck = Array.from({length: SOLUTION_DB.length}, (_, i) => i);
         }
@@ -633,12 +1180,18 @@ function loadNewGameLogic() {
         // 3. 뽑은 카드는 덱에서 제거합니다. (중복 방지 핵심)
         puzzleDeck.splice(randomIndex, 1);
 
-        // [개발자 로그] 남은 문제 수 확인
-        console.log(`🎲 랜덤 출제: #${SOLUTION_DB[newIdx].id} (남은 문제: ${puzzleDeck.length}개)`);
+        // 현재 인덱스 업데이트 (치트키 등 호환성 유지)
+        currentProblemIdx = newIdx;
+
+        if (SOLUTION_DB[newIdx].id) {
+            console.log(`%c🎲 랜덤 출제: #${SOLUTION_DB[newIdx].id} (남은 문제: ${puzzleDeck.length}개)`, "background: #2d3436; color: #badc58; font-size: 16px; font-weight: bold; padding: 6px; border-radius: 4px;");
+        } else {
+            console.log(`🎲 랜덤 출제 Index: ${newIdx} (남은 문제: ${puzzleDeck.length}개)`);
+        }
 
         answerKey = JSON.parse(JSON.stringify(SOLUTION_DB[newIdx]));
     } else {
-        // Fallback (DB 로드 실패 시)
+        // Fallback
         answerKey = [[7,7,4,4,4,1,1,1,6,6,6],[3,7,7,0,4,4,1,1,5,5,6],[3,3,7,0,0,0,11,8,8,5,6],[3,2,2,2,2,11,11,11,8,10,10],[3,2,9,9,9,9,11,8,8,10,10]];
         console.log("⚠️ 데이터베이스가 로드되지 않아 기본 문제를 사용합니다.");
     }
@@ -654,9 +1207,9 @@ function loadNewGameLogic() {
         randomizeTrayPositions();
         renderPieces();
     }, 50);
-showMessage("새로운 게임 시작!"); 
+    
+    showMessage("새로운 게임 시작!"); 
 }
-
 function extractPiecesFromBoard() {
     pieces = [];
     for(let id=0; id<12; id++) {
@@ -723,14 +1276,40 @@ function randomizeTrayPositions() {
 }
 
 function applyDifficulty() {
-    const keepCount = parseInt(document.getElementById('difficulty').value);
+    const diffSelect = document.getElementById('difficulty');
+    const val = diffSelect.value;
+    
+    // 💾 [저장] 선택한 난이도를 브라우저에 저장
+    localStorage.setItem('catnoodle_difficulty', val);
+
     let allIndices = pieces.map((_, i) => i);
     let lockedIndices = [];
-    for(let i=0; i<keepCount; i++) {
-        let r = Math.floor(Math.random() * allIndices.length);
-        lockedIndices.push(allIndices[r]);
-        allIndices.splice(r, 1);
+
+    // 💡 수정된 부분: 반냥(half) 또는 초보냥(novice)인 경우
+    if (val === 'half' || val === 'novice') {
+        // 1. 현재 조각들의 위치와 인덱스를 가져옴
+        let piecePositions = pieces.map((p, index) => ({ index: index, x: p.x }));
+        
+        // 2. x좌표 기준 오름차순 정렬 (왼쪽 -> 오른쪽)
+        piecePositions.sort((a, b) => a.x - b.x);
+        
+        // 3. 잠글 개수 결정 (초보냥이는 9개, 반냥이는 6개)
+        const lockCount = (val === 'novice') ? 9 : 6;
+        
+        // 4. 앞에서부터 개수만큼 잘라서 잠금 리스트에 추가
+        lockedIndices = piecePositions.slice(0, lockCount).map(obj => obj.index);
+        
+    } else {
+        // [일반 모드] 무작위 N개 잠금
+        const keepCount = parseInt(val);
+        for(let i=0; i<keepCount; i++) {
+            let r = Math.floor(Math.random() * allIndices.length);
+            lockedIndices.push(allIndices[r]);
+            allIndices.splice(r, 1);
+        }
     }
+
+// 잠금 상태 적용
     pieces.forEach((p, idx) => {
         if(lockedIndices.includes(idx)) {
             p.isLocked = true;
@@ -738,10 +1317,13 @@ function applyDifficulty() {
             p.isLocked = false;
             removePieceFromBoardState(p.currentShape, p.y, p.x);
             p.x = -1; p.y = -1;
+            
+            // 👇 [추가] 모음판으로 가는 조각들을 무작위로 변형합니다!
+            randomizePieceOrientation(idx);
         }
     });
 }
-
+    
 function removePieceFromBoardState(shape, r, c) {
     for(let i=0; i<shape.length; i++) for(let j=0; j<shape[0].length; j++) if(shape[i][j]) boardState[r+i][c+j]=-1;
 }
@@ -1203,6 +1785,22 @@ function rotatePieceData(idx) {
     updateVisualsInDrag(idx); // 즉시 렌더링 호출
 }
 
+    // 🆕 조각을 무작위로 회전 및 뒤집는 함수
+function randomizePieceOrientation(idx) {
+    const p = pieces[idx];
+    
+    // 1. 무작위 뒤집기 (50% 확률)
+    if (Math.random() > 0.5) {
+        p.currentShape = p.currentShape.map(row => [...row].reverse());
+    }
+    
+    // 2. 무작위 회전 (0~3번)
+    const rotCount = Math.floor(Math.random() * 4);
+    for (let i = 0; i < rotCount; i++) {
+        p.currentShape = rotateMatrix(p.currentShape);
+    }
+}
+
 function flipPieceData(idx) {
     const p = pieces[idx];
     const oldShape = p.currentShape;
@@ -1229,12 +1827,44 @@ function placePieceToBoardState(shape, r, c, id) {
 
 function checkWinCondition() {
     const remainingPieces = pieces.filter(p => p.x === -1).length;
+    
     if(remainingPieces === 0) {
+        const msgBox = document.querySelector('#board-message-box h2');
+        const subMsg = document.querySelector('#board-message-box p');
+        
+        if (isChallengerMode) {
+            stopTimer();
+            const now = Date.now();
+            const diff = now - startTime; // 현재 걸린 시간(ms)
+            const recordStr = document.getElementById('game-timer').innerText; // 문자열 기록
+            
+            let msg = `<span style="color:#fab1a0">${recordStr}</span>`;
+            
+// checkWinCondition 함수 내부의 if (diff < bestTime) 블록 수정
+// checkWinCondition 함수 내부의 신기록 달성 블록 찾기
+if (diff < bestTime) {
+    bestTime = diff;
+    const title = getModeTitle(currentDifficultyMode);
+    
+    // ✅ innerText 대신 innerHTML을 사용하여 우리가 설정한 폰트 클래스를 유지합니다.
+    document.getElementById('best-record').innerHTML = 
+        `<span class="best-txt">${title}</span><span class="best-time">${recordStr}</span>`;
+    
+    msg += `<br><span style="font-size:0.7em; color:#ffffff; font-weight:bold;">✨ NEW RECORD! ✨</span>`;
+    playSound('success');
+}
+            
+            msgBox.innerHTML = msg;
+            subMsg.innerText = "퍼즐을 완성했어요! 🏆";
+        } else {
+            msgBox.innerText = "냥누들 마스터!";
+            subMsg.innerText = "퍼즐을 완성했어요🎉";
+        }
+
         const bOverlay = document.getElementById('board-overlay');
         if(bOverlay) bOverlay.style.display = 'flex';
     }
 }
-
 function showMessage(t) {
     const m=document.getElementById('message'); m.textContent=t; m.style.display='block';
     setTimeout(()=>m.style.display='none', 2000);
@@ -1267,6 +1897,6 @@ window.addEventListener('resize', initLayout);
 initLayout();
 loadNewGame();
 </script>
+
 </body>
 </html>
-
